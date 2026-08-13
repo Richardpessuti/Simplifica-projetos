@@ -1690,6 +1690,11 @@ try{
     }
   }
   db = firebase.firestore();
+  // em algumas redes (dados móveis, proxy, firewall corporativo) a conexão
+  // padrão do Firestore demora muito pra ser detectada — isso deixa a
+  // primeira consulta de cada vez lenta (às vezes minutos). Essa opção faz
+  // o SDK detectar de cara o jeito certo de conectar nessas redes.
+  db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
   auth = firebase.auth();
   firebaseOk = true;
 }catch(e){
@@ -3893,16 +3898,26 @@ document.addEventListener('click', async (e)=>{
   if(viewCol){
     const id = e.target.getAttribute('data-id');
     const name = e.target.getAttribute('data-name');
-    const originalText = e.target.textContent;
+    const btnEl = e.target;
+    const originalText = btnEl.textContent;
     const newWin = window.open('', '_blank'); // abre já, dentro do gesto de clique
-    e.target.textContent = 'Abrindo...';
+    if(newWin){
+      newWin.document.write('<title>Carregando…</title><body style="font-family:sans-serif;padding:60px 24px;text-align:center;color:#666;">Carregando o arquivo, aguarde…</body>');
+    }
+    btnEl.disabled = true;
+    btnEl.textContent = 'Abrindo...';
+    const avisoLento1 = setTimeout(()=>{ btnEl.textContent = 'Ainda carregando...'; }, 6000);
+    const avisoLento2 = setTimeout(()=>{ btnEl.textContent = 'Conexão lenta, aguarde...'; }, 18000);
     let base64 = null;
     try{
       base64 = await loadFileChunked(viewCol, id);
     }catch(err){
       console.error(err);
     }
-    e.target.textContent = originalText;
+    clearTimeout(avisoLento1);
+    clearTimeout(avisoLento2);
+    btnEl.disabled = false;
+    btnEl.textContent = originalText;
     if(base64){
       openBase64(base64, name, newWin);
     }else{
