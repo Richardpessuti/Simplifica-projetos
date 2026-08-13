@@ -6,7 +6,7 @@
 
 App web (uma página só, `index.html`) pra arquitetos organizarem uma reforma junto com o cliente: cronograma, cotações, aprovações com parcelamento, prestadores de serviço e arquivos técnicos — tudo num só lugar, acessado pelo navegador do celular.
 
-**Não é um app nativo.** É HTML + CSS + JavaScript puro, sem framework, sem processo de build. Um arquivo só. Hospedado no Netlify como site estático.
+**Não é um app nativo.** É HTML + CSS + JavaScript puro, sem framework, sem processo de build. Um arquivo só. Hospedado no **GitHub Pages** como site estático (ver seção "Hospedagem" abaixo — trocamos do Netlify pro GitHub Pages em 13/08/2026).
 
 ## Estrutura de acesso (papéis)
 
@@ -21,7 +21,10 @@ Essa estrutura de permissão **não deve ser alterada** sem discutir antes — v
 - **Frontend**: HTML/CSS/JS vanilla, um arquivo `index.html`
 - **Backend**: Firebase (Auth + Firestore), configurado direto no `<script>` do HTML (`firebaseConfig` no topo)
 - **Armazenamento de arquivos**: arquivos (PDFs, imagens) são convertidos pra base64 e salvos em pedaços (`chunks`) dentro do Firestore — não usa Firebase Storage. Isso funciona mas é caro/lento; ficou pendente migrar pra Storage.
-- **Hospedagem**: Netlify, site `simplificaprojetos.netlify.app`, hoje via upload manual (não conectado a Git ainda — isso está em andamento, ver seção "Próximos passos")
+- **Hospedagem**: **GitHub Pages**, publicado direto do repositório `Richardpessuti/Simplifica-projetos`, branch `claude/leitura-perguntas-917odr`, pasta `/ (root)`. Link ao vivo: **https://richardpessuti.github.io/Simplifica-projetos/**. Deploy automático a cada push — sem passo manual.
+  - **Por que não Netlify**: o site esteve conectado ao Netlify (`simplificaprojetos.netlify.app`) via Git, mas o plano gratuito do time bloqueia deploys de commits com autor "não reconhecido" (erro *"Build blocked: Unrecognized Git contributor"* — os commits feitos pelo Claude Code usam o autor `Claude <noreply@anthropic.com>`, que não está associado à conta GitHub do time). Não existe opção de liberar isso em plano gratuito, só via upgrade pago. Como alternativa gratuita, o repositório foi **tornado público** e o deploy passou a ser feito via GitHub Pages.
+  - **Repositório é público** — isso expõe o `firebaseConfig` (apiKey, projectId etc.) no código-fonte. Isso por si só não é um problema de segurança (é assim que o Firebase funciona; a chave é pública por design), **mas depende de as Firestore Security Rules estarem configuradas no Firebase Console** — item que segue pendente na lista abaixo. Enquanto as regras não estiverem travadas, tratar isso como prioridade de segurança, não só "nice to have".
+  - Se no futuro quiser voltar pro Netlify: resolve o bloqueio fazendo upgrade do plano do time, ou reconectando com um autor de commit associado a uma conta GitHub reconhecida como colaboradora do repositório.
 
 ## Sistema de design (implementado)
 
@@ -88,7 +91,7 @@ Cópia do `index.html` com os `<script>` do Firebase removidos e o modo demo for
 
 ## Discutido mas NÃO implementado ainda
 
-- Firestore Security Rules no servidor (hoje a segurança de dados depende só da lógica do client — precisa de regras no Firebase Console validando `membrosEmails`/`arquitetoId` no backend)
+- **⚠️ PRIORIDADE ALTA (subiu de prioridade em 13/08/2026): Firestore Security Rules no servidor** — hoje a segurança de dados depende só da lógica do client, sem regras no Firebase Console validando `membrosEmails`/`arquitetoId` no backend. Isso já era pendente, mas agora o repositório do código é **público** (necessário pro deploy via GitHub Pages — ver seção "Hospedagem"), o que torna o `projectId`/`apiKey` do Firebase mais fácil de encontrar. Sem regras travadas, alguém com esses dados poderia ler/escrever direto no Firestore pelo SDK, sem passar pelo app. Tratar como próximo passo de segurança, não como melhoria opcional.
 - Migrar armazenamento de arquivo de base64-no-Firestore pra Firebase Storage
 - Compressão automática de imagem antes do upload
 - PWA instalável (ícone na tela inicial)
@@ -114,12 +117,11 @@ O visual atual (paleta grafite/verde, cards planos, ícones emoji) foi um primei
 - **3D / imagem de fundo cinematográfica**, especialmente na tela de login/entrada: um projeto de reforma "se formando" em 3D fotorrealista atrás do formulário, como pano de fundo. Já discutimos que isso deve ficar concentrado na entrada (não dentro das telas de uso diário, tipo Cotações/Aprovados, onde a pessoa está resolvendo tarefa e precisa de leitura rápida) — mas o nível de acabamento visual "Apple" deve se estender pro resto do app também, não só a capa.
 - Isso é trabalho de design visual pesado (imagens/render 3D reais custam produção — banco de imagens, geração por IA, ou contratação de um render 3D) — não dá pra resolver só com CSS. Vale planejar de onde essas imagens vêm antes de implementar.
 
-## Próximos passos (deploy automático)
+## Deploy automático (status: concluído)
 
-1. Criar repositório no GitHub com o conteúdo do `index.html`
-2. No Netlify (`simplificaprojetos`), em Site configuration → Build & deploy → Link repository, conectar esse repositório (comando de build vazio, publish directory `.`)
-3. A partir daí, qualquer commit no repositório publica sozinho — sem upload manual
-4. Pra editar com Claude Code pelo celular: app Claude → aba **Código** → **New Session** → escolher esse repositório → descrever a tarefa
+O repositório já está criado e publicando sozinho via GitHub Pages a cada push (ver seção "Hospedagem" acima). Nada pendente aqui.
+
+Pra editar com Claude Code pelo celular: app Claude → aba **Código** → **New Session** → escolher esse repositório → descrever a tarefa.
 
 ## Como pedir pro Claude Code continuar
 
