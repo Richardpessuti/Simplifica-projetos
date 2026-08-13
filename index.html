@@ -474,6 +474,33 @@
   .status-pill.caution{ background:color-mix(in srgb, var(--caution-dark) 14%, transparent); color:var(--caution-dark); }
   .status-pill.danger{ background:color-mix(in srgb, var(--danger) 12%, transparent); color:var(--danger); }
   .status-pill.muted{ background:color-mix(in srgb, var(--muted) 14%, transparent); color:var(--muted); }
+  .step-status-col{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:5px;
+    flex-shrink:0;
+  }
+  .date-pill{
+    display:inline-flex;
+    align-items:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:20px;
+    background:var(--paper);
+    color:var(--muted);
+    border:none;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .date-pill-view{ cursor:default; }
+  .date-pill-empty{
+    background:none;
+    border:1.5px dashed var(--paper-line);
+    color:var(--muted);
+  }
   .etapa-tipo-row{
     display:flex;
     align-items:center;
@@ -598,9 +625,6 @@
     height:12px;
     padding:0;
     margin-left:2px;
-  }
-  .step-date-view{
-    font-family:'IBM Plex Mono', monospace;
   }
   .status-select{
     width:100%;
@@ -2098,6 +2122,7 @@ let cronArquivoAtual = null; // {hasFile, fileName}
 let projeto3dAtual = null; // {hasFile, fileName}
 let importPreview = []; // [{nome, tipo, ordem}]
 let cronGradeDatas = null; // {nome: {diaInicio, diaFim}} — lido da grade colorida do PDF, se houver
+let etapaEditandoData = null; // id da etapa com o balãozinho de data aberto pra edição, se houver
 
 const ETAPA_TIPO_KEYWORDS = [
   [/demoli|remo[cç][aã]o de itens/i, 'Mão de obra'],
@@ -2408,11 +2433,10 @@ function dataDaGradeCronograma(baseISO, diaIndex){
   return base.toISOString().slice(0,10);
 }
 
-function formatarDataBR(iso){
+function formatarDataCompacta(iso){
   if(!iso) return '';
   const [ano,mes,dia] = iso.split('-');
-  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-  return dia + ' ' + meses[Number(mes)-1];
+  return `${dia}/${mes}/${ano}`;
 }
 
 function renderImportPreview(){
@@ -2669,7 +2693,22 @@ function renderLinhaDoTempo(){
     return;
   }
   el.innerHTML = `<div class="card"><h2>${escapeHtml(txt('tituloLinhaDoTempo'))}</h2>` +
-    ordenadas.map((et,i)=>`
+    ordenadas.map((et,i)=>{
+      const faixa = et.dataInicio ? formatarDataCompacta(et.dataInicio) + (et.dataFim && et.dataFim!==et.dataInicio ? '-'+formatarDataCompacta(et.dataFim) : '') : '';
+      let dataHtml;
+      if(etapaEditandoData === et.id){
+        dataHtml = `<div class="step-date">
+          <label class="step-date-row"><span class="step-date-label">De</span><input type="date" class="step-date-input" data-data-etapa="${et.id}|inicio" value="${et.dataInicio||''}"></label>
+          <label class="step-date-row"><span class="step-date-label">Até</span><input type="date" class="step-date-input" data-data-etapa="${et.id}|fim" value="${et.dataFim||''}"></label>
+        </div>`;
+      }else if(faixa){
+        dataHtml = isAdmin
+          ? `<button type="button" class="date-pill" data-toggle-data-etapa="${et.id}">${faixa}</button>`
+          : `<span class="date-pill date-pill-view">${faixa}</span>`;
+      }else{
+        dataHtml = isAdmin ? `<button type="button" class="date-pill date-pill-empty" data-toggle-data-etapa="${et.id}">+ data</button>` : '';
+      }
+      return `
       <div class="step-row">
         <div class="step-num" style="background:${statusEtapaCor(et.status)};">${i+1}</div>
         <div class="step-body">
@@ -2678,12 +2717,11 @@ function renderLinhaDoTempo(){
               <div class="item-title">${escapeHtml(et.nome)}</div>
               <div class="meta">${escapeHtml((et.tipos||[]).join(', '))}</div>
             </div>
-            <span class="status-pill ${statusEtapaClasse(et.status)}">${escapeHtml(et.status)}</span>
+            <div class="step-status-col">
+              <span class="status-pill ${statusEtapaClasse(et.status)}">${escapeHtml(et.status)}</span>
+              ${dataHtml}
+            </div>
           </div>
-          ${isAdmin ? `<div class="step-date">
-            <label class="step-date-row"><span class="step-date-label">De</span><input type="date" class="step-date-input" data-data-etapa="${et.id}|inicio" value="${et.dataInicio||''}"></label>
-            <label class="step-date-row"><span class="step-date-label">Até</span><input type="date" class="step-date-input" data-data-etapa="${et.id}|fim" value="${et.dataFim||''}"></label>
-          </div>` : (et.dataInicio ? `<div class="meta step-date-view">${formatarDataBR(et.dataInicio)}${et.dataFim && et.dataFim!==et.dataInicio ? ' – '+formatarDataBR(et.dataFim) : ''}</div>` : '')}
           ${isAdmin ? `<div class="step-actions">
             <span class="step-reorder">
               <button data-subir-etapa="${et.id}" title="Subir">↑</button>
@@ -2694,8 +2732,17 @@ function renderLinhaDoTempo(){
           </div>` : ''}
         </div>
       </div>
-    `).join('') + `</div>`;
+    `;
+    }).join('') + `</div>`;
 }
+
+document.addEventListener('click', (e)=>{
+  const toggleId = e.target.getAttribute('data-toggle-data-etapa');
+  if(toggleId){
+    etapaEditandoData = (etapaEditandoData === toggleId) ? null : toggleId;
+    renderLinhaDoTempo();
+  }
+});
 
 document.addEventListener('change', async (e)=>{
   const dataAttr = e.target.getAttribute('data-data-etapa');
