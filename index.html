@@ -265,7 +265,7 @@
     box-shadow:0 1px 3px rgba(20,23,28,0.045);
     transition:box-shadow .3s var(--ease), transform .3s var(--ease);
   }
-  .card h2{
+  .card h2, .modal-sheet-head h2{
     font-family:'Space Grotesk', sans-serif;
     font-weight:600;
     font-size:19px;
@@ -275,7 +275,7 @@
     gap:8px;
     color:var(--ink);
   }
-  .card h2 .tag{
+  .card h2 .tag, .modal-sheet-head h2 .tag{
     background:var(--caution);
     color:#fff;
     font-size:10px;
@@ -705,6 +705,32 @@
     transform:translateY(0);
     opacity:1;
   }
+  .modal-sheet-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .modal-close{
+    flex-shrink:0;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    border:none;
+    background:var(--paper);
+    color:var(--muted);
+    font-size:13px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+  }
+  .tab-toolbar{
+    display:flex;
+    margin-bottom:20px;
+  }
+  .tab-toolbar .btn{ margin-top:0; }
 
   .config-warning code{
     background:#fff;
@@ -1289,58 +1315,8 @@
 
   <!-- COTAÇÕES -->
   <section id="tab-cotacoes">
-    <div class="card">
-      <h2 id="c-form-title">Nova cotação <span class="tag">upload</span></h2>
-      <label>Item</label>
-      <input type="text" id="c-item" placeholder="Ex: Sofá 3 lugares">
-
-      <label>Tipo</label>
-      <select id="c-tipo"></select>
-
-      <label>Local da cotação</label>
-      <input type="text" id="c-local" placeholder="Ex: Loja XYZ / Site ABC">
-
-      <label>Preço (R$)</label>
-      <input type="number" id="c-preco" placeholder="0,00">
-
-      <label>Número do profissional (opcional)</label>
-      <input type="text" id="c-prof" placeholder="Ex: 01, 02...">
-
-      <label>Status</label>
-      <select id="c-status">
-        <option value="Pendente">Pendente</option>
-        <option value="Aprovado">Aprovado</option>
-        <option value="Recusado">Recusado</option>
-      </select>
-
-      <div id="c-pagamento-wrap" style="display:none;margin-top:14px;padding:12px;background:var(--paper);border-radius:var(--radius-btn);">
-        <label style="margin-top:0;">Forma de pagamento</label>
-        <div style="display:flex;gap:8px;">
-          <button type="button" id="c-pag-vista" class="pag-toggle-btn active" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">À vista</button>
-          <button type="button" id="c-pag-parcelado" class="pag-toggle-btn" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Parcelado</button>
-        </div>
-        <div id="c-pag-parcelas-wrap" style="display:none;margin-top:12px;">
-          <label>Nº de parcelas</label>
-          <input type="number" id="c-pag-n" min="1" max="24" value="2">
-          <label>Cartão (opcional)</label>
-          <input type="text" id="c-pag-cartao" placeholder="Ex: Nubank Richard">
-          <label>Dia de fechamento (opcional)</label>
-          <input type="number" id="c-pag-fechamento" min="1" max="31" placeholder="Ex: 10">
-          <div style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;">
-            <input type="checkbox" id="c-pag-autopay" checked style="margin-top:3px;">
-            <label style="margin:0;text-transform:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);letter-spacing:0;">Marcar parcela como paga automaticamente quando a data vencer (sem confirmação bancária real)</label>
-          </div>
-        </div>
-      </div>
-
-      <label>Documento da cotação</label>
-      <div class="file-drop" id="c-drop">Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)</div>
-      <input type="file" id="c-file" accept=".pdf,image/*" multiple>
-
-      <div id="c-bulk-list" style="display:none;margin-top:12px;"></div>
-
-      <button class="btn" id="c-save">Salvar cotação</button>
-      <button class="btn muted" id="c-cancel" style="display:none;">Cancelar edição</button>
+    <div class="tab-toolbar">
+      <button class="btn" id="c-add-btn">+ Nova cotação</button>
     </div>
 
     <div id="c-list"></div>
@@ -1418,46 +1394,8 @@
 
   <!-- PRESTADORES -->
   <section id="tab-prestadores">
-    <div class="card">
-      <h2 id="p-form-title">Novo prestador <span class="tag">contato</span></h2>
-      <label>Número (gerado automaticamente)</label>
-      <input type="text" id="p-num" readonly style="background:#EEEBE1;color:var(--muted);">
-
-      <label>Nome</label>
-      <input type="text" id="p-nome" placeholder="Ex: João Silva">
-
-      <label>Nome da empresa</label>
-      <input type="text" id="p-empresa" placeholder="Ex: Silva Elétrica Ltda">
-
-      <label>Especialidade</label>
-      <select id="p-esp"></select>
-
-      <label>Telefone</label>
-      <input type="text" id="p-tel" placeholder="Ex: (11) 99999-9999">
-
-      <label>Status</label>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button type="button" class="p-status-chip active" data-status="Cotação" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;">Cotação</button>
-        <button type="button" class="p-status-chip" data-status="Contratado" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;">Contratado</button>
-        <button type="button" class="p-status-chip" data-status="Recusado" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;">Recusado</button>
-      </div>
-      <input type="hidden" id="p-status">
-
-      <label>Endereço (opcional)</label>
-      <input type="text" id="p-endereco" placeholder="Ex: Rua das Flores, 123 - São Paulo">
-
-      <button type="button" id="p-mais-toggle" style="background:none;border:none;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:14px;cursor:pointer;padding:0;text-decoration:underline;">+ mais detalhes</button>
-      <div id="p-mais-wrap" style="display:none;margin-top:10px;">
-        <label>E-mail (opcional)</label>
-        <input type="text" id="p-email" placeholder="email@exemplo.com">
-        <label>Indicado por (opcional)</label>
-        <input type="text" id="p-indicado" placeholder="Ex: Marcos (eletricista)">
-        <label>Observações internas (só você vê)</label>
-        <input type="text" id="p-obs" placeholder="Ex: atrasa entrega, mas preço bom">
-      </div>
-
-      <button class="btn secondary" id="p-save">Salvar prestador</button>
-      <button class="btn muted" id="p-cancel" style="display:none;">Cancelar edição</button>
+    <div class="tab-toolbar">
+      <button class="btn secondary" id="p-add-btn">+ Novo prestador</button>
     </div>
 
     <div id="p-list"></div>
@@ -1494,6 +1432,112 @@
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="whats-modal-sub"></div>
     <div id="whats-modal-lista"></div>
     <button class="btn muted" id="whats-modal-fechar" style="margin-top:10px;">Cancelar</button>
+  </div>
+</div>
+
+<div id="c-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-sheet-head">
+      <h2 id="c-form-title">Nova cotação <span class="tag">upload</span></h2>
+      <button type="button" class="modal-close" id="c-modal-fechar" aria-label="Fechar">✕</button>
+    </div>
+    <label>Item</label>
+    <input type="text" id="c-item" placeholder="Ex: Sofá 3 lugares">
+
+    <label>Tipo</label>
+    <select id="c-tipo"></select>
+
+    <label>Local da cotação</label>
+    <input type="text" id="c-local" placeholder="Ex: Loja XYZ / Site ABC">
+
+    <label>Preço (R$)</label>
+    <input type="number" id="c-preco" placeholder="0,00">
+
+    <label>Número do profissional (opcional)</label>
+    <input type="text" id="c-prof" placeholder="Ex: 01, 02...">
+
+    <label>Status</label>
+    <select id="c-status">
+      <option value="Pendente">Pendente</option>
+      <option value="Aprovado">Aprovado</option>
+      <option value="Recusado">Recusado</option>
+    </select>
+
+    <div id="c-pagamento-wrap" style="display:none;margin-top:14px;padding:12px;background:var(--paper);border-radius:var(--radius-btn);">
+      <label style="margin-top:0;">Forma de pagamento</label>
+      <div style="display:flex;gap:8px;">
+        <button type="button" id="c-pag-vista" class="pag-toggle-btn active" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">À vista</button>
+        <button type="button" id="c-pag-parcelado" class="pag-toggle-btn" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Parcelado</button>
+      </div>
+      <div id="c-pag-parcelas-wrap" style="display:none;margin-top:12px;">
+        <label>Nº de parcelas</label>
+        <input type="number" id="c-pag-n" min="1" max="24" value="2">
+        <label>Cartão (opcional)</label>
+        <input type="text" id="c-pag-cartao" placeholder="Ex: Nubank Richard">
+        <label>Dia de fechamento (opcional)</label>
+        <input type="number" id="c-pag-fechamento" min="1" max="31" placeholder="Ex: 10">
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;">
+          <input type="checkbox" id="c-pag-autopay" checked style="margin-top:3px;">
+          <label style="margin:0;text-transform:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);letter-spacing:0;">Marcar parcela como paga automaticamente quando a data vencer (sem confirmação bancária real)</label>
+        </div>
+      </div>
+    </div>
+
+    <label>Documento da cotação</label>
+    <div class="file-drop" id="c-drop">Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)</div>
+    <input type="file" id="c-file" accept=".pdf,image/*" multiple>
+
+    <div id="c-bulk-list" style="display:none;margin-top:12px;"></div>
+
+    <button class="btn" id="c-save">Salvar cotação</button>
+    <button class="btn muted" id="c-cancel" style="display:none;">Cancelar edição</button>
+  </div>
+</div>
+
+<div id="p-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-sheet-head">
+      <h2 id="p-form-title">Novo prestador <span class="tag">contato</span></h2>
+      <button type="button" class="modal-close" id="p-modal-fechar" aria-label="Fechar">✕</button>
+    </div>
+    <label>Número (gerado automaticamente)</label>
+    <input type="text" id="p-num" readonly style="background:#EEEBE1;color:var(--muted);">
+
+    <label>Nome</label>
+    <input type="text" id="p-nome" placeholder="Ex: João Silva">
+
+    <label>Nome da empresa</label>
+    <input type="text" id="p-empresa" placeholder="Ex: Silva Elétrica Ltda">
+
+    <label>Especialidade</label>
+    <select id="p-esp"></select>
+
+    <label>Telefone</label>
+    <input type="text" id="p-tel" placeholder="Ex: (11) 99999-9999">
+
+    <label>Status</label>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button type="button" class="p-status-chip active" data-status="Cotação" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;">Cotação</button>
+      <button type="button" class="p-status-chip" data-status="Contratado" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;">Contratado</button>
+      <button type="button" class="p-status-chip" data-status="Recusado" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;">Recusado</button>
+    </div>
+    <input type="hidden" id="p-status">
+
+    <label>Endereço (opcional)</label>
+    <input type="text" id="p-endereco" placeholder="Ex: Rua das Flores, 123 - São Paulo">
+
+    <button type="button" id="p-mais-toggle" style="background:none;border:none;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:14px;cursor:pointer;padding:0;text-decoration:underline;">+ mais detalhes</button>
+    <div id="p-mais-wrap" style="display:none;margin-top:10px;">
+      <label>E-mail (opcional)</label>
+      <input type="text" id="p-email" placeholder="email@exemplo.com">
+      <label>Indicado por (opcional)</label>
+      <input type="text" id="p-indicado" placeholder="Ex: Marcos (eletricista)">
+      <label>Observações internas (só você vê)</label>
+      <input type="text" id="p-obs" placeholder="Ex: atrasa entrega, mas preço bom">
+    </div>
+
+    <button class="btn secondary" id="p-save">Salvar prestador</button>
+    <button class="btn muted" id="p-cancel" style="display:none;">Cancelar edição</button>
   </div>
 </div>
 
@@ -3292,8 +3336,14 @@ function cancelEditCotacao(){
   document.getElementById('c-pag-cartao').value = '';
   document.getElementById('c-pag-fechamento').value = '';
   document.getElementById('c-pag-autopay').checked = true;
+  document.getElementById('c-modal').classList.remove('show');
 }
 document.getElementById('c-cancel').addEventListener('click', cancelEditCotacao);
+document.getElementById('c-add-btn').addEventListener('click', ()=>{
+  cancelEditCotacao();
+  document.getElementById('c-modal').classList.add('show');
+});
+document.getElementById('c-modal-fechar').addEventListener('click', cancelEditCotacao);
 
 document.getElementById('c-pag-vista').addEventListener('click', ()=>{
   document.getElementById('c-pag-vista').classList.add('active');
@@ -3608,8 +3658,14 @@ function cancelEditPrestador(){
   document.getElementById('p-indicado').value='';
   document.getElementById('p-obs').value='';
   document.getElementById('p-mais-wrap').style.display = 'none';
+  document.getElementById('p-modal').classList.remove('show');
 }
 document.getElementById('p-cancel').addEventListener('click', cancelEditPrestador);
+document.getElementById('p-add-btn').addEventListener('click', ()=>{
+  cancelEditPrestador();
+  document.getElementById('p-modal').classList.add('show');
+});
+document.getElementById('p-modal-fechar').addEventListener('click', cancelEditPrestador);
 
 function selecionarStatusPrestador(status){
   document.getElementById('p-status').value = status;
@@ -3783,7 +3839,7 @@ document.addEventListener('click', async (e)=>{
     document.getElementById('c-form-title').innerHTML = 'Editando cotação <span class="tag">edição</span>';
     document.getElementById('c-save').textContent = 'Salvar edição';
     document.getElementById('c-cancel').style.display = 'block';
-    document.getElementById('tab-cotacoes').scrollIntoView({behavior:'smooth'});
+    document.getElementById('c-modal').classList.add('show');
     return;
   }
 
@@ -3828,7 +3884,7 @@ document.addEventListener('click', async (e)=>{
     document.getElementById('p-form-title').innerHTML = 'Editando prestador <span class="tag">edição</span>';
     document.getElementById('p-save').textContent = 'Salvar edição';
     document.getElementById('p-cancel').style.display = 'block';
-    document.getElementById('tab-prestadores').scrollIntoView({behavior:'smooth'});
+    document.getElementById('p-modal').classList.add('show');
     return;
   }
 
