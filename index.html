@@ -372,18 +372,18 @@
     background-size:400% 100%;
     animation:skeletonShimmer 1.4s ease-in-out infinite;
   }
-  .list-item .row1{
+  .list-item .row1, .step-body .row1{
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
     gap:8px;
   }
-  .list-item .item-title{
+  .list-item .item-title, .step-body .item-title{
     font-weight:600;
     font-size:14.5px;
     font-family:'Inter', sans-serif;
   }
-  .list-item .meta{
+  .list-item .meta, .step-body .meta{
     font-size:12px;
     color:var(--muted);
     margin-top:3px;
@@ -444,6 +444,7 @@
   .status-pill.ok{ background:color-mix(in srgb, var(--ok) 14%, transparent); color:var(--ok); }
   .status-pill.caution{ background:color-mix(in srgb, var(--caution-dark) 14%, transparent); color:var(--caution-dark); }
   .status-pill.danger{ background:color-mix(in srgb, var(--danger) 12%, transparent); color:var(--danger); }
+  .status-pill.muted{ background:color-mix(in srgb, var(--muted) 14%, transparent); color:var(--muted); }
   .etapa-tipo-row{
     display:flex;
     align-items:center;
@@ -470,6 +471,63 @@
     cursor:pointer;
     padding:4px 0 4px 8px;
     flex-shrink:0;
+  }
+  .step-row{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    padding:16px 2px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .step-row:last-child{ border-bottom:none; padding-bottom:4px; }
+  .step-num{
+    flex-shrink:0;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:12.5px;
+    color:#fff;
+  }
+  .step-body{ flex:1; min-width:0; }
+  .step-row .row1{ align-items:flex-start; }
+  .step-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .step-actions .step-reorder{
+    display:flex;
+    gap:2px;
+    background:var(--paper);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .step-actions .step-reorder button{
+    border:none;
+    background:none;
+    color:var(--muted);
+    width:28px;
+    height:28px;
+    cursor:pointer;
+    font-size:13px;
+  }
+  .step-actions .step-link{
+    font-family:'Inter', sans-serif;
+    font-size:11.5px;
+    font-weight:600;
+    background:none;
+    border:none;
+    text-decoration:underline;
+    text-underline-offset:2px;
+    cursor:pointer;
+    padding:0;
   }
   .status-select{
     width:100%;
@@ -2182,6 +2240,12 @@ function statusEtapaCor(status){
   return '#B9C4CE';
 }
 
+function statusEtapaClasse(status){
+  if(status==='Concluída') return 'ok';
+  if(status==='Em andamento') return 'caution';
+  return 'muted';
+}
+
 function checarTipo(etapa, tipo){
   const cots = cotacoesCache.filter(q=>q.tipo===tipo);
   const aprovadas = cots.filter(q=>q.status==='Aprovado');
@@ -2243,20 +2307,25 @@ function renderLinhaDoTempo(){
   }
   el.innerHTML = `<div class="card"><h2>Linha do tempo completa</h2>` +
     ordenadas.map((et,i)=>`
-      <div class="list-item" style="border-left:4px solid ${statusEtapaCor(et.status)};">
-        <div class="row1">
-          <div>
-            <div class="item-title">${i+1}. ${escapeHtml(et.nome)}</div>
-            <div class="meta">${(et.tipos||[]).join(', ')}</div>
+      <div class="step-row">
+        <div class="step-num" style="background:${statusEtapaCor(et.status)};">${i+1}</div>
+        <div class="step-body">
+          <div class="row1">
+            <div>
+              <div class="item-title">${escapeHtml(et.nome)}</div>
+              <div class="meta">${escapeHtml((et.tipos||[]).join(', '))}</div>
+            </div>
+            <span class="status-pill ${statusEtapaClasse(et.status)}">${escapeHtml(et.status)}</span>
           </div>
-          <span class="badge-prof" style="background:${statusEtapaCor(et.status)};">${escapeHtml(et.status)}</span>
+          ${isAdmin ? `<div class="step-actions">
+            <span class="step-reorder">
+              <button data-subir-etapa="${et.id}" title="Subir">↑</button>
+              <button data-descer-etapa="${et.id}" title="Descer">↓</button>
+            </span>
+            ${et.status!=='Não iniciada' ? `<button class="step-link" data-reabrir-etapa="${et.id}" style="color:var(--muted);">Reabrir</button>` : ''}
+            <button class="step-link" data-del-etapa="${et.id}" style="color:var(--danger);">Excluir</button>
+          </div>` : ''}
         </div>
-        ${isAdmin ? `<div class="actions">
-          <button data-subir-etapa="${et.id}" style="flex:0 0 44px;">↑</button>
-          <button data-descer-etapa="${et.id}" style="flex:0 0 44px;">↓</button>
-          ${et.status!=='Não iniciada' ? `<button data-reabrir-etapa="${et.id}">Reabrir</button>` : ''}
-          <button class="del" data-del-etapa="${et.id}">Excluir</button>
-        </div>` : ''}
       </div>
     `).join('') + `</div>`;
 }
