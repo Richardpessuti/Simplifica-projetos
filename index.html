@@ -160,24 +160,23 @@
   nav{
     display:flex;
     gap:2px;
-    margin:0;
-    padding:10px 14px;
+    margin:14px 14px 0;
+    padding:6px;
+    border-radius:18px;
     overflow-x:auto;
     -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
-    background:color-mix(in srgb, var(--nav-bg) 88%, transparent);
-    -webkit-backdrop-filter:saturate(180%) blur(16px);
-    backdrop-filter:saturate(180%) blur(16px);
+    background:var(--nav-bg);
+    box-shadow:0 12px 28px rgba(20,23,28,0.14), 0 2px 6px rgba(20,23,28,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
     position:sticky;
-    top:0;
+    top:12px;
     z-index:10;
-    box-shadow:0 1px 0 rgba(20,23,28,0.06);
   }
   nav::-webkit-scrollbar{ display:none; }
   nav button{
     flex:0 0 auto;
     border:none;
-    border-radius:20px;
+    border-radius:14px;
     background:transparent;
     font-family:'Inter', sans-serif;
     font-weight:600;
@@ -187,12 +186,13 @@
     cursor:pointer;
     color:var(--muted);
     white-space:nowrap;
-    transition:background-color .25s var(--ease), color .25s var(--ease), transform .15s var(--ease-spring);
+    transition:background-color .25s var(--ease), color .25s var(--ease), transform .15s var(--ease-spring), box-shadow .25s var(--ease);
   }
   nav button:active{ transform:scale(.95); }
   nav button.active{
     background:var(--accent);
     color:#fff;
+    box-shadow:0 4px 10px color-mix(in srgb, var(--accent) 45%, transparent);
   }
 
   main{padding:32px 18px 0;}
