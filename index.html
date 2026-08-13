@@ -432,6 +432,45 @@
     border-radius:20px;
     margin-top:6px;
   }
+  .status-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:12px;
+    font-weight:600;
+    padding:4px 11px;
+    border-radius:20px;
+  }
+  .status-pill.ok{ background:color-mix(in srgb, var(--ok) 14%, transparent); color:var(--ok); }
+  .status-pill.caution{ background:color-mix(in srgb, var(--caution-dark) 14%, transparent); color:var(--caution-dark); }
+  .status-pill.danger{ background:color-mix(in srgb, var(--danger) 12%, transparent); color:var(--danger); }
+  .etapa-tipo-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:14px 2px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .etapa-tipo-row:last-of-type{ border-bottom:none; }
+  .etapa-tipo-row .etapa-tipo-nome{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:14px;
+  }
+  .etapa-tipo-row .etapa-tipo-toggle{
+    font-family:'Inter', sans-serif;
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--muted);
+    background:none;
+    border:none;
+    text-decoration:underline;
+    text-underline-offset:2px;
+    cursor:pointer;
+    padding:4px 0 4px 8px;
+    flex-shrink:0;
+  }
   .status-select{
     width:100%;
     padding:9px 10px;
@@ -2147,10 +2186,10 @@ function checarTipo(etapa, tipo){
   const cots = cotacoesCache.filter(q=>q.tipo===tipo);
   const aprovadas = cots.filter(q=>q.status==='Aprovado');
   const manual = etapa.tiposCompletos && etapa.tiposCompletos[tipo];
-  if(manual) return {label:'Completo (marcado manualmente)', cor:'var(--ok)', icone:'✅'};
-  if(aprovadas.length>0) return {label: aprovadas.length+' aprovada(s) de '+cots.length, cor:'var(--ok)', icone:'✅'};
-  if(cots.length>0) return {label: cots.length+' cotação(ões), nenhuma aprovada', cor:'var(--caution-dark)', icone:'⚠️'};
-  return {label:'Nenhuma cotação ainda', cor:'var(--danger)', icone:'❌'};
+  if(manual) return {label:'Completo', classe:'ok'};
+  if(aprovadas.length>0) return {label: aprovadas.length+' de '+cots.length+' aprovada(s)', classe:'ok'};
+  if(cots.length>0) return {label: cots.length+' cotação(ões), nenhuma aprovada', classe:'caution'};
+  return {label:'Nenhuma cotação ainda', classe:'danger'};
 }
 
 function renderProximaEtapa(){
@@ -2172,25 +2211,24 @@ function renderProximaEtapa(){
 
   const tipos = proxima.tipos || [];
   el.innerHTML = `
-    <div class="card" style="border-color:var(--blueprint);">
+    <div class="card">
       <h2>Próxima etapa <span class="tag">${escapeHtml(proxima.nome)}</span></h2>
       ${tipos.map(t=>{
         const c = checarTipo(proxima, t);
-        return `<div class="list-item" style="padding:9px 10px;">
-          <div class="row1">
-            <div class="item-title" style="font-size:13px;">${c.icone} ${escapeHtml(t)}</div>
+        const completo = proxima.tiposCompletos && proxima.tiposCompletos[t];
+        return `<div class="etapa-tipo-row">
+          <div>
+            <div class="etapa-tipo-nome">${escapeHtml(t)}</div>
+            <span class="status-pill ${c.classe}">${escapeHtml(c.label)}</span>
           </div>
-          <div class="meta" style="color:${c.cor};font-weight:600;">${c.label}</div>
-          <div class="actions">
-            <button data-marcar-tipo="${proxima.id}|${t}" style="border-color:${c.cor};color:${c.cor};">
-              ${(proxima.tiposCompletos&&proxima.tiposCompletos[t]) ? 'Desmarcar completo' : 'Marcar como completo'}
-            </button>
-          </div>
+          <button class="etapa-tipo-toggle" data-marcar-tipo="${proxima.id}|${t}">
+            ${completo ? 'Desmarcar' : 'Marcar completo'}
+          </button>
         </div>`;
       }).join('')}
-      <div class="actions" style="margin-top:12px;">
-        <button class="view" data-concluir-etapa="${proxima.id}" style="border-color:var(--ok);color:var(--ok);">Marcar etapa como concluída</button>
-        <button class="view" data-pular-etapa="${proxima.id}" style="border-color:var(--muted);color:var(--muted);">Pular etapa</button>
+      <div class="actions" style="margin-top:16px;">
+        <button data-concluir-etapa="${proxima.id}" style="color:var(--ok);">Marcar etapa como concluída</button>
+        <button data-pular-etapa="${proxima.id}" style="color:var(--muted);">Pular etapa</button>
       </div>
     </div>
   `;
