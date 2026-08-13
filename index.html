@@ -705,36 +705,142 @@
       scroll-behavior:auto !important;
     }
   }
+
+  /* ============ HERO (tela de entrada) — 3 tokens, hierarquia, 1 foco ============ */
+  :root{
+    --hero-ink:#14171C;
+    --hero-accent:#2F6F5E;
+    --hero-signal:#C7862B;
+  }
+  .screen-auth.hero{ padding:0; background:var(--hero-ink); }
+  .hero-fixed-scene{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    overflow:hidden;
+    pointer-events:none;
+  }
+  #hero-canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    opacity:0;
+    transition:opacity .8s var(--ease);
+  }
+  #hero-canvas.ready{ opacity:1; }
+  .hero-glow-a{
+    position:absolute;
+    width:70vmax; height:70vmax;
+    left:-18vmax; top:-24vmax;
+    border-radius:50%;
+    background:radial-gradient(circle, color-mix(in srgb, var(--hero-accent) 38%, transparent) 0%, transparent 70%);
+    filter:blur(70px);
+  }
+  .hero-vignette{
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at 32% 38%, transparent 25%, rgba(13,15,18,0.72) 100%);
+  }
+  .hero-block{
+    position:relative;
+    z-index:1;
+    min-height:100vh;
+    display:flex;
+    box-sizing:border-box;
+    padding:24px;
+  }
+  .hero-block-intro{ align-items:flex-end; padding-bottom:16vh; }
+  .hero-copy{ max-width:560px; }
+  .hero-headline{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:clamp(42px, 11vw, 84px);
+    line-height:0.98;
+    letter-spacing:-1.5px;
+    color:#fff;
+    margin:0 0 20px;
+  }
+  .hero-sub{
+    font-size:15px;
+    line-height:1.6;
+    color:rgba(244,245,243,0.72);
+    max-width:380px;
+    margin:0 0 28px;
+  }
+  .hero-skip{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.3px;
+    color:var(--hero-signal);
+    text-decoration:none;
+    border-bottom:1px solid color-mix(in srgb, var(--hero-signal) 50%, transparent);
+    padding-bottom:2px;
+  }
+  .hero-block-reveal{
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:center;
+    gap:34px;
+    max-width:560px;
+    margin:0 auto;
+  }
+  .hero-reveal{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:500;
+    font-size:clamp(22px, 5vw, 34px);
+    line-height:1.3;
+    color:#fff;
+    margin:0;
+    will-change:opacity, transform;
+  }
+  .hero-block-login{ align-items:center; justify-content:center; }
+  @media (max-width:480px){
+    .hero-block-intro{ align-items:center; text-align:center; padding-bottom:10vh; }
+    .hero-copy{ margin:0 auto; }
+  }
 </style>
 </head>
 <body>
 
 <!-- TELA DE LOGIN -->
-<div id="auth-screen" class="screen-auth" style="display:none;">
-  <div class="auth-scene" aria-hidden="true">
-    <div class="auth-scene-glow auth-scene-glow-a"></div>
-    <div class="auth-scene-glow auth-scene-glow-b"></div>
-    <div class="auth-scene-grid"></div>
-    <div class="auth-scene-block auth-scene-block-1"></div>
-    <div class="auth-scene-block auth-scene-block-2"></div>
-    <div class="auth-scene-block auth-scene-block-3"></div>
-    <div class="auth-scene-vignette"></div>
+<div id="auth-screen" class="screen-auth hero" style="display:none;">
+  <div class="hero-fixed-scene" aria-hidden="true">
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-glow-a"></div>
+    <div class="hero-vignette"></div>
   </div>
-  <div class="auth-content">
-    <p class="eyebrow" style="color:var(--caution);">Reforma do apartamento</p>
-    <h1 class="auth-title-main">Central de Cotações</h1>
-    <div class="card auth-card">
-      <h2 id="auth-title">Entrar</h2>
-      <label>E-mail</label>
-      <input type="text" id="auth-email" placeholder="seu@email.com">
-      <label>Senha</label>
-      <input type="text" id="auth-senha" placeholder="mínimo 6 caracteres">
-      <button class="btn" id="auth-entrar">Entrar</button>
-      <button class="btn secondary" id="auth-cadastrar" style="margin-top:8px;">Criar conta nova</button>
-      <button id="auth-esqueci" style="background:none;border:none;color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer;text-decoration:underline;padding:0;">Esqueci minha senha</button>
-      <div id="auth-erro" style="color:var(--danger);font-size:12px;margin-top:10px;"></div>
+
+  <section class="hero-block hero-block-intro">
+    <div class="hero-copy">
+      <p class="eyebrow">Reforma do apartamento</p>
+      <h1 class="hero-headline">Central de<br>Cotações</h1>
+      <p class="hero-sub">Cronograma, cotações e prestadores — tudo num só lugar, do primeiro tijolo à última demão.</p>
+      <a href="#hero-login" class="hero-skip" id="hero-skip-link">Já tenho conta — entrar ↓</a>
     </div>
-  </div>
+  </section>
+
+  <section class="hero-block hero-block-reveal">
+    <p class="hero-reveal" data-reveal>Acompanhe cada etapa da obra em tempo real.</p>
+    <p class="hero-reveal" data-reveal>Aprove cotações e organize o pagamento em parcelas.</p>
+    <p class="hero-reveal" data-reveal>Tudo isso guardado num só lugar, do seu jeito.</p>
+  </section>
+
+  <section class="hero-block hero-block-login" id="hero-login">
+    <div class="auth-content">
+      <div class="card auth-card">
+        <h2 id="auth-title">Entrar</h2>
+        <label>E-mail</label>
+        <input type="text" id="auth-email" placeholder="seu@email.com">
+        <label>Senha</label>
+        <input type="text" id="auth-senha" placeholder="mínimo 6 caracteres">
+        <button class="btn" id="auth-entrar">Entrar</button>
+        <button class="btn secondary" id="auth-cadastrar" style="margin-top:8px;">Criar conta nova</button>
+        <button id="auth-esqueci" style="background:none;border:none;color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer;text-decoration:underline;padding:0;">Esqueci minha senha</button>
+        <div id="auth-erro" style="color:var(--danger);font-size:12px;margin-top:10px;"></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <!-- TELA MASTER -->
@@ -1522,6 +1628,132 @@ function ensurePdfJs(){
     document.head.appendChild(script);
   });
   return _pdfJsLoading;
+}
+
+function loadScript(src){
+  return new Promise((resolve, reject)=>{
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = ()=> reject(new Error('Falha ao carregar ' + src));
+    document.head.appendChild(script);
+  });
+}
+
+let _heroLibsLoading = null;
+function ensureHeroLibs(){
+  if(typeof THREE !== 'undefined' && typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined'){
+    return Promise.resolve();
+  }
+  if(_heroLibsLoading) return _heroLibsLoading;
+  _heroLibsLoading = Promise.all([
+    typeof THREE !== 'undefined' ? Promise.resolve() : loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'),
+    typeof gsap !== 'undefined' ? Promise.resolve() : loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js')
+      .then(()=> loadScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js'))
+  ]);
+  return _heroLibsLoading;
+}
+
+let _heroInitDone = false;
+function initHero(){
+  if(_heroInitDone) return;
+  _heroInitDone = true;
+
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobile = window.innerWidth < 640;
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ---- Timeline de entrada (headline, sub, cta) ----
+  const introEls = document.querySelectorAll('.hero-block-intro .eyebrow, .hero-headline, .hero-sub, .hero-skip');
+  if(reduceMotion){
+    gsap.set(introEls, {opacity:1, y:0});
+  }else{
+    gsap.set(introEls, {opacity:0, y:16});
+    gsap.to(introEls, {opacity:1, y:0, duration:0.7, ease:'power2.out', stagger:0.08, delay:0.15});
+  }
+
+  // ---- Reveals em etapas, ligados ao scroll ----
+  const revealEls = document.querySelectorAll('.hero-reveal');
+  if(reduceMotion){
+    gsap.set(revealEls, {opacity:1, y:0});
+  }else{
+    revealEls.forEach(el=>{
+      gsap.fromTo(el, {opacity:0, y:24}, {
+        opacity:1, y:0, duration:0.5, ease:'power2.out',
+        scrollTrigger:{ trigger:el, start:'top 78%', end:'top 40%', toggleActions:'play reverse play reverse' }
+      });
+    });
+  }
+
+  // ---- Link "já tenho conta" rola até o formulário ----
+  const skipLink = document.getElementById('hero-skip-link');
+  if(skipLink){
+    skipLink.addEventListener('click', (e)=>{
+      e.preventDefault();
+      document.getElementById('hero-login').scrollIntoView({behavior: reduceMotion ? 'auto' : 'smooth'});
+    });
+  }
+
+  // ---- Objeto 3D único, ligado ao progresso do scroll ----
+  const canvas = document.getElementById('hero-canvas');
+  if(!canvas || typeof THREE === 'undefined') return;
+
+  const renderer = new THREE.WebGLRenderer({canvas, alpha:true, antialias:!isMobile});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobile ? 1.5 : 2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0, 7);
+
+  const geometry = new THREE.IcosahedronGeometry(1.7, isMobile ? 0 : 1);
+  const material = new THREE.MeshStandardMaterial({color:0x2F6F5E, roughness:0.35, metalness:0.15, flatShading:true});
+  const solid = new THREE.Mesh(geometry, material);
+  solid.position.set(1.6, 0, 0);
+  scene.add(solid);
+
+  const wire = new THREE.LineSegments(
+    new THREE.WireframeGeometry(geometry),
+    new THREE.LineBasicMaterial({color:0xC7862B, transparent:true, opacity:0.5})
+  );
+  wire.position.copy(solid.position);
+  wire.scale.setScalar(1.02);
+  scene.add(wire);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const key = new THREE.DirectionalLight(0xffffff, 0.9);
+  key.position.set(4, 3, 5);
+  scene.add(key);
+
+  function resize(){
+    const w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h);
+    camera.aspect = w/h;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(()=> canvas.classList.add('ready'));
+
+  if(!reduceMotion){
+    ScrollTrigger.create({
+      trigger: document.getElementById('auth-screen'),
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 0.6,
+      onUpdate(self){
+        const p = self.progress;
+        solid.rotation.y = p * Math.PI * 2.2;
+        solid.rotation.x = p * Math.PI * 0.6;
+        wire.rotation.copy(solid.rotation);
+        camera.position.x = -p * 1.4;
+        camera.position.z = 7 - p * 1.5;
+        camera.lookAt(solid.position);
+        renderer.render(scene, camera);
+      }
+    });
+  }
 }
 
 let etapasCache = [];
@@ -3604,6 +3836,9 @@ function showScreen(id){
   ['auth-screen','project-screen','master-screen','app-shell'].forEach(s=>{
     document.getElementById(s).style.display = (s===id) ? 'block' : 'none';
   });
+  if(id === 'auth-screen'){
+    ensureHeroLibs().then(initHero).catch(err=>console.error('Hero indisponível:', err));
+  }
 }
 
 function friendlyAuthError(code){
