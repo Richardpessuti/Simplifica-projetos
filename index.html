@@ -190,40 +190,69 @@
 
   nav{
     display:flex;
-    flex-wrap:wrap;
-    gap:4px;
-    margin:14px 14px 0;
-    padding:8px;
-    border-radius:18px;
+    flex-wrap:nowrap;
+    gap:2px;
+    margin:0;
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+    border-radius:20px 20px 0 0;
     background:var(--nav-bg);
-    box-shadow:0 12px 28px rgba(20,23,28,0.14), 0 2px 6px rgba(20,23,28,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
-    position:sticky;
-    top:12px;
-    z-index:10;
+    box-shadow:0 -12px 28px rgba(20,23,28,0.14), 0 -2px 6px rgba(20,23,28,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:30;
   }
   nav button{
-    flex:0 0 auto;
+    flex:1 1 0;
+    min-width:0;
     border:none;
     border-radius:14px;
     background:transparent;
     font-family:'Inter', sans-serif;
     font-weight:600;
-    font-size:13px;
+    font-size:10.5px;
     letter-spacing:0;
-    padding:9px 16px;
+    padding:7px 2px;
     cursor:pointer;
     color:var(--muted);
-    white-space:nowrap;
+    white-space:normal;
+    line-height:1.15;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
     transition:background-color .2s var(--ease), color .2s var(--ease), transform .1s var(--ease), box-shadow .2s var(--ease);
   }
+  nav button .tab-ic{ font-size:18px; line-height:1; }
   nav button:active{ transform:scale(.96); }
   nav button.active{
     background:var(--accent);
     color:#fff;
     box-shadow:0 4px 10px color-mix(in srgb, var(--accent) 45%, transparent);
   }
+  .nav-more-sheet{
+    display:none;
+    position:absolute;
+    bottom:calc(100% + 10px);
+    right:6px;
+    width:210px;
+    background:var(--nav-bg);
+    border-radius:16px;
+    padding:6px;
+    box-shadow:0 -10px 32px rgba(20,23,28,0.18), 0 2px 6px rgba(20,23,28,0.1);
+    flex-direction:column;
+    gap:2px;
+  }
+  .nav-more-sheet.show{ display:flex; }
+  .nav-more-sheet .tab-btn{
+    flex-direction:row;
+    justify-content:flex-start;
+    text-align:left;
+    border-radius:10px;
+    font-size:13px;
+    padding:10px 12px;
+  }
 
-  main{padding:32px 18px 0;}
+  main{padding:32px 18px 104px;}
   section{display:none;}
   section.active{display:block; animation:tabFade .15s var(--ease) both;}
 
@@ -1053,16 +1082,19 @@
 </div>
 
 <nav>
-  <button class="tab-btn active" data-tab="cronograma">Cronograma</button>
-  <button class="tab-btn" data-tab="projeto3d">Projeto 3D</button>
-  <button class="tab-btn" data-tab="cotacoes">Cotações</button>
-  <button class="tab-btn" data-tab="tipos">Por Tipo</button>
-  <button class="tab-btn" data-tab="aprovados">Aprovados</button>
-  <button class="tab-btn" data-tab="cartoes">Cartões</button>
-  <button class="tab-btn" data-tab="arquiteta">Arq. Arquiteta</button>
-  <button class="tab-btn" data-tab="prestadores">Prestadores</button>
-  <button class="tab-btn" data-tab="buscar">Buscar por nº</button>
-  <button class="tab-btn" data-tab="admin" id="nav-admin-btn" style="display:none;background:var(--caution);">⚙ Admin</button>
+  <button class="tab-btn active" data-tab="cronograma"><span class="tab-ic">🗓️</span>Cronograma</button>
+  <button class="tab-btn" data-tab="cotacoes"><span class="tab-ic">💰</span>Cotações</button>
+  <button class="tab-btn" data-tab="projeto3d"><span class="tab-ic">🧊</span>Projeto 3D</button>
+  <button class="tab-btn" data-tab="prestadores"><span class="tab-ic">👷</span>Prestadores</button>
+  <button class="tab-btn nav-more-btn" id="nav-more-btn" type="button"><span class="tab-ic">⋯</span>Mais</button>
+  <div class="nav-more-sheet" id="nav-more-sheet">
+    <button class="tab-btn" data-tab="tipos">Por Tipo</button>
+    <button class="tab-btn" data-tab="aprovados">Aprovados</button>
+    <button class="tab-btn" data-tab="cartoes">Cartões</button>
+    <button class="tab-btn" data-tab="arquiteta">Arq. Arquiteta</button>
+    <button class="tab-btn" data-tab="buscar">Buscar por nº</button>
+    <button class="tab-btn" data-tab="admin" id="nav-admin-btn" style="display:none;background:var(--caution);">⚙ Admin</button>
+  </div>
 </nav>
 
 <main>
@@ -1649,13 +1681,31 @@ function skeletonCards(n){
 }
 
 // ---------- Tabs ----------
-document.querySelectorAll('.tab-btn').forEach(btn=>{
+const NAV_OVERFLOW_TABS = ['tipos','aprovados','cartoes','arquiteta','buscar','admin'];
+function fecharNavMais(){
+  document.getElementById('nav-more-sheet').classList.remove('show');
+}
+document.querySelectorAll('.tab-btn[data-tab]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
     document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));
     btn.classList.add('active');
+    if(NAV_OVERFLOW_TABS.includes(btn.dataset.tab)){
+      document.getElementById('nav-more-btn').classList.add('active');
+    }
     document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+    fecharNavMais();
   });
+});
+document.getElementById('nav-more-btn').addEventListener('click', (e)=>{
+  e.stopPropagation();
+  document.getElementById('nav-more-sheet').classList.toggle('show');
+});
+document.addEventListener('click', (e)=>{
+  const sheet = document.getElementById('nav-more-sheet');
+  if(sheet.classList.contains('show') && !sheet.contains(e.target) && e.target.id !== 'nav-more-btn'){
+    fecharNavMais();
+  }
 });
 
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
@@ -4050,6 +4100,7 @@ if(firebaseOk){
     currentProjetoNome = null;
     isAdmin = false;
     document.getElementById('nav-admin-btn').style.display = 'none';
+    document.getElementById('nav-more-btn').classList.remove('active');
     showScreen('project-screen');
     carregarProjetosDoUsuario();
   });
@@ -4418,7 +4469,7 @@ if(firebaseOk){
       const data = doc.data() || {};
       isAdmin = data.criadoPor === currentUserEmail || currentUserEmail === masterEmailAtual;
       projetoArquitetoId = data.arquitetoId || null;
-      document.getElementById('nav-admin-btn').style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('nav-admin-btn').style.display = isAdmin ? 'flex' : 'none';
 
       temaAtual = data.tema || {};
       aplicarTema(temaAtual);
