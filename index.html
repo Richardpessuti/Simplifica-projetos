@@ -1558,6 +1558,7 @@ const firebaseConfig = {
 
 let db = null;
 let auth = null;
+const LS_KEY_PROJETO = 'ccProjetoAtual';
 let currentProjetoId = null;
 let isAdmin = false;
 let currentArquitetoId = null;
@@ -4147,6 +4148,7 @@ if(firebaseOk){
     unsubscribeAll();
     currentProjetoId = null;
     isAdmin = false;
+    try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
     auth.signOut();
   });
 
@@ -4155,6 +4157,7 @@ if(firebaseOk){
     currentProjetoId = null;
     currentProjetoNome = null;
     isAdmin = false;
+    try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
     document.getElementById('nav-admin-btn').style.display = 'none';
     document.getElementById('nav-more-btn').classList.remove('active');
     showScreen('project-screen');
@@ -4176,7 +4179,7 @@ if(firebaseOk){
       };
       if(efetivoArquitetoId) payload.arquitetoId = efetivoArquitetoId;
       const ref = await db.collection('projetos').add(payload);
-      abrirProjeto(ref.id, nome);
+      abrirProjeto(ref.id, nome, payload);
     }catch(e){
       console.error(e);
       toast('Erro ao criar projeto: ' + e.message);
@@ -4512,16 +4515,23 @@ if(firebaseOk){
     }
   });
 
-  function abrirProjeto(id, nome){
+  function abrirProjeto(id, nome, dadosPreCarregados){
     unsubscribeAll();
     aplicarTema(null);
     currentProjetoId = id;
     currentProjetoNome = nome;
+    try{ localStorage.setItem(LS_KEY_PROJETO, id); }catch(e){}
     document.getElementById('app-projeto-nome').textContent = nome;
     document.getElementById('conn-status').textContent = 'conectado ✓ — ' + currentUserEmail;
     showScreen('app-shell');
 
-    db.collection('projetos').doc(id).get().then(async doc=>{
+    // se já temos os dados do projeto em mãos (ex: acabamos de criá-lo),
+    // usa direto em vez de esperar mais uma ida ao servidor
+    const dadosPromise = dadosPreCarregados
+      ? Promise.resolve({data: ()=>dadosPreCarregados})
+      : db.collection('projetos').doc(id).get();
+
+    dadosPromise.then(async doc=>{
       const data = doc.data() || {};
       isAdmin = data.criadoPor === currentUserEmail || currentUserEmail === masterEmailAtual;
       projetoArquitetoId = data.arquitetoId || null;
@@ -4740,18 +4750,13 @@ if(firebaseOk){
       atualizarBannerVerificacao(user);
       await resolverMasterEmail();
 
-      if(currentUserEmail === masterEmailAtual){
-        showScreen('master-screen');
-        renderMasterScreen();
-        return;
-      }
-
       const arqSnap = await db.collection('arquitetos').where('email','==',currentUserEmail).limit(1).get();
       if(!arqSnap.empty){
         const arqDoc = arqSnap.docs[0];
         if(arqDoc.data().ativo === false){
           showScreen('auth-screen');
           document.getElementById('auth-erro').textContent = 'Seu acesso foi bloqueado. Fale com quem administra o sistema.';
+          try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
           auth.signOut();
           return;
         }
@@ -4759,8 +4764,37 @@ if(firebaseOk){
       }else{
         currentArquitetoId = null;
       }
-
       modoMasterVendoArquitetoId = null;
+
+      // restaura o projeto que estava aberto antes da página recarregar
+      // (acontece, por exemplo, quando o navegador recarrega a aba depois
+      // de abrir um documento em outra aba/app)
+      const idProjetoSalvo = (()=>{ try{ return localStorage.getItem(LS_KEY_PROJETO); }catch(e){ return null; } })();
+      if(idProjetoSalvo){
+        try{
+          const doc = await db.collection('projetos').doc(idProjetoSalvo).get();
+          const data = doc.exists ? doc.data() : null;
+          const temAcesso = data && (
+            data.criadoPor === currentUserEmail ||
+            currentUserEmail === masterEmailAtual ||
+            (data.membrosEmails||[]).includes(currentUserEmail)
+          );
+          if(temAcesso){
+            abrirProjeto(idProjetoSalvo, data.nome, data);
+            return;
+          }
+        }catch(e){
+          console.error(e);
+        }
+        try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
+      }
+
+      if(currentUserEmail === masterEmailAtual){
+        showScreen('master-screen');
+        renderMasterScreen();
+        return;
+      }
+
       showScreen('project-screen');
       carregarProjetosDoUsuario();
     }else{
@@ -4769,6 +4803,7 @@ if(firebaseOk){
       currentProjetoId = null;
       currentArquitetoId = null;
       modoMasterVendoArquitetoId = null;
+      try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
       aplicarTema(null);
       document.getElementById('verify-warning').style.display = 'none';
       showScreen('auth-screen');
