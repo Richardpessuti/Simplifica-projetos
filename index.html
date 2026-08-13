@@ -522,7 +522,7 @@
       linear-gradient(160deg, var(--blueprint) 0%, var(--blueprint-dark) 100%);
   }
   .auth-scene{
-    position:absolute;
+    position:fixed;
     inset:0;
     z-index:0;
     perspective:1200px;
@@ -670,16 +670,25 @@
 </div>
 
 <!-- TELA MASTER -->
-<div id="master-screen" style="display:none;min-height:100vh;padding:24px 16px;background:var(--paper);">
-  <div style="max-width:460px;margin:0 auto;">
+<div id="master-screen" class="screen-auth" style="display:none;">
+  <div class="auth-scene" aria-hidden="true">
+    <div class="auth-scene-glow auth-scene-glow-a"></div>
+    <div class="auth-scene-glow auth-scene-glow-b"></div>
+    <div class="auth-scene-grid"></div>
+    <div class="auth-scene-block auth-scene-block-1"></div>
+    <div class="auth-scene-block auth-scene-block-2"></div>
+    <div class="auth-scene-block auth-scene-block-3"></div>
+    <div class="auth-scene-vignette"></div>
+  </div>
+  <div class="auth-content" style="max-width:460px;">
     <p class="eyebrow">Painel geral</p>
-    <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:24px;margin:0 0 16px;">Arquitetos</h1>
+    <h1 class="auth-title-main" style="font-size:clamp(24px, 6vw, 28px);">Arquitetos</h1>
 
-    <div class="card" id="master-arquitetos-card">
+    <div class="card auth-card" id="master-arquitetos-card">
       <div id="master-arquitetos-list"></div>
     </div>
 
-    <div class="card">
+    <div class="card auth-card">
       <h2>Cadastrar novo arquiteto</h2>
       <label>Nome</label>
       <input type="text" id="master-arq-nome" placeholder="Ex: Milena Celante">
@@ -688,7 +697,7 @@
       <button class="btn secondary" id="master-arq-criar">Cadastrar arquiteto</button>
     </div>
 
-    <div class="card">
+    <div class="card auth-card">
       <h2>Seu e-mail de acesso master</h2>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Só quem estiver aqui vê esta tela. Você pode trocar pra outro e-mail quando quiser.</div>
       <input type="text" id="master-email-atual" placeholder="novoemail@exemplo.com">
@@ -701,20 +710,29 @@
 </div>
 
 <!-- TELA DE SELEÇÃO / CRIAÇÃO DE PROJETO -->
-<div id="project-screen" style="display:none;min-height:100vh;padding:24px 16px;background:var(--paper);">
-  <div style="max-width:420px;margin:0 auto;">
+<div id="project-screen" class="screen-auth" style="display:none;">
+  <div class="auth-scene" aria-hidden="true">
+    <div class="auth-scene-glow auth-scene-glow-a"></div>
+    <div class="auth-scene-glow auth-scene-glow-b"></div>
+    <div class="auth-scene-grid"></div>
+    <div class="auth-scene-block auth-scene-block-1"></div>
+    <div class="auth-scene-block auth-scene-block-2"></div>
+    <div class="auth-scene-block auth-scene-block-3"></div>
+    <div class="auth-scene-vignette"></div>
+  </div>
+  <div class="auth-content" style="max-width:420px;">
     <p class="eyebrow">Reforma do apartamento</p>
-    <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:24px;margin:0 0 6px;">Seus projetos</h1>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;" id="project-user-email"></div>
-    <div class="card">
+    <h1 class="auth-title-main" style="font-size:clamp(24px, 6vw, 28px);">Seus projetos</h1>
+    <div style="font-size:12px;color:rgba(244,245,243,0.75);margin-bottom:16px;" id="project-user-email"></div>
+    <div class="card auth-card">
       <div id="project-voltar-master" style="display:none;margin-bottom:12px;"></div>
       <div id="project-list"></div>
     </div>
 
-    <div class="card" id="new-project-card">
+    <div class="card auth-card" id="new-project-card">
       <h2>Criar novo projeto</h2>
       <label>Nome do projeto</label>
-      <input type="text" id="new-project-nome" placeholder="Ex: Apartamento Fran e Richard">
+      <input type="text" id="new-project-nome" placeholder="Ex: João e Maria">
       <button class="btn secondary" id="new-project-criar">Criar projeto</button>
     </div>
 
