@@ -31,10 +31,13 @@ service cloud.firestore {
         : null;
     }
 
+    // E-mail do master fixo aqui (em vez de ler config/master a cada checagem)
+    // — consultas de lista no Firestore não permitem depender de leitura de
+    // outro documento pra decidir permissão. Se um dia trocar o e-mail
+    // master pelo botão "Trocar e-mail master" no app, atualize essa linha
+    // e publique as regras de novo.
     function isMaster() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/config/master) &&
-        get(/databases/$(database)/documents/config/master).data.email.lower() == userEmail();
+      return isSignedIn() && userEmail() == "richardpessuti@hotmail.com";
     }
 
     function isProjectAdmin(projetoData) {
