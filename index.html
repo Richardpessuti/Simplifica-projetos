@@ -44,6 +44,8 @@
     --shadow-lg:0 24px 70px rgba(20,23,28,0.20), 0 8px 24px rgba(20,23,28,0.10);
     --glass-bg:rgba(255,255,255,0.55);
     --glass-border:rgba(255,255,255,0.5);
+    --textura-cor:#E4483A;
+    --folhagem-opacidade:1;
   }
   *{box-sizing:border-box;}
   @keyframes fadeInUp{
@@ -70,14 +72,13 @@
     margin:0;
     background-color:var(--paper);
     background-image:
-      radial-gradient(ellipse 900px 500px at 15% 0%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, transparent 60%),
-      linear-gradient(335deg, color-mix(in srgb, var(--ink) 8%, transparent) 23px, transparent 23px),
-      linear-gradient(155deg, color-mix(in srgb, var(--ink) 8%, transparent) 23px, transparent 23px),
-      linear-gradient(335deg, color-mix(in srgb, var(--ink) 8%, transparent) 23px, transparent 23px),
-      linear-gradient(155deg, color-mix(in srgb, var(--ink) 8%, transparent) 23px, transparent 23px);
-    background-size:auto, 58px 58px, 58px 58px, 58px 58px, 58px 58px;
-    background-position:0 0, 0px 2px, 4px 35px, 29px 31px, 33px 6px;
-    background-attachment:fixed, fixed, fixed, fixed, fixed;
+      radial-gradient(ellipse 820px 620px at 8% -8%, color-mix(in srgb, var(--textura-cor) 40%, transparent) 0%, transparent 62%),
+      radial-gradient(ellipse 680px 520px at 105% 12%, color-mix(in srgb, var(--textura-cor) 26%, transparent) 0%, transparent 65%),
+      radial-gradient(ellipse 420px 520px at -6% 96%, color-mix(in srgb, var(--accent) calc(38% * var(--folhagem-opacidade)), transparent) 0%, transparent 68%),
+      radial-gradient(ellipse 320px 400px at 102% 90%, color-mix(in srgb, var(--accent) calc(30% * var(--folhagem-opacidade)), transparent) 0%, transparent 68%),
+      radial-gradient(ellipse 260px 300px at 22% 60%, color-mix(in srgb, var(--accent) calc(14% * var(--folhagem-opacidade)), transparent) 0%, transparent 70%);
+    background-repeat:no-repeat;
+    background-attachment:fixed;
     color:var(--ink);
     font-family:'Inter', sans-serif;
     min-height:100vh;
@@ -838,6 +839,24 @@
     </div>
 
     <div class="card">
+      <h2>Fundo do app <span class="tag">textura</span></h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">O fundo por trás dos cards, em todas as telas — igual ao clima da tela de entrada. Escolha a cor e se quer a folhagem decorativa.</div>
+
+      <label>Cor de fundo</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-textura" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-textura-hex" placeholder="#E4483A" style="flex:1;">
+      </div>
+
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:16px;">
+        <input type="checkbox" id="admin-mostrar-folhagem" checked style="margin-top:3px;">
+        <label style="margin:0;text-transform:none;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink);letter-spacing:0;">Mostrar folhagem decorativa</label>
+      </div>
+
+      <button class="btn secondary" id="admin-salvar-textura" style="margin-top:16px;">Salvar fundo</button>
+    </div>
+
+    <div class="card">
       <h2>Cores por tipo <span class="tag">opcional</span></h2>
       <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Dá uma faixa colorida nos itens de cada tipo, pra identificar rápido nas listas.</div>
       <label>Tipo</label>
@@ -1166,7 +1185,8 @@ const TEMA_CAMPOS = {
   corCard: '--card-bg',
   corMenu: '--nav-bg',
   corBotao: '--accent',
-  corRecusado: '--danger'
+  corRecusado: '--danger',
+  corTextura: '--textura-cor'
 };
 
 const CANTOS_PRESETS = {
@@ -1194,6 +1214,9 @@ function aplicarTema(tema){
   const preset = CANTOS_PRESETS[cantos] || CANTOS_PRESETS.arredondado;
   root.setProperty('--radius-card', preset.card);
   root.setProperty('--radius-btn', preset.btn);
+
+  const mostrarFolhagem = !tema || tema.mostrarFolhagem !== false;
+  root.setProperty('--folhagem-opacidade', mostrarFolhagem ? '1' : '0');
 
   // cor por tipo (usada nas listas de cotações e etapas)
   window._tipoCores = (tema && tema.tipoCores) || {};
@@ -1244,6 +1267,7 @@ wireColorPair('admin-cor-card','admin-cor-card-hex');
 wireColorPair('admin-cor-menu','admin-cor-menu-hex');
 wireColorPair('admin-cor-botao','admin-cor-botao-hex');
 wireColorPair('admin-cor-recusado','admin-cor-recusado-hex');
+wireColorPair('admin-cor-textura','admin-cor-textura-hex');
 wireColorPair('admin-tipo-cor','admin-tipo-cor-hex');
 let currentProjetoNome = null;
 let currentUserEmail = null;
@@ -3750,14 +3774,30 @@ if(firebaseOk){
     }
   });
 
+  document.getElementById('admin-salvar-textura').addEventListener('click', async ()=>{
+    Object.assign(temaAtual, {
+      corTextura: normalizarHex(document.getElementById('admin-cor-textura-hex').value, '#E4483A'),
+      mostrarFolhagem: document.getElementById('admin-mostrar-folhagem').checked
+    });
+    try{
+      await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
+      aplicarTema(temaAtual);
+      toast('Fundo atualizado');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+  });
+
   document.getElementById('admin-resetar-tema').addEventListener('click', async ()=>{
     try{
       temaAtual = { tipoCores: temaAtual.tipoCores || {}, decoracoes: temaAtual.decoracoes || [] };
       await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
-      ['fundo','cabecalho','destaque','texto','sucesso','card','menu','botao','recusado'].forEach(campo=>{
+      ['fundo','cabecalho','destaque','texto','sucesso','card','menu','botao','recusado','textura'].forEach(campo=>{
         document.getElementById('admin-cor-'+campo+'-hex').value = '';
       });
       document.getElementById('admin-cantos').value = 'arredondado';
+      document.getElementById('admin-mostrar-folhagem').checked = true;
       aplicarTema(temaAtual);
       toast('Cores padrão restauradas');
     }catch(e){
@@ -3892,6 +3932,8 @@ if(firebaseOk){
       });
       const cantosSel = document.getElementById('admin-cantos');
       if(cantosSel) cantosSel.value = temaAtual.cantos || 'arredondado';
+      const folhagemChk = document.getElementById('admin-mostrar-folhagem');
+      if(folhagemChk) folhagemChk.checked = temaAtual.mostrarFolhagem !== false;
       renderTipoCoresLegenda();
       renderDecoGrid();
 
