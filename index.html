@@ -1732,20 +1732,26 @@ function skeletonCards(n){
 
 // ---------- Tabs ----------
 const NAV_OVERFLOW_TABS = ['tipos','aprovados','cartoes','arquiteta','buscar','admin'];
+const LS_KEY_TAB = 'ccAbaAtual';
 function fecharNavMais(){
   document.getElementById('nav-more-sheet').classList.remove('show');
 }
+function ativarTab(tabName){
+  const secao = document.getElementById('tab-'+tabName);
+  if(!secao) return;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));
+  const btn = document.querySelector('.tab-btn[data-tab="'+tabName+'"]');
+  if(btn) btn.classList.add('active');
+  if(NAV_OVERFLOW_TABS.includes(tabName)){
+    document.getElementById('nav-more-btn').classList.add('active');
+  }
+  secao.classList.add('active');
+  fecharNavMais();
+  try{ localStorage.setItem(LS_KEY_TAB, tabName); }catch(e){}
+}
 document.querySelectorAll('.tab-btn[data-tab]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));
-    btn.classList.add('active');
-    if(NAV_OVERFLOW_TABS.includes(btn.dataset.tab)){
-      document.getElementById('nav-more-btn').classList.add('active');
-    }
-    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
-    fecharNavMais();
-  });
+  btn.addEventListener('click', ()=> ativarTab(btn.dataset.tab));
 });
 document.getElementById('nav-more-btn').addEventListener('click', (e)=>{
   e.stopPropagation();
@@ -4163,7 +4169,7 @@ if(firebaseOk){
     unsubscribeAll();
     currentProjetoId = null;
     isAdmin = false;
-    try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
+    try{ localStorage.removeItem(LS_KEY_PROJETO); localStorage.removeItem(LS_KEY_TAB); }catch(e){}
     auth.signOut();
   });
 
@@ -4172,7 +4178,7 @@ if(firebaseOk){
     currentProjetoId = null;
     currentProjetoNome = null;
     isAdmin = false;
-    try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
+    try{ localStorage.removeItem(LS_KEY_PROJETO); localStorage.removeItem(LS_KEY_TAB); }catch(e){}
     document.getElementById('nav-admin-btn').style.display = 'none';
     document.getElementById('nav-more-btn').classList.remove('active');
     showScreen('project-screen');
@@ -4771,7 +4777,7 @@ if(firebaseOk){
         if(arqDoc.data().ativo === false){
           showScreen('auth-screen');
           document.getElementById('auth-erro').textContent = 'Seu acesso foi bloqueado. Fale com quem administra o sistema.';
-          try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
+          try{ localStorage.removeItem(LS_KEY_PROJETO); localStorage.removeItem(LS_KEY_TAB); }catch(e){}
           auth.signOut();
           return;
         }
@@ -4796,12 +4802,14 @@ if(firebaseOk){
           );
           if(temAcesso){
             abrirProjeto(idProjetoSalvo, data.nome, data);
+            const abaSalva = (()=>{ try{ return localStorage.getItem(LS_KEY_TAB); }catch(e){ return null; } })();
+            if(abaSalva && abaSalva !== 'admin') ativarTab(abaSalva);
             return;
           }
         }catch(e){
           console.error(e);
         }
-        try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
+        try{ localStorage.removeItem(LS_KEY_PROJETO); localStorage.removeItem(LS_KEY_TAB); }catch(e){}
       }
 
       if(currentUserEmail === masterEmailAtual){
@@ -4818,7 +4826,7 @@ if(firebaseOk){
       currentProjetoId = null;
       currentArquitetoId = null;
       modoMasterVendoArquitetoId = null;
-      try{ localStorage.removeItem(LS_KEY_PROJETO); }catch(e){}
+      try{ localStorage.removeItem(LS_KEY_PROJETO); localStorage.removeItem(LS_KEY_TAB); }catch(e){}
       aplicarTema(null);
       document.getElementById('verify-warning').style.display = 'none';
       showScreen('auth-screen');
