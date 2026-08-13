@@ -302,6 +302,12 @@
     color:#fff;
     box-shadow:var(--shadow-sm);
   }
+  .btn.muted{
+    background:var(--paper);
+    color:var(--ink);
+    box-shadow:none;
+    border:1.5px solid var(--paper-line);
+  }
   .pag-toggle-btn.active, .p-status-chip.active{
     background:var(--accent) !important;
     color:#fff !important;
@@ -354,6 +360,8 @@
     min-width:80px;
   }
   .actions button{
+    -webkit-appearance:none;
+    appearance:none;
     flex:1;
     padding:9px;
     border-radius:8px;
@@ -363,6 +371,7 @@
     cursor:pointer;
     border:none;
     background:var(--paper);
+    color:var(--ink);
     transition:background-color .2s var(--ease);
   }
   .actions button.view{color:var(--blueprint);}
@@ -681,11 +690,11 @@
       <h2>Seu e-mail de acesso master</h2>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Só quem estiver aqui vê esta tela. Você pode trocar pra outro e-mail quando quiser.</div>
       <input type="text" id="master-email-atual" placeholder="novoemail@exemplo.com">
-      <button class="btn" id="master-email-salvar" style="background:#eee;margin-top:10px;">Trocar e-mail master</button>
+      <button class="btn muted" id="master-email-salvar" style="margin-top:10px;">Trocar e-mail master</button>
     </div>
 
-    <button class="btn" id="master-meus-projetos" style="background:#eee;margin-top:8px;">Ver meus projetos pessoais</button>
-    <button class="btn" id="master-sair" style="background:#eee;margin-top:8px;">Sair da conta</button>
+    <button class="btn muted" id="master-meus-projetos" style="margin-top:8px;">Ver meus projetos pessoais</button>
+    <button class="btn muted" id="master-sair" style="margin-top:8px;">Sair da conta</button>
   </div>
 </div>
 
@@ -706,7 +715,7 @@
       <button class="btn secondary" id="new-project-criar">Criar projeto</button>
     </div>
 
-    <button class="btn" id="project-sair" style="background:#eee;margin-top:8px;">Sair da conta</button>
+    <button class="btn muted" id="project-sair" style="margin-top:8px;">Sair da conta</button>
   </div>
 </div>
 
@@ -832,7 +841,7 @@
       </select>
 
       <button class="btn secondary" id="admin-salvar-tema" style="margin-top:14px;">Aplicar cores</button>
-      <button class="btn" id="admin-resetar-tema" style="margin-top:8px;background:#eee;">Usar cores padrão</button>
+      <button class="btn muted" id="admin-resetar-tema" style="margin-top:8px;">Usar cores padrão</button>
     </div>
 
     <div class="card">
@@ -914,7 +923,7 @@
     <div class="card">
       <h2>Dados de antes do login</h2>
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Se você usava o app antes de existir login, importe esses dados antigos pra dentro deste projeto (só precisa fazer uma vez).</div>
-      <button class="btn" id="btn-migrar" style="background:#eee;">↑ importar dados de antes do login</button>
+      <button class="btn muted" id="btn-migrar">↑ importar dados de antes do login</button>
     </div>
 
   </section>
@@ -990,7 +999,7 @@
       <div id="c-bulk-list" style="display:none;margin-top:12px;"></div>
 
       <button class="btn" id="c-save">Salvar cotação</button>
-      <button class="btn" id="c-cancel" style="display:none;background:#eee;">Cancelar edição</button>
+      <button class="btn muted" id="c-cancel" style="display:none;">Cancelar edição</button>
     </div>
 
     <div id="c-list"></div>
@@ -1060,7 +1069,7 @@
       <div id="a-bulk-list" style="display:none;margin-top:12px;"></div>
 
       <button class="btn secondary" id="a-save">Salvar arquivo</button>
-      <button class="btn" id="a-cancel" style="display:none;background:#eee;">Cancelar edição</button>
+      <button class="btn muted" id="a-cancel" style="display:none;">Cancelar edição</button>
     </div>
 
     <div id="a-list"></div>
@@ -1107,7 +1116,7 @@
       </div>
 
       <button class="btn secondary" id="p-save">Salvar prestador</button>
-      <button class="btn" id="p-cancel" style="display:none;background:#eee;">Cancelar edição</button>
+      <button class="btn muted" id="p-cancel" style="display:none;">Cancelar edição</button>
     </div>
 
     <div id="p-list"></div>
@@ -1143,7 +1152,7 @@
     <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin:0 0 4px;">Enviar arquivo</h2>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="whats-modal-sub"></div>
     <div id="whats-modal-lista"></div>
-    <button class="btn" id="whats-modal-fechar" style="background:#eee;margin-top:10px;">Cancelar</button>
+    <button class="btn muted" id="whats-modal-fechar" style="margin-top:10px;">Cancelar</button>
   </div>
 </div>
 
@@ -1592,7 +1601,7 @@ function renderImportPreview(){
         </div>
       `).join('')}
       <button class="btn secondary" id="cron-confirmar">Confirmar e importar ${importPreview.length} etapas</button>
-      <button class="btn" id="cron-cancelar-import" style="background:#eee;">Cancelar</button>
+      <button class="btn muted" id="cron-cancelar-import">Cancelar</button>
     </div>
   `;
 }
@@ -1991,7 +2000,7 @@ function renderPrestImportPreview(){
         </div>
       `).join('')}
       <button class="btn secondary" id="prest-confirmar">Confirmar e importar ${prestImportPreview.length} prestadores</button>
-      <button class="btn" id="prest-cancelar" style="background:#eee;">Cancelar</button>
+      <button class="btn muted" id="prest-cancelar">Cancelar</button>
     </div>
   `;
 }
@@ -3848,7 +3857,7 @@ if(firebaseOk){
 
     if(modoMasterVendoArquitetoId || currentUserEmail === masterEmailAtual){
       voltarEl.style.display = 'block';
-      voltarEl.innerHTML = `<button class="btn" id="voltar-pro-master" style="background:#eee;">← voltar pro painel master</button>`;
+      voltarEl.innerHTML = `<button class="btn muted" id="voltar-pro-master">← voltar pro painel master</button>`;
     }else{
       voltarEl.style.display = 'none';
       voltarEl.innerHTML = '';
