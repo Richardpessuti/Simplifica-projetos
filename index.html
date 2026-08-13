@@ -1090,7 +1090,7 @@
   <div class="header-deco" id="header-deco"></div>
   <p class="eyebrow">Reforma do apartamento</p>
   <h1 id="app-projeto-nome">Central de Cotações</h1>
-  <p class="sub">Suba cotações e arquivos da arquiteta. Cada item pode levar o número de um profissional — quem tiver esse número encontra só o que é dele na aba Buscar.</p>
+  <p class="sub" id="app-subtitulo">Suba cotações e arquivos da arquiteta. Cada item pode levar o número de um profissional — quem tiver esse número encontra só o que é dele na aba Buscar.</p>
   <span id="conn-status" class="ok">conectado ✓</span>
   <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
     <button id="btn-trocar-projeto" style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:5px 12px;cursor:pointer;">↺ trocar projeto</button>
@@ -1209,6 +1209,32 @@
 
       <button class="btn secondary" id="admin-salvar-tema" style="margin-top:14px;">Aplicar cores</button>
       <button class="btn muted" id="admin-resetar-tema" style="margin-top:8px;">Usar cores padrão</button>
+    </div>
+
+    <div class="card">
+      <h2>Textos <span class="tag">opcional</span></h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Edite os textos principais deste projeto. Deixe em branco pra usar o texto padrão.</div>
+
+      <label>Subtítulo do cabeçalho</label>
+      <input type="text" id="admin-txt-subtitulo" placeholder="Suba cotações e arquivos da arquiteta...">
+
+      <label>Título "Próxima etapa"</label>
+      <input type="text" id="admin-txt-tituloProximaEtapa" placeholder="Próxima etapa">
+
+      <label>Título "Linha do tempo completa"</label>
+      <input type="text" id="admin-txt-tituloLinhaDoTempo" placeholder="Linha do tempo completa">
+
+      <label>Mensagem de cronograma vazio</label>
+      <input type="text" id="admin-txt-cronogramaVazioMembro" placeholder="A arquiteta ainda não subiu o cronograma da obra.">
+
+      <label>Título "Buscar por especialidade"</label>
+      <input type="text" id="admin-txt-tituloBuscarEspecialidade" placeholder="Buscar por especialidade">
+
+      <label>Título "Buscar por número"</label>
+      <input type="text" id="admin-txt-tituloBuscarNumero" placeholder="Buscar por número do profissional">
+
+      <button class="btn secondary" id="admin-salvar-textos" style="margin-top:14px;">Salvar textos</button>
+      <button class="btn muted" id="admin-resetar-textos" style="margin-top:8px;">Usar textos padrão</button>
     </div>
 
     <div class="card">
@@ -1404,14 +1430,14 @@
   <!-- BUSCAR -->
   <section id="tab-buscar">
     <div class="card">
-      <h2>Buscar por especialidade</h2>
+      <h2 id="titulo-buscar-esp">Buscar por especialidade</h2>
       <div class="search-box">
         <select id="s-esp"></select>
         <button id="s-esp-btn">Buscar</button>
       </div>
     </div>
     <div class="card">
-      <h2>Buscar por número do profissional</h2>
+      <h2 id="titulo-buscar-num">Buscar por número do profissional</h2>
       <div class="search-box">
         <input type="text" id="s-input" placeholder="Digite o número, ex: 03">
         <button id="s-btn">Buscar</button>
@@ -1431,6 +1457,8 @@
     <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin:0 0 4px;">Enviar arquivo</h2>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="whats-modal-sub"></div>
     <div id="whats-modal-lista"></div>
+    <button class="btn secondary" id="whats-modal-direto" style="margin-top:14px;">Ir direto pro WhatsApp, sem anexos</button>
+    <button class="btn" id="whats-modal-enviar" disabled>Enviar 0 selecionado(s)</button>
     <button class="btn muted" id="whats-modal-fechar" style="margin-top:10px;">Cancelar</button>
   </div>
 </div>
@@ -1580,6 +1608,29 @@ const TEMA_CAMPOS = {
   corRecusado: '--danger',
   corTextura: '--textura-cor'
 };
+
+const TEXTOS_PADRAO = {
+  subtitulo: 'Suba cotações e arquivos da arquiteta. Cada item pode levar o número de um profissional — quem tiver esse número encontra só o que é dele na aba Buscar.',
+  tituloProximaEtapa: 'Próxima etapa',
+  tituloLinhaDoTempo: 'Linha do tempo completa',
+  cronogramaVazioMembro: 'A arquiteta ainda não subiu o cronograma da obra.',
+  tituloBuscarEspecialidade: 'Buscar por especialidade',
+  tituloBuscarNumero: 'Buscar por número do profissional'
+};
+let textosAtuais = {};
+function txt(chave){
+  return (textosAtuais && textosAtuais[chave]) || TEXTOS_PADRAO[chave];
+}
+function aplicarTextosPersonalizados(){
+  const subEl = document.getElementById('app-subtitulo');
+  if(subEl) subEl.textContent = txt('subtitulo');
+  const beEl = document.getElementById('titulo-buscar-esp');
+  if(beEl) beEl.textContent = txt('tituloBuscarEspecialidade');
+  const bnEl = document.getElementById('titulo-buscar-num');
+  if(bnEl) bnEl.textContent = txt('tituloBuscarNumero');
+  if(document.getElementById('cron-proxima')) renderProximaEtapa();
+  if(document.getElementById('cron-linha-do-tempo')) renderLinhaDoTempo();
+}
 
 const CANTOS_PRESETS = {
   arredondado: {card:'16px', btn:'10px'},
@@ -2045,30 +2096,112 @@ function listarArquivosDisponiveis(){
   return itens;
 }
 
+let whatsSelecionados = new Set();
+
 function abrirModalWhatsApp(tel, nomeContato){
   const modal = document.getElementById('whats-modal');
   const lista = document.getElementById('whats-modal-lista');
-  document.getElementById('whats-modal-sub').textContent = `Pra ${nomeContato} — escolha um arquivo pra baixar antes de abrir o WhatsApp, ou vá direto sem nada.`;
+  document.getElementById('whats-modal-sub').textContent = `Pra ${nomeContato} — marque um ou mais arquivos pra levar, ou vá direto sem nada.`;
 
+  whatsSelecionados = new Set();
   const arquivos = listarArquivosDisponiveis();
-  let html = `<div class="list-item" style="cursor:pointer;" data-whats-opcao="nenhum">
-    <div class="item-title">Ir direto pro WhatsApp</div>
-    <div class="meta">Sem anexar nenhum arquivo</div>
-  </div>`;
-  arquivos.forEach((a,i)=>{
-    html += `<div class="list-item" style="cursor:pointer;" data-whats-opcao="${i}">
-      <div class="item-title">${escapeHtml(a.label)}</div>
-      <div class="meta">${escapeHtml(a.fileName)}</div>
-    </div>`;
-  });
-  lista.innerHTML = html;
+  lista.innerHTML = arquivos.map((a,i)=>`
+    <label class="list-item" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
+      <input type="checkbox" data-whats-check="${i}" style="flex-shrink:0;width:18px;height:18px;">
+      <span>
+        <div class="item-title">${escapeHtml(a.label)}</div>
+        <div class="meta">${escapeHtml(a.fileName)}</div>
+      </span>
+    </label>
+  `).join('');
   modal.dataset.tel = tel;
   modal.dataset.arquivos = JSON.stringify(arquivos);
+  atualizarBotaoWhatsEnviar();
   modal.classList.add('show');
+}
+
+function atualizarBotaoWhatsEnviar(){
+  const btn = document.getElementById('whats-modal-enviar');
+  const n = whatsSelecionados.size;
+  btn.textContent = n===0 ? 'Enviar 0 selecionado(s)' : `Enviar ${n} arquivo(s) selecionado(s)`;
+  btn.disabled = n===0;
 }
 
 document.getElementById('whats-modal-fechar').addEventListener('click', ()=>{
   document.getElementById('whats-modal').classList.remove('show');
+});
+
+document.addEventListener('change', (e)=>{
+  const idx = e.target.getAttribute('data-whats-check');
+  if(idx !== null){
+    if(e.target.checked) whatsSelecionados.add(Number(idx));
+    else whatsSelecionados.delete(Number(idx));
+    atualizarBotaoWhatsEnviar();
+  }
+});
+
+document.getElementById('whats-modal-direto').addEventListener('click', ()=>{
+  const modal = document.getElementById('whats-modal');
+  const tel = modal.dataset.tel;
+  modal.classList.remove('show');
+  window.open(waLink(tel), '_blank');
+});
+
+document.getElementById('whats-modal-enviar').addEventListener('click', async ()=>{
+  const modal = document.getElementById('whats-modal');
+  const arquivos = JSON.parse(modal.dataset.arquivos || '[]');
+  const escolhidos = [...whatsSelecionados].sort((a,b)=>a-b).map(i=>arquivos[i]).filter(Boolean);
+  if(escolhidos.length===0) return;
+  modal.classList.remove('show');
+
+  toast(escolhidos.length===1 ? 'Preparando arquivo...' : `Preparando ${escolhidos.length} arquivos...`);
+  try{
+    const arquivosCarregados = [];
+    for(const item of escolhidos){
+      const base64 = await loadFileChunked(item.colecao, item.id);
+      if(base64) arquivosCarregados.push({file: base64ToFile(base64, item.fileName), base64, nome: item.fileName});
+    }
+    if(arquivosCarregados.length===0){ toast('Arquivo(s) não encontrado(s)'); return; }
+
+    const listaFiles = arquivosCarregados.map(a=>a.file);
+    // Celular moderno: abre a tela nativa de compartilhar, com o WhatsApp como opção direta
+    if(navigator.canShare && navigator.canShare({files: listaFiles})){
+      try{
+        await navigator.share({files: listaFiles, title: 'Arquivos', text: 'Segue ' + (listaFiles.length===1 ? 'o arquivo' : 'os arquivos') + ': ' + arquivosCarregados.map(a=>a.nome).join(', ')});
+        return;
+      }catch(shareErr){
+        if(shareErr && shareErr.name === 'AbortError') return; // usuário cancelou, tudo bem
+        console.error(shareErr);
+      }
+    }
+
+    // Fallback: baixa cada arquivo (o usuário anexa manualmente no WhatsApp depois)
+    arquivosCarregados.forEach((a, i)=>{
+      setTimeout(()=>{
+        const commaIdx = a.base64.indexOf(',');
+        const meta = a.base64.slice(0, commaIdx);
+        const data = a.base64.slice(commaIdx + 1);
+        const mimeMatch = meta.match(/data:(.*);base64/);
+        const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+        const binary = atob(data);
+        const array = new Uint8Array(binary.length);
+        for(let j=0;j<binary.length;j++) array[j] = binary.charCodeAt(j);
+        const blob = new Blob([array], {type: mime});
+        const url = URL.createObjectURL(blob);
+        const el = document.createElement('a');
+        el.href = url;
+        el.download = a.nome;
+        document.body.appendChild(el);
+        el.click();
+        el.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 60000);
+      }, i * 400);
+    });
+    toast(arquivosCarregados.length===1 ? 'Arquivo baixado — anexe no WhatsApp' : `${arquivosCarregados.length} arquivos baixados — anexe no WhatsApp`);
+  }catch(err){
+    console.error(err);
+    toast('Erro ao preparar arquivos');
+  }
 });
 
 document.addEventListener('click', async (e)=>{
@@ -2077,51 +2210,6 @@ document.addEventListener('click', async (e)=>{
     const nome = e.target.getAttribute('data-whats-arquivo-nome');
     abrirModalWhatsApp(arquivoTel, nome);
     return;
-  }
-
-  const opcao = e.target.closest('[data-whats-opcao]')?.getAttribute('data-whats-opcao');
-  if(opcao !== undefined && opcao !== null){
-    const modal = document.getElementById('whats-modal');
-    const tel = modal.dataset.tel;
-    modal.classList.remove('show');
-
-    if(opcao === 'nenhum'){
-      window.open(waLink(tel), '_blank');
-      return;
-    }
-
-    const arquivos = JSON.parse(modal.dataset.arquivos || '[]');
-    const escolhido = arquivos[Number(opcao)];
-    if(!escolhido) return;
-
-    const newWin = window.open('', '_blank'); // abre já, dentro do gesto de clique
-    toast('Preparando arquivo...');
-    try{
-      const base64 = await loadFileChunked(escolhido.colecao, escolhido.id);
-      if(!base64){ if(newWin) newWin.close(); toast('Arquivo não encontrado'); return; }
-
-      const arquivo = base64ToFile(base64, escolhido.fileName);
-
-      // Celular moderno: abre a tela nativa de compartilhar, com o WhatsApp como opção direta
-      if(navigator.canShare && navigator.canShare({files:[arquivo]})){
-        try{
-          if(newWin) newWin.close();
-          await navigator.share({files:[arquivo], title: escolhido.fileName, text: 'Segue o arquivo: ' + escolhido.fileName});
-          return;
-        }catch(shareErr){
-          if(shareErr && shareErr.name === 'AbortError') return; // usuário cancelou, tudo bem
-          console.error(shareErr);
-        }
-      }
-
-      // Fallback: abre o arquivo na tela — o usuário toca no ícone de compartilhar do navegador e escolhe o WhatsApp
-      openBase64(base64, escolhido.fileName, newWin);
-      toast('Arquivo aberto — toque no ícone de compartilhar (□↑) e escolha o WhatsApp');
-    }catch(err){
-      console.error(err);
-      if(newWin && !newWin.closed) newWin.close();
-      toast('Erro ao preparar arquivo');
-    }
   }
 });
 
@@ -2382,7 +2470,7 @@ function renderProximaEtapa(){
   const tipos = proxima.tipos || [];
   el.innerHTML = `
     <div class="card">
-      <h2>Próxima etapa <span class="tag">${escapeHtml(proxima.nome)}</span></h2>
+      <h2>${escapeHtml(txt('tituloProximaEtapa'))} <span class="tag">${escapeHtml(proxima.nome)}</span></h2>
       ${tipos.map(t=>{
         const c = checarTipo(proxima, t);
         const completo = proxima.tiposCompletos && proxima.tiposCompletos[t];
@@ -2408,10 +2496,10 @@ function renderLinhaDoTempo(){
   const el = document.getElementById('cron-linha-do-tempo');
   const ordenadas = [...etapasCache].sort((a,b)=>a.ordem-b.ordem);
   if(ordenadas.length===0){
-    el.innerHTML = `<div class="empty"><div class="big">— · —</div>${isAdmin ? 'Nenhum cronograma importado ainda. Suba o PDF na aba Admin.' : 'A arquiteta ainda não subiu o cronograma da obra.'}</div>`;
+    el.innerHTML = `<div class="empty"><div class="big">— · —</div>${isAdmin ? 'Nenhum cronograma importado ainda. Suba o PDF na aba Admin.' : escapeHtml(txt('cronogramaVazioMembro'))}</div>`;
     return;
   }
-  el.innerHTML = `<div class="card"><h2>Linha do tempo completa</h2>` +
+  el.innerHTML = `<div class="card"><h2>${escapeHtml(txt('tituloLinhaDoTempo'))}</h2>` +
     ordenadas.map((et,i)=>`
       <div class="step-row">
         <div class="step-num" style="background:${statusEtapaCor(et.status)};">${i+1}</div>
@@ -4394,6 +4482,50 @@ if(firebaseOk){
     btn.disabled = false; btn.textContent = 'Aplicar cores';
   });
 
+  const CAMPOS_TEXTO_ADMIN = ['subtitulo','tituloProximaEtapa','tituloLinhaDoTempo','cronogramaVazioMembro','tituloBuscarEspecialidade','tituloBuscarNumero'];
+  function preencherFormularioTextos(){
+    CAMPOS_TEXTO_ADMIN.forEach(chave=>{
+      const el = document.getElementById('admin-txt-'+chave);
+      if(el) el.value = (textosAtuais && textosAtuais[chave]) || '';
+    });
+  }
+
+  document.getElementById('admin-salvar-textos').addEventListener('click', async ()=>{
+    const btn = document.getElementById('admin-salvar-textos');
+    const novosTextos = {};
+    CAMPOS_TEXTO_ADMIN.forEach(chave=>{
+      const valor = document.getElementById('admin-txt-'+chave).value.trim();
+      if(valor) novosTextos[chave] = valor;
+    });
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    try{
+      await db.collection('projetos').doc(currentProjetoId).update({textos: novosTextos});
+      textosAtuais = novosTextos;
+      aplicarTextosPersonalizados();
+      toast('Textos salvos');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = 'Salvar textos';
+  });
+
+  document.getElementById('admin-resetar-textos').addEventListener('click', async ()=>{
+    const btn = document.getElementById('admin-resetar-textos');
+    btn.disabled = true; btn.textContent = 'Restaurando...';
+    try{
+      await db.collection('projetos').doc(currentProjetoId).update({textos: {}});
+      textosAtuais = {};
+      preencherFormularioTextos();
+      aplicarTextosPersonalizados();
+      toast('Textos padrão restaurados');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = 'Usar textos padrão';
+  });
+
   document.getElementById('admin-salvar-textura').addEventListener('click', async ()=>{
     const btn = document.getElementById('admin-salvar-textura');
     Object.assign(temaAtual, {
@@ -4541,6 +4673,13 @@ if(firebaseOk){
     aplicarTema(null);
     currentProjetoId = id;
     currentProjetoNome = nome;
+    // zera o que veio do projeto anterior, pra não piscar dado de outro projeto
+    // antes dos novos listeners carregarem
+    cotacoesCache = [];
+    arquitetaCache = [];
+    prestadoresCache = [];
+    etapasCache = [];
+    textosAtuais = {};
     try{ localStorage.setItem(LS_KEY_PROJETO, id); }catch(e){}
     document.getElementById('app-projeto-nome').textContent = nome;
     document.getElementById('conn-status').textContent = 'conectado ✓ — ' + currentUserEmail;
@@ -4557,6 +4696,10 @@ if(firebaseOk){
       isAdmin = data.criadoPor === currentUserEmail || currentUserEmail === masterEmailAtual;
       projetoArquitetoId = data.arquitetoId || null;
       document.getElementById('nav-admin-btn').style.display = isAdmin ? 'flex' : 'none';
+
+      textosAtuais = data.textos || {};
+      aplicarTextosPersonalizados();
+      if(isAdmin) preencherFormularioTextos();
 
       temaAtual = data.tema || {};
       aplicarTema(temaAtual);
