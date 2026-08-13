@@ -89,9 +89,24 @@ Pula o login e mostra o app com dados fictícios, sem tocar no Firebase — pra 
 ### Preview local sem Firebase (`preview-real.html`)
 Cópia do `index.html` com os `<script>` do Firebase removidos e o modo demo forçado sempre ativo — abre instantaneamente (inclusive como artifact no chat do Claude), sem precisar publicar em lugar nenhum. Útil pro fluxo: gerar preview → aprovar visual → só então gerar o `index.html` de verdade e publicar.
 
+## Segurança (endurecida em 13/08/2026)
+
+O usuário pediu "toda segurança possível". O que foi feito:
+
+- **`firestore.rules`** (arquivo na raiz do repo) — regras completas escritas: exige login pra tudo (zero leitura/escrita pública), acesso a um projeto só pra quem está em `membrosEmails`/é `criadoPor`/é master, subcoleções herdam a mesma checagem via regra recursiva. **⚠️ Ainda precisa ser colado no Firebase Console → Firestore Database → Regras → Publicar — sem isso, as regras não fazem efeito nenhum.**
+- **Pré-check de convite no cadastro removido** — antes, `emailFoiConvidado()` consultava o Firestore sem login pra bloquear cadastro de e-mail não convidado; isso exigia leitura pública, incompatível com as regras acima. Agora qualquer um pode criar conta, mas só enxerga dados depois de um admin/master adicionar o e-mail a um projeto (tela "aguardando convite" nesse meio tempo).
+- **Firebase App Check + reCAPTCHA v3** ("não sou robô", invisível) — código já está no `index.html` (`RECAPTCHA_V3_SITE_KEY`), mas **precisa de uma chave gerada no Firebase Console → Build → App Check** pra ativar. Sem a chave, o app funciona normal, só sem essa camada extra.
+- Mensagens de erro de login unificadas (não revela mais se um e-mail tem conta ou não — mitiga tentativa de força bruta / enumeração).
+- Content-Security-Policy (meta tag) restringindo scripts/estilos aos domínios que o app realmente usa.
+- Corrigido um ponto de injeção via campo de cor personalizada (`normalizarHex` agora valida formato antes de gravar).
+
+**Passos manuais pendentes (só o usuário consegue fazer, precisam de acesso ao Firebase/Google Console):**
+1. Colar `firestore.rules` no Firebase Console (Firestore → Regras → Publicar).
+2. Gerar chave reCAPTCHA v3 gratuita (Firebase Console → Build → App Check) e substituir `RECAPTCHA_V3_SITE_KEY` no `index.html`.
+3. Ativar "Email enumeration protection" em Firebase Console → Authentication → Settings → User actions (reforça a mesma proteção contra descobrir e-mails cadastrados).
+
 ## Discutido mas NÃO implementado ainda
 
-- **⚠️ PRIORIDADE ALTA (subiu de prioridade em 13/08/2026): Firestore Security Rules no servidor** — hoje a segurança de dados depende só da lógica do client, sem regras no Firebase Console validando `membrosEmails`/`arquitetoId` no backend. Isso já era pendente, mas agora o repositório do código é **público** (necessário pro deploy via GitHub Pages — ver seção "Hospedagem"), o que torna o `projectId`/`apiKey` do Firebase mais fácil de encontrar. Sem regras travadas, alguém com esses dados poderia ler/escrever direto no Firestore pelo SDK, sem passar pelo app. Tratar como próximo passo de segurança, não como melhoria opcional.
 - Migrar armazenamento de arquivo de base64-no-Firestore pra Firebase Storage
 - Compressão automática de imagem antes do upload
 - PWA instalável (ícone na tela inicial)

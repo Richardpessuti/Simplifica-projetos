@@ -3,6 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Content-Security-Policy: só permite carregar recursos dos domínios que o
+     app realmente usa (Firebase, Google Fonts, cdnjs, reCAPTCHA/App Check).
+     Reduz o estrago de qualquer injeção de script externo, mesmo que uma
+     falha de escape passe despercebida em algum lugar. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com https://www.google.com https://www.recaptcha.net;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://cdnjs.cloudflare.com https://www.google.com;
+  frame-src https://www.google.com https://www.recaptcha.net;
+  worker-src 'self' blob:;
+  object-src 'none';
+  base-uri 'self';
+">
 <title>Obra — Central de Cotações</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -11,6 +27,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check-compat.js"></script>
 
 <!-- pdf.js carrega sob demanda (só quando o admin importa um PDF) — ver ensurePdfJs() -->
 
@@ -1447,7 +1464,7 @@ function normalizarHex(valor, padrao){
   let v = (valor || '').trim();
   if(!v) return padrao;
   if(!v.startsWith('#')) v = '#' + v;
-  return v;
+  return /^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$/.test(v) ? v : padrao;
 }
 
 function wireColorPair(colorId, hexId){
@@ -1474,11 +1491,30 @@ let currentProjetoNome = null;
 let currentUserEmail = null;
 let firebaseOk = false;
 
+/* ======================================================================
+   App Check — proteção "não sou robô" (invisível, via reCAPTCHA v3).
+   Gere a chave de graça em: Firebase Console > Build > App Check >
+   Apps > (seu app web) > reCAPTCHA v3 > registrar, e cole aqui embaixo.
+   Enquanto a chave não for trocada, o App Check fica desativado e o app
+   funciona normalmente (sem essa camada extra de proteção).
+   ====================================================================== */
+const RECAPTCHA_V3_SITE_KEY = "COLE_SUA_CHAVE_RECAPTCHA_V3_AQUI";
+
 try{
   if(firebaseConfig.apiKey === "COLE_AQUI"){
     throw new Error("config-missing");
   }
   firebase.initializeApp(firebaseConfig);
+  if(RECAPTCHA_V3_SITE_KEY && RECAPTCHA_V3_SITE_KEY !== "COLE_SUA_CHAVE_RECAPTCHA_V3_AQUI" && firebase.appCheck){
+    try{
+      firebase.appCheck().activate(
+        new firebase.appCheck.ReCaptchaV3Provider(RECAPTCHA_V3_SITE_KEY),
+        true
+      );
+    }catch(appCheckErr){
+      console.error('App Check não ativou:', appCheckErr);
+    }
+  }
   db = firebase.firestore();
   auth = firebase.auth();
   firebaseOk = true;
@@ -3843,14 +3879,17 @@ function showScreen(id){
 
 function friendlyAuthError(code){
   const map = {
-    'auth/invalid-email': 'E-mail inválido.',
-    'auth/user-not-found': 'Não existe conta com esse e-mail. Toque em "Criar conta nova".',
-    'auth/wrong-password': 'Senha incorreta.',
+    // Propositalmente igual pra e-mail inexistente e senha errada — não dá
+    // pra descobrir se um e-mail tem conta só tentando fazer login.
+    'auth/user-not-found': 'E-mail ou senha incorretos.',
+    'auth/wrong-password': 'E-mail ou senha incorretos.',
     'auth/invalid-login-credentials': 'E-mail ou senha incorretos.',
     'auth/invalid-credential': 'E-mail ou senha incorretos.',
+    'auth/invalid-email': 'E-mail inválido.',
     'auth/email-already-in-use': 'Já existe uma conta com esse e-mail. Toque em "Entrar".',
     'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
     'auth/missing-password': 'Digite uma senha.',
+    'auth/too-many-requests': 'Muitas tentativas seguidas. Espere um pouco antes de tentar de novo.',
   };
   return map[code] || 'Erro: ' + code;
 }
@@ -3869,19 +3908,6 @@ if(firebaseOk){
     }
   });
 
-  async function emailFoiConvidado(email){
-    if(email === masterEmailAtual) return true;
-    try{
-      const arqSnap = await db.collection('arquitetos').where('email','==',email).limit(1).get();
-      if(!arqSnap.empty) return true;
-    }catch(e){ console.error(e); }
-    try{
-      const projSnap = await db.collection('projetos').where('membrosEmails','array-contains',email).limit(1).get();
-      if(!projSnap.empty) return true;
-    }catch(e){ console.error(e); }
-    return false;
-  }
-
   document.getElementById('auth-cadastrar').addEventListener('click', async ()=>{
     const email = document.getElementById('auth-email').value.trim().toLowerCase();
     const senha = document.getElementById('auth-senha').value;
@@ -3890,16 +3916,8 @@ if(firebaseOk){
     erroEl.textContent = '';
     if(!email || !senha){ erroEl.textContent = 'Preencha e-mail e senha.'; return; }
     const btn = document.getElementById('auth-cadastrar');
-    btn.disabled = true; btn.textContent = 'Verificando convite...';
+    btn.disabled = true; btn.textContent = 'Criando conta...';
     try{
-      await resolverMasterEmail();
-      const convidado = await emailFoiConvidado(email);
-      if(!convidado){
-        erroEl.textContent = 'Esse e-mail ainda não foi convidado. Peça pra quem administra o projeto (ou o studio) te adicionar primeiro.';
-        btn.disabled = false; btn.textContent = 'Criar conta nova';
-        return;
-      }
-      btn.textContent = 'Criando conta...';
       const cred = await auth.createUserWithEmailAndPassword(email, senha);
       try{ await cred.user.sendEmailVerification(); }
       catch(verErr){ console.error(verErr); }
@@ -4242,7 +4260,9 @@ if(firebaseOk){
         snap = await db.collection('projetos').where('membrosEmails','array-contains',currentUserEmail).get();
       }
       if(snap.empty){
-        el.innerHTML = '<div class="empty" style="padding:16px 0;">Nenhum projeto ainda. Crie um abaixo, ou peça pra quem já tem um projeto te adicionar pelo seu e-mail.</div>';
+        el.innerHTML = podecriarProjeto
+          ? '<div class="empty" style="padding:16px 0;">Nenhum projeto ainda. Crie um abaixo.</div>'
+          : `<div class="empty" style="padding:16px 0;">Sua conta foi criada, mas você ainda não tem acesso a nenhum projeto. Peça pra quem administra o projeto te adicionar pelo e-mail <strong>${escapeHtml(currentUserEmail)}</strong>.</div>`;
         return;
       }
       const projetos = [];

@@ -1,0 +1,108 @@
+rules_version = '2';
+
+// Regras de segurança do Firestore — Central de Cotações
+//
+// Como aplicar: Firebase Console → seu projeto → Firestore Database →
+// aba "Regras" → cole este arquivo inteiro → Publicar.
+//
+// Resumo do modelo de acesso:
+// - Nada é legível ou escrevível sem estar autenticado (login com e-mail/senha).
+// - Um projeto (`projetos/{id}`) só é visível/editável por quem está no
+//   `membrosEmails`, por quem criou (`criadoPor`), ou pelo master.
+// - Tudo dentro de um projeto (cotações, prestadores, cronograma, arquivos
+//   em pedaços etc.) herda essa mesma checagem, através de uma única regra
+//   recursiva — não precisa listar cada subcoleção uma por uma.
+// - `arquitetos` é legível por qualquer usuário autenticado (necessário pro
+//   banner de logo aparecer pra qualquer membro do projeto), mas só o
+//   master cria/edita/exclui — exceto um arquiteto pode atualizar o
+//   próprio cadastro (usado pra trocar a própria logo).
+// - `config/master` define quem é o master; só o master atual pode trocar.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userEmail() {
+      return isSignedIn() && request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : null;
+    }
+
+    function isMaster() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/config/master) &&
+        get(/databases/$(database)/documents/config/master).data.email.lower() == userEmail();
+    }
+
+    function isProjectAdmin(projetoData) {
+      return isSignedIn() &&
+        (projetoData.criadoPor is string && projetoData.criadoPor.lower() == userEmail() || isMaster());
+    }
+
+    function isProjectMember(projetoData) {
+      return isProjectAdmin(projetoData) ||
+        (isSignedIn() && projetoData.membrosEmails is list && userEmail() in projetoData.membrosEmails);
+    }
+
+    // ---------- config/master ----------
+    match /config/master {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow update: if isMaster();
+      allow create, delete: if false; // documento é criado/mantido manualmente
+    }
+
+    // ---------- arquitetos ----------
+    match /arquitetos/{arqId} {
+      allow read: if isSignedIn();
+      allow create, delete: if isMaster();
+      allow update: if isMaster() ||
+        (isSignedIn() && resource.data.email is string && resource.data.email.lower() == userEmail());
+    }
+
+    // ---------- dados legados de antes do login (sem dono definido) ----------
+    // Usados só pelo botão "importar dados de antes do login" (migração
+    // única, histórica). Não têm campo de dono, então não dá pra restringir
+    // por usuário — liberado leitura pra qualquer autenticado, sem escrita
+    // (o app só lê daqui pra copiar pra dentro de um projeto).
+    match /cotacoes/{docId} { allow read: if isSignedIn(); allow write: if false; }
+    match /arquiteta/{docId} { allow read: if isSignedIn(); allow write: if false; }
+    match /prestadores/{docId} { allow read: if isSignedIn(); allow write: if false; }
+    match /etapas/{docId} { allow read: if isSignedIn(); allow write: if false; }
+    match /cronograma_arquivo/{docId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+      match /chunks/{chunkId} { allow read: if isSignedIn(); allow write: if false; }
+    }
+
+    // ---------- projetos e tudo dentro deles ----------
+    match /projetos/{projetoId} {
+      allow read: if isProjectMember(resource.data);
+
+      allow create: if isSignedIn() &&
+        request.resource.data.criadoPor is string &&
+        request.resource.data.criadoPor.lower() == userEmail() &&
+        request.resource.data.membrosEmails is list &&
+        userEmail() in request.resource.data.membrosEmails;
+
+      allow update: if isProjectMember(resource.data) &&
+        // impede que um membro comum se auto-promova a criador ou mude quem tem acesso;
+        // só o admin do projeto pode alterar essas duas coisas
+        (isProjectAdmin(resource.data) ||
+          (request.resource.data.criadoPor == resource.data.criadoPor &&
+           request.resource.data.membrosEmails == resource.data.membrosEmails));
+
+      allow delete: if isProjectAdmin(resource.data);
+
+      // Cotações, prestadores, etapas, arquivos da arquiteta, cronograma,
+      // projeto 3D e os "chunks" de arquivo de cada um — tudo dentro do
+      // projeto segue a mesma regra: precisa ser membro/admin/master.
+      match /{document=**} {
+        allow read, write: if isProjectMember(get(/databases/$(database)/documents/projetos/$(projetoId)).data);
+      }
+    }
+  }
+}
