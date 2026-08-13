@@ -1,4 +1,3 @@
-<!-- build-check: force redeploy -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -13,11 +12,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-<!-- pdf.js — para ler o cronograma em PDF direto no navegador -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
-<!-- mammoth.js — para ler arquivos .docx (Word) direto no navegador -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<!-- pdf.js carrega sob demanda (só quando o admin importa um PDF) — ver ensurePdfJs() -->
 
 <style>
   :root{
@@ -52,6 +47,14 @@
   @keyframes fadeInUp{
     from{opacity:0; transform:translateY(10px);}
     to{opacity:1; transform:translateY(0);}
+  }
+  @keyframes tabFade{
+    from{opacity:0;}
+    to{opacity:1;}
+  }
+  @keyframes skeletonShimmer{
+    from{background-position:-200% 0;}
+    to{background-position:200% 0;}
   }
   @keyframes floatSlow{
     0%,100%{ transform:perspective(900px) rotateX(6deg) rotateY(-8deg) translateY(0px); }
@@ -194,9 +197,9 @@
     cursor:pointer;
     color:var(--muted);
     white-space:nowrap;
-    transition:background-color .25s var(--ease), color .25s var(--ease), transform .15s var(--ease-spring), box-shadow .25s var(--ease);
+    transition:background-color .2s var(--ease), color .2s var(--ease), transform .1s var(--ease), box-shadow .2s var(--ease);
   }
-  nav button:active{ transform:scale(.95); }
+  nav button:active{ transform:scale(.96); }
   nav button.active{
     background:var(--accent);
     color:#fff;
@@ -205,7 +208,7 @@
 
   main{padding:32px 18px 0;}
   section{display:none;}
-  section.active{display:block; animation:fadeInUp .4s var(--ease) both;}
+  section.active{display:block; animation:tabFade .15s var(--ease) both;}
 
   .card{
     background:var(--card-bg);
@@ -215,7 +218,6 @@
     margin-bottom:32px;
     box-shadow:0 1px 3px rgba(20,23,28,0.045);
     transition:box-shadow .3s var(--ease), transform .3s var(--ease);
-    animation:fadeInUp .5s var(--ease) both;
   }
   .card h2{
     font-family:'Space Grotesk', sans-serif;
@@ -294,9 +296,9 @@
     letter-spacing:0.3px;
     cursor:pointer;
     box-shadow:var(--shadow-sm);
-    transition:transform .15s var(--ease-spring), box-shadow .2s var(--ease), opacity .2s var(--ease);
+    transition:transform .1s var(--ease), box-shadow .2s var(--ease), opacity .2s var(--ease);
   }
-  .btn:active{transform:scale(.98) translateY(1px); box-shadow:none;}
+  .btn:active{transform:scale(.98); box-shadow:none;}
   .btn:disabled{opacity:.5; cursor:wait;}
   .btn.secondary{
     background:var(--blueprint);
@@ -327,6 +329,32 @@
   }
   .list-item:last-child{ border-bottom:none; padding-bottom:4px; }
   .list-item:active{ background:var(--paper); }
+
+  .skel-row{
+    padding:18px 2px;
+    border-bottom:1px solid var(--paper-line);
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .skel-row:last-child{ border-bottom:none; }
+  .skel-bar{
+    height:13px;
+    border-radius:6px;
+    background:linear-gradient(90deg, var(--paper-line) 25%, #ECEDE9 37%, var(--paper-line) 63%);
+    background-size:400% 100%;
+    animation:skeletonShimmer 1.4s ease-in-out infinite;
+  }
+  .skel-bar.skel-title{ width:52%; height:14px; }
+  .skel-bar.skel-meta{ width:32%; height:11px; }
+  .skel-card{
+    height:72px;
+    border-radius:var(--radius-card);
+    margin-bottom:16px;
+    background:linear-gradient(90deg, var(--paper-line) 25%, #ECEDE9 37%, var(--paper-line) 63%);
+    background-size:400% 100%;
+    animation:skeletonShimmer 1.4s ease-in-out infinite;
+  }
   .list-item .row1{
     display:flex;
     justify-content:space-between;
@@ -501,6 +529,40 @@
     margin:16px;
     line-height:1.6;
   }
+  .modal-overlay{
+    display:flex;
+    position:fixed;
+    inset:0;
+    background:rgba(43,29,24,0.55);
+    z-index:100;
+    align-items:flex-end;
+    justify-content:center;
+    opacity:0;
+    visibility:hidden;
+    transition:opacity .2s var(--ease), visibility 0s linear .2s;
+  }
+  .modal-overlay.show{
+    opacity:1;
+    visibility:visible;
+    transition:opacity .2s var(--ease), visibility 0s linear 0s;
+  }
+  .modal-sheet{
+    background:#fff;
+    width:100%;
+    max-width:480px;
+    border-radius:18px 18px 0 0;
+    padding:20px;
+    max-height:75vh;
+    overflow-y:auto;
+    transform:translateY(16px);
+    opacity:0;
+    transition:transform .22s var(--ease), opacity .22s var(--ease);
+  }
+  .modal-overlay.show .modal-sheet{
+    transform:translateY(0);
+    opacity:1;
+  }
+
   .config-warning code{
     background:#fff;
     padding:1px 5px;
@@ -636,7 +698,12 @@
     .auth-scene-block-3{ display:block; }
   }
   @media (prefers-reduced-motion:reduce){
-    .auth-scene-glow, .auth-scene-block, .auth-scene-grid{ animation:none; }
+    *, *::before, *::after{
+      animation-duration:0.01ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:0.01ms !important;
+      scroll-behavior:auto !important;
+    }
   }
 </style>
 </head>
@@ -1169,8 +1236,8 @@
 
 <div class="toast" id="toast"></div>
 
-<div id="whats-modal" style="display:none;position:fixed;inset:0;background:rgba(43,29,24,0.55);z-index:100;align-items:flex-end;justify-content:center;">
-  <div style="background:#fff;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:20px;max-height:75vh;overflow-y:auto;">
+<div id="whats-modal" class="modal-overlay">
+  <div class="modal-sheet">
     <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin:0 0 4px;">Enviar arquivo</h2>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="whats-modal-sub"></div>
     <div id="whats-modal-lista"></div>
@@ -1330,6 +1397,18 @@ function toast(msg){
   setTimeout(()=>toastEl.classList.remove('show'), 2200);
 }
 
+function skeletonRows(n){
+  return Array.from({length:n||3}).map(()=>`
+    <div class="skel-row">
+      <div class="skel-bar skel-title"></div>
+      <div class="skel-bar skel-meta"></div>
+    </div>
+  `).join('');
+}
+function skeletonCards(n){
+  return Array.from({length:n||3}).map(()=>`<div class="skel-card"></div>`).join('');
+}
+
 // ---------- Tabs ----------
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -1428,8 +1507,21 @@ function nextProfNumber(){
 }
 
 // ==================== CRONOGRAMA ====================
-if(typeof pdfjsLib !== 'undefined'){
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let _pdfJsLoading = null;
+function ensurePdfJs(){
+  if(typeof pdfjsLib !== 'undefined') return Promise.resolve();
+  if(_pdfJsLoading) return _pdfJsLoading;
+  _pdfJsLoading = new Promise((resolve, reject)=>{
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    script.onload = ()=>{
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      resolve();
+    };
+    script.onerror = ()=> reject(new Error('Não consegui carregar o leitor de PDF. Verifique sua conexão.'));
+    document.head.appendChild(script);
+  });
+  return _pdfJsLoading;
 }
 
 let etapasCache = [];
@@ -1501,11 +1593,11 @@ function abrirModalWhatsApp(tel, nomeContato){
   lista.innerHTML = html;
   modal.dataset.tel = tel;
   modal.dataset.arquivos = JSON.stringify(arquivos);
-  modal.style.display = 'flex';
+  modal.classList.add('show');
 }
 
 document.getElementById('whats-modal-fechar').addEventListener('click', ()=>{
-  document.getElementById('whats-modal').style.display = 'none';
+  document.getElementById('whats-modal').classList.remove('show');
 });
 
 document.addEventListener('click', async (e)=>{
@@ -1520,7 +1612,7 @@ document.addEventListener('click', async (e)=>{
   if(opcao !== undefined && opcao !== null){
     const modal = document.getElementById('whats-modal');
     const tel = modal.dataset.tel;
-    modal.style.display = 'none';
+    modal.classList.remove('show');
 
     if(opcao === 'nenhum'){
       window.open(waLink(tel), '_blank');
@@ -1567,6 +1659,7 @@ document.addEventListener('click', async (e)=>{
 const IGNORAR_LINHA_CRONOGRAMA = /^(s|t|q|sem|semana\s?\d*|rev\d*|cronograma de obra|apartamento.*|milena|celante|arquiteta|presta[cç][aã]o de servi[cç]os|produtos.*|itens feitos sob medida)$/i;
 
 async function parsePdfCronograma(file){
+  await ensurePdfJs();
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data: buf}).promise;
   const linhas = [];
@@ -1864,6 +1957,7 @@ function renderLinhaDoTempo(){
 
 function listenCronograma(){
   if(!db) return;
+  document.getElementById('cron-linha-do-tempo').innerHTML = skeletonCards(3);
   trackUnsub(col('cronograma_arquivo').doc('atual').onSnapshot(doc=>{
     cronArquivoAtual = doc.exists ? doc.data() : null;
     const el = document.getElementById('cron-arquivo-atual');
@@ -1982,6 +2076,7 @@ function parseLinhaPrestador(linha){
 async function parseArquivoPrestadores(file){
   let texto = '';
   if(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')){
+    await ensurePdfJs();
     const buf = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data: buf}).promise;
     for(let p=1; p<=pdf.numPages; p++){
@@ -2528,6 +2623,7 @@ function renderTipos(docs){
 
 function listenCotacoes(){
   if(!db) return;
+  document.getElementById('c-list').innerHTML = skeletonRows(3);
   trackUnsub(col('cotacoes').orderBy('criado','desc').onSnapshot(snap=>{
     const docs = [];
     snap.forEach(doc=> docs.push({id:doc.id, ...doc.data()}));
@@ -2833,6 +2929,7 @@ function renderArquitetaList(docs){
 
 function listenArquiteta(){
   if(!db) return;
+  document.getElementById('a-list').innerHTML = skeletonRows(3);
   trackUnsub(col('arquiteta').orderBy('criado','desc').onSnapshot(snap=>{
     const docs = [];
     snap.forEach(doc=> docs.push({id:doc.id, ...doc.data()}));
@@ -3020,6 +3117,7 @@ function renderPrestadoresList(docs){
 
 function listenPrestadores(){
   if(!db) return;
+  document.getElementById('p-list').innerHTML = skeletonRows(3);
   trackUnsub(col('prestadores').orderBy('num','asc').onSnapshot(snap=>{
     const docs = [];
     snap.forEach(doc=> docs.push({id:doc.id, ...doc.data()}));
@@ -3780,6 +3878,7 @@ if(firebaseOk){
   });
 
   document.getElementById('admin-salvar-tema').addEventListener('click', async ()=>{
+    const btn = document.getElementById('admin-salvar-tema');
     Object.assign(temaAtual, {
       corFundo: normalizarHex(document.getElementById('admin-cor-fundo-hex').value, '#F4F5F3'),
       corCabecalho: normalizarHex(document.getElementById('admin-cor-cabecalho-hex').value, '#14171C'),
@@ -3792,6 +3891,7 @@ if(firebaseOk){
       corRecusado: normalizarHex(document.getElementById('admin-cor-recusado-hex').value, '#C1443A'),
       cantos: document.getElementById('admin-cantos').value
     });
+    btn.disabled = true; btn.textContent = 'Salvando...';
     try{
       await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
       aplicarTema(temaAtual);
@@ -3800,13 +3900,16 @@ if(firebaseOk){
       console.error(e);
       toast('Erro: ' + e.message);
     }
+    btn.disabled = false; btn.textContent = 'Aplicar cores';
   });
 
   document.getElementById('admin-salvar-textura').addEventListener('click', async ()=>{
+    const btn = document.getElementById('admin-salvar-textura');
     Object.assign(temaAtual, {
       corTextura: normalizarHex(document.getElementById('admin-cor-textura-hex').value, '#E4483A'),
       mostrarFolhagem: document.getElementById('admin-mostrar-folhagem').checked
     });
+    btn.disabled = true; btn.textContent = 'Salvando...';
     try{
       await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
       aplicarTema(temaAtual);
@@ -3815,9 +3918,12 @@ if(firebaseOk){
       console.error(e);
       toast('Erro: ' + e.message);
     }
+    btn.disabled = false; btn.textContent = 'Salvar fundo';
   });
 
   document.getElementById('admin-resetar-tema').addEventListener('click', async ()=>{
+    const btn = document.getElementById('admin-resetar-tema');
+    btn.disabled = true; btn.textContent = 'Restaurando...';
     try{
       temaAtual = { tipoCores: temaAtual.tipoCores || {}, decoracoes: temaAtual.decoracoes || [] };
       await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
@@ -3832,11 +3938,14 @@ if(firebaseOk){
       console.error(e);
       toast('Erro: ' + e.message);
     }
+    btn.disabled = false; btn.textContent = 'Usar cores padrão';
   });
 
   document.getElementById('add-membro-btn').addEventListener('click', async ()=>{
     const email = document.getElementById('novo-membro-email').value.trim().toLowerCase();
     if(!email || !email.includes('@')){ toast('Digite um e-mail válido'); return; }
+    const btn = document.getElementById('add-membro-btn');
+    btn.disabled = true; btn.textContent = 'Adicionando...';
     try{
       await db.collection('projetos').doc(currentProjetoId).update({
         membrosEmails: firebase.firestore.FieldValue.arrayUnion(email)
@@ -3848,6 +3957,7 @@ if(firebaseOk){
       console.error(e);
       toast('Erro: ' + e.message);
     }
+    btn.disabled = false; btn.textContent = 'Adicionar acesso';
   });
 
   document.addEventListener('click', async (e)=>{
@@ -3888,7 +3998,7 @@ if(firebaseOk){
     const podecriarProjeto = !!currentArquitetoId || currentUserEmail === masterEmailAtual;
     document.getElementById('new-project-card').style.display = podecriarProjeto ? 'block' : 'none';
 
-    el.innerHTML = '<div class="empty">Carregando...</div>';
+    el.innerHTML = skeletonRows(2);
     try{
       let snap;
       if(modoMasterVendoArquitetoId){
@@ -4000,7 +4110,7 @@ if(firebaseOk){
   async function renderMasterScreen(){
     document.getElementById('master-email-atual').value = masterEmailAtual;
     const el = document.getElementById('master-arquitetos-list');
-    el.innerHTML = '<div class="empty">Carregando...</div>';
+    el.innerHTML = skeletonRows(3);
     try{
       const snap = await db.collection('arquitetos').get();
       if(snap.empty){
