@@ -558,6 +558,50 @@
     cursor:pointer;
     padding:0;
   }
+  .step-date{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    margin-top:5px;
+  }
+  .step-date-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin:0;
+    text-transform:none;
+  }
+  .step-date-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--muted);
+    width:20px;
+    flex-shrink:0;
+  }
+  input.step-date-input{
+    width:auto;
+    border:none;
+    background:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    padding:1px 0;
+    cursor:pointer;
+  }
+  input.step-date-input:focus{
+    box-shadow:none;
+    border-color:transparent;
+  }
+  .step-date-input::-webkit-calendar-picker-indicator{
+    opacity:0.45;
+    width:12px;
+    height:12px;
+    padding:0;
+    margin-left:2px;
+  }
+  .step-date-view{
+    font-family:'IBM Plex Mono', monospace;
+  }
   .status-select{
     width:100%;
     padding:9px 10px;
@@ -1297,6 +1341,9 @@
     <div class="card">
       <h2>Cronograma da obra <span class="tag">importar</span></h2>
       <div id="cron-arquivo-atual" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
+      <label>Data de início da obra (segunda-feira da Semana 01)</label>
+      <input type="date" id="cron-data-inicio">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Se o PDF tiver a grade de semanas com barras coloridas, o app tenta calcular a data de cada etapa automaticamente a partir daqui. Sempre dá pra corrigir depois.</div>
       <label>Arquivo do cronograma (PDF)</label>
       <div class="file-drop" id="cron-drop">Toque para escolher o PDF do cronograma</div>
       <input type="file" id="cron-file" accept=".pdf">
@@ -2050,6 +2097,7 @@ let etapasCache = [];
 let cronArquivoAtual = null; // {hasFile, fileName}
 let projeto3dAtual = null; // {hasFile, fileName}
 let importPreview = []; // [{nome, tipo, ordem}]
+let cronGradeDatas = null; // {nome: {diaInicio, diaFim}} — lido da grade colorida do PDF, se houver
 
 const ETAPA_TIPO_KEYWORDS = [
   [/demoli|remo[cç][aã]o de itens/i, 'Mão de obra'],
@@ -2257,6 +2305,116 @@ async function parsePdfCronograma(file){
   return etapas;
 }
 
+// Tenta ler, a partir das barras coloridas de uma grade semanal (S T Q Q S por
+// semana), em qual "dia" (índice sequencial, 5 por semana) cada etapa começa e
+// termina. Feito pra bater com o modelo de cronograma em grade (tipo Gantt) da
+// arquiteta — se o PDF não tiver essa grade, simplesmente não acha nada e a
+// data fica em branco pra preencher manualmente.
+async function detectarDiasEtapas(file){
+  try{
+    await ensurePdfJs();
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    const page = await pdf.getPage(1);
+    const content = await page.getTextContent();
+
+    // acha a linha dos dias (várias células "S"/"T"/"Q" na mesma altura)
+    const candidatosDias = [];
+    content.items.forEach(item=>{
+      const texto = item.str.trim();
+      if(/^[STQ]$/.test(texto)){
+        candidatosDias.push({x: item.transform[4], y: item.transform[5], w: item.width||0, h: item.height||10});
+      }
+    });
+    const clustersDias = [];
+    candidatosDias.forEach(it=>{
+      let c = clustersDias.find(cl=>Math.abs(cl.y - it.y) < 3);
+      if(!c){ c = {y: it.y, itens: []}; clustersDias.push(c); }
+      c.itens.push(it);
+    });
+    clustersDias.sort((a,b)=> b.itens.length - a.itens.length);
+    const linhaDias = clustersDias[0];
+    if(!linhaDias || linhaDias.itens.length < 15) return null;
+
+    const colunas = [...linhaDias.itens].sort((a,b)=>a.x-b.x).map(it=>({
+      x: it.x + it.w/2,
+      y: it.y + it.h/2
+    }));
+
+    // agrupa linhas de texto (mesma lógica do parser de nomes) pra achar a
+    // posição vertical de cada etapa
+    const porLinha = {};
+    content.items.forEach(item=>{
+      const y = Math.round(item.transform[5] / 4) * 4;
+      const texto = item.str.trim();
+      if(!texto) return;
+      if(!porLinha[y]) porLinha[y] = [];
+      porLinha[y].push({x: item.transform[4], y: item.transform[5], w: item.width||0, h: item.height||10, texto});
+    });
+    const linhasEtapas = [];
+    Object.keys(porLinha).forEach(y=>{
+      const itens = porLinha[y].sort((a,b)=>a.x-b.x);
+      const primeiro = itens[0];
+      if(primeiro.x < 160 && primeiro.texto.length > 2 && !IGNORAR_LINHA_CRONOGRAMA.test(primeiro.texto)){
+        linhasEtapas.push({nome: primeiro.texto, y: primeiro.y + primeiro.h/2});
+      }
+    });
+    if(linhasEtapas.length === 0) return null;
+
+    // renderiza a página num canvas pra "ler" a cor de cada célula da grade
+    const scale = 1.5;
+    const viewport = page.getViewport({scale});
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const ctx = canvas.getContext('2d', {willReadFrequently:true});
+    await page.render({canvasContext: ctx, viewport}).promise;
+
+    function corPreenchida(xPdf, yPdf){
+      const [vx, vy] = viewport.convertToViewportPoint(xPdf, yPdf);
+      const px = Math.min(canvas.width-1, Math.max(0, Math.round(vx)));
+      const py = Math.min(canvas.height-1, Math.max(0, Math.round(vy)));
+      const [r,g,b] = ctx.getImageData(px, py, 1, 1).data;
+      if(b - r > 40 && b > 180) return true; // barra azul
+      if(r - g > 40 && r - b > 40 && r > 200) return true; // barra vermelha
+      return false;
+    }
+
+    const resultado = {};
+    linhasEtapas.forEach(({nome, y})=>{
+      let diaInicio = -1, diaFim = -1;
+      colunas.forEach((col, i)=>{
+        if(corPreenchida(col.x, y)){
+          if(diaInicio === -1) diaInicio = i;
+          diaFim = i;
+        }
+      });
+      if(diaInicio !== -1) resultado[nome] = {diaInicio, diaFim};
+    });
+    return resultado;
+  }catch(e){
+    console.error('Não consegui ler as datas da grade do cronograma:', e);
+    return null;
+  }
+}
+
+function dataDaGradeCronograma(baseISO, diaIndex){
+  if(!baseISO || diaIndex==null || diaIndex<0) return null;
+  const [ano,mes,dia] = baseISO.split('-').map(Number);
+  const base = new Date(Date.UTC(ano, mes-1, dia));
+  const semanas = Math.floor(diaIndex/5);
+  const diaDaSemana = diaIndex%5;
+  base.setUTCDate(base.getUTCDate() + semanas*7 + diaDaSemana);
+  return base.toISOString().slice(0,10);
+}
+
+function formatarDataBR(iso){
+  if(!iso) return '';
+  const [ano,mes,dia] = iso.split('-');
+  const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  return dia + ' ' + meses[Number(mes)-1];
+}
+
 function renderImportPreview(){
   const el = document.getElementById('cron-preview');
   if(importPreview.length===0){ el.innerHTML=''; return; }
@@ -2306,12 +2464,15 @@ cronFile.addEventListener('change', async ()=>{
   statusEl.textContent = 'Lendo o PDF...';
   try{
     const nomes = await parsePdfCronograma(file);
+    cronGradeDatas = await detectarDiasEtapas(file);
     if(nomes.length === 0){
       statusEl.textContent = 'Não consegui identificar etapas nesse PDF. Você pode adicionar manualmente na lista abaixo.';
       importPreview = [];
     }else{
       importPreview = nomes.map(nome=>({nome, tipo: guessTipoEtapa(nome)}));
-      statusEl.textContent = `${nomes.length} etapas encontradas — revise abaixo antes de confirmar.`;
+      const comData = cronGradeDatas ? importPreview.filter(et=>cronGradeDatas[et.nome]).length : 0;
+      statusEl.textContent = `${nomes.length} etapas encontradas — revise abaixo antes de confirmar.` +
+        (comData>0 ? ` Datas identificadas automaticamente pra ${comData} delas.` : '');
     }
     renderImportPreview();
     window._cronFileToSave = file;
@@ -2340,16 +2501,24 @@ document.addEventListener('click', async (e)=>{
       // apaga etapas antigas e cria as novas na ordem revisada
       const antigasSnap = await col('etapas').get();
       await Promise.all(antigasSnap.docs.map(d=>d.ref.delete()));
+      const dataInicioObra = document.getElementById('cron-data-inicio').value || null;
       for(let i=0;i<importPreview.length;i++){
         const et = importPreview[i];
-        await col('etapas').doc(uid()).set({
+        const grade = cronGradeDatas && cronGradeDatas[et.nome];
+        const payload = {
           ordem: i+1, nome: et.nome, tipos: [et.tipo],
           status: 'Não iniciada', tiposCompletos: {},
           criado: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        };
+        if(dataInicioObra && grade){
+          payload.dataInicio = dataDaGradeCronograma(dataInicioObra, grade.diaInicio);
+          payload.dataFim = dataDaGradeCronograma(dataInicioObra, grade.diaFim);
+        }
+        await col('etapas').doc(uid()).set(payload);
       }
       toast('Cronograma importado!');
       importPreview = [];
+      cronGradeDatas = null;
       renderImportPreview();
       document.getElementById('cron-import-status').textContent = '';
       document.getElementById('cron-file').value='';
@@ -2511,6 +2680,10 @@ function renderLinhaDoTempo(){
             </div>
             <span class="status-pill ${statusEtapaClasse(et.status)}">${escapeHtml(et.status)}</span>
           </div>
+          ${isAdmin ? `<div class="step-date">
+            <label class="step-date-row"><span class="step-date-label">De</span><input type="date" class="step-date-input" data-data-etapa="${et.id}|inicio" value="${et.dataInicio||''}"></label>
+            <label class="step-date-row"><span class="step-date-label">Até</span><input type="date" class="step-date-input" data-data-etapa="${et.id}|fim" value="${et.dataFim||''}"></label>
+          </div>` : (et.dataInicio ? `<div class="meta step-date-view">${formatarDataBR(et.dataInicio)}${et.dataFim && et.dataFim!==et.dataInicio ? ' – '+formatarDataBR(et.dataFim) : ''}</div>` : '')}
           ${isAdmin ? `<div class="step-actions">
             <span class="step-reorder">
               <button data-subir-etapa="${et.id}" title="Subir">↑</button>
@@ -2523,6 +2696,22 @@ function renderLinhaDoTempo(){
       </div>
     `).join('') + `</div>`;
 }
+
+document.addEventListener('change', async (e)=>{
+  const dataAttr = e.target.getAttribute('data-data-etapa');
+  if(dataAttr){
+    const [etapaId, campo] = dataAttr.split('|');
+    const valor = e.target.value || null;
+    const payload = {};
+    payload[campo === 'inicio' ? 'dataInicio' : 'dataFim'] = valor;
+    try{
+      await col('etapas').doc(etapaId).update(payload);
+    }catch(err){
+      console.error(err);
+      toast('Erro ao salvar data');
+    }
+  }
+});
 
 function listenCronograma(){
   if(!db) return;
