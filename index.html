@@ -1,0 +1,3942 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Obra — Central de Cotações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase (Auth + Firestore — gratuito, sem cartão de crédito) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+<!-- pdf.js — para ler o cronograma em PDF direto no navegador -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<!-- mammoth.js — para ler arquivos .docx (Word) direto no navegador -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<style>
+  :root{
+    --blueprint:#14171C;
+    --blueprint-dark:#0D0F12;
+    --paper:#F4F5F3;
+    --paper-line:#E1E4E0;
+    --caution:#C7862B;
+    --caution-dark:#A6701F;
+    --ink:#14171C;
+    --muted:#6B7280;
+    --ok:#2F6F5E;
+    --danger:#C1443A;
+    --accent:#2F6F5E;
+    --accent-dark:#24594B;
+    --card-bg:#FFFFFF;
+    --nav-bg:#FFFFFF;
+    --radius-card:16px;
+    --radius-btn:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+    padding-bottom:40px;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    background:var(--blueprint);
+    background-image:var(--banner-img, none);
+    background-size:cover;
+    background-position:center;
+    color:var(--banner-text, var(--paper));
+    padding:34px 20px 22px;
+    min-height:150px;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-end;
+  }
+  header::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:var(--banner-overlay, none);
+    pointer-events:none;
+  }
+  .header-deco{
+    position:relative;
+    font-size:22px;
+    letter-spacing:6px;
+    margin-bottom:10px;
+    opacity:.9;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    color:var(--caution);
+    margin:0 0 8px;
+    position:relative;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-optical-sizing:auto;
+    font-size:28px;
+    margin:0;
+    letter-spacing:-0.3px;
+    position:relative;
+  }
+  .sub{
+    font-size:13px;
+    color:var(--banner-text, #E4D6C9);
+    opacity:.82;
+    margin-top:8px;
+    max-width:520px;
+    position:relative;
+    line-height:1.5;
+  }
+  #conn-status{
+    display:inline-block;
+    margin-top:12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    padding:4px 10px;
+    border-radius:20px;
+    background:rgba(255,255,255,0.12);
+    position:relative;
+  }
+  #conn-status.ok{color:#E9C9A8;}
+  #conn-status.err{color:#F3A79C;}
+
+  nav{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:6px;
+    margin:18px 16px 0;
+    background:transparent;
+  }
+  nav button{
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius-btn);
+    background:var(--nav-bg);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    letter-spacing:0.2px;
+    padding:10px 3px;
+    cursor:pointer;
+    color:var(--muted);
+    line-height:1.3;
+    transition:all .15s ease;
+  }
+  nav button.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+
+  main{padding:20px 16px 0;}
+  section{display:none;}
+  section.active{display:block;}
+
+  .card{
+    background:var(--card-bg);
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius-card);
+    padding:18px;
+    margin-bottom:16px;
+    box-shadow:0 2px 10px rgba(43,29,24,0.05), 0 1px 2px rgba(43,29,24,0.04);
+  }
+  .card h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:18px;
+    margin:0 0 14px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--ink);
+  }
+  .card h2 .tag{
+    background:var(--caution);
+    color:#fff;
+    font-size:10px;
+    font-family:'IBM Plex Mono', monospace;
+    padding:2px 7px;
+    border-radius:20px;
+    font-weight:700;
+  }
+
+  label{
+    display:block;
+    font-size:11px;
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--muted);
+    margin:12px 0 4px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  label:first-of-type{margin-top:0;}
+  input[type=text], input[type=number], input[type=date], select{
+    width:100%;
+    padding:10px 12px;
+    border:1.5px solid var(--paper-line);
+    border-radius:var(--radius-btn);
+    font-size:14px;
+    font-family:'Inter', sans-serif;
+    background:var(--paper);
+  }
+  input:focus, select:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .file-drop{
+    border:1.5px dashed #C9C4B4;
+    border-radius:var(--radius-btn);
+    padding:16px;
+    text-align:center;
+    font-size:12.5px;
+    color:var(--muted);
+    background:var(--paper);
+    cursor:pointer;
+  }
+  .file-drop.has-file{
+    border-color:var(--ok);
+    color:var(--ok);
+    font-weight:600;
+  }
+  input[type=file]{display:none;}
+
+  .btn{
+    margin-top:16px;
+    width:100%;
+    padding:13px;
+    border:none;
+    border-radius:var(--radius-btn);
+    background:var(--accent);
+    color:#fff;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:13px;
+    letter-spacing:0.3px;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(198,104,58,0.3);
+    transition:transform .1s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn:disabled{opacity:.5; cursor:wait;}
+  .btn.secondary{
+    background:var(--blueprint);
+    color:#fff;
+    box-shadow:0 2px 8px rgba(94,33,25,0.25);
+  }
+  .pag-toggle-btn.active, .p-status-chip.active{
+    background:var(--accent) !important;
+    color:#fff !important;
+    border-color:var(--accent) !important;
+    font-weight:700;
+  }
+
+  .list-item{
+    border:1px solid var(--paper-line);
+    border-radius:calc(var(--radius-card) - 4px);
+    padding:13px;
+    margin-bottom:10px;
+    background:var(--paper);
+  }
+  .list-item .row1{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:8px;
+  }
+  .list-item .item-title{
+    font-weight:600;
+    font-size:14.5px;
+    font-family:'Inter', sans-serif;
+  }
+  .list-item .meta{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:3px;
+    line-height:1.5;
+  }
+  .price{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    color:var(--blueprint);
+    white-space:nowrap;
+  }
+  .actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+  }
+  .actions > *{
+    flex:1;
+    min-width:80px;
+  }
+  .actions button{
+    flex:1;
+    padding:8px;
+    border-radius:8px;
+    font-size:11.5px;
+    font-family:'IBM Plex Mono', monospace;
+    cursor:pointer;
+    border:1px solid var(--paper-line);
+    background:#fff;
+  }
+  .actions button.view{color:var(--blueprint); border-color:var(--blueprint);}
+  .actions button.del{color:var(--danger); border-color:var(--danger);}
+  .badge-prof{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    background:var(--accent);
+    color:#fff;
+    padding:3px 9px;
+    border-radius:20px;
+    margin-top:6px;
+  }
+  .status-select{
+    width:100%;
+    padding:9px 10px;
+    border-radius:var(--radius-btn);
+    font-size:13px;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    border:1.5px solid var(--paper-line);
+    margin-top:2px;
+  }
+  .status-select.status-pendente{ background:#FBEEE2; color:var(--caution-dark); }
+  .status-select.status-aprovado{ background:#E7EFE7; color:var(--ok); }
+  .status-select.status-recusado{ background:#F6E4DF; color:var(--danger); }
+
+  .bulk-row{
+    border:1px solid var(--paper-line);
+    border-radius:10px;
+    padding:10px;
+    margin-bottom:8px;
+    background:var(--paper);
+  }
+  .bulk-row .bulk-file{
+    font-size:11.5px;
+    color:var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    margin-bottom:6px;
+    word-break:break-all;
+  }
+  .bulk-row input, .bulk-row select{
+    width:100%;
+    padding:8px 10px;
+    border:1.5px solid #C9C4B4;
+    border-radius:6px;
+    font-size:13px;
+    margin-bottom:6px;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .bulk-row .bulk-remove{
+    background:none;
+    border:none;
+    color:var(--danger);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    cursor:pointer;
+    padding:0;
+  }
+
+  .search-box{
+    display:flex;
+    gap:8px;
+  }
+  .search-box input{flex:1;}
+  .search-box button{
+    padding:0 18px;
+    border:2px solid var(--ink);
+    border-radius:8px;
+    background:var(--blueprint);
+    color:#fff;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  .empty{
+    text-align:center;
+    padding:30px 10px;
+    color:var(--muted);
+    font-size:13px;
+  }
+  .empty .big{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:28px;
+    color:#D8D2C0;
+    margin-bottom:8px;
+  }
+  .note{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:14px;
+    line-height:1.5;
+    border-top:1px dashed #C9C4B4;
+    padding-top:10px;
+  }
+  .toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--ink);
+    color:#fff;
+    padding:10px 18px;
+    border-radius:20px;
+    font-size:13px;
+    font-family:'IBM Plex Mono', monospace;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s;
+    z-index:50;
+    max-width:85vw;
+    text-align:center;
+  }
+  .toast.show{opacity:1;}
+
+  .config-warning{
+    background:#FDECEC;
+    border:2px solid var(--danger);
+    color:var(--danger);
+    padding:14px;
+    border-radius:10px;
+    font-size:13px;
+    margin:16px;
+    line-height:1.6;
+  }
+  .config-warning code{
+    background:#fff;
+    padding:1px 5px;
+    border-radius:4px;
+    font-size:12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div id="auth-screen" style="display:none;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 15%, #7A2D22 0%, var(--blueprint) 45%, var(--blueprint-dark) 100%);">
+  <div style="max-width:380px;margin:0 auto;width:100%;">
+    <p class="eyebrow" style="color:var(--caution);">Reforma do apartamento</p>
+    <h1 style="color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:26px;margin:0 0 20px;">Central de Cotações</h1>
+    <div class="card">
+      <h2 id="auth-title">Entrar</h2>
+      <label>E-mail</label>
+      <input type="text" id="auth-email" placeholder="seu@email.com">
+      <label>Senha</label>
+      <input type="text" id="auth-senha" placeholder="mínimo 6 caracteres">
+      <button class="btn" id="auth-entrar">Entrar</button>
+      <button class="btn secondary" id="auth-cadastrar" style="margin-top:8px;">Criar conta nova</button>
+      <button id="auth-esqueci" style="background:none;border:none;color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer;text-decoration:underline;padding:0;">Esqueci minha senha</button>
+      <div id="auth-erro" style="color:var(--danger);font-size:12px;margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TELA MASTER -->
+<div id="master-screen" style="display:none;min-height:100vh;padding:24px 16px;background:var(--paper);">
+  <div style="max-width:460px;margin:0 auto;">
+    <p class="eyebrow">Painel geral</p>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:24px;margin:0 0 16px;">Arquitetos</h1>
+
+    <div id="master-arquitetos-list"></div>
+
+    <div class="card">
+      <h2>Cadastrar novo arquiteto</h2>
+      <label>Nome</label>
+      <input type="text" id="master-arq-nome" placeholder="Ex: Milena Celante">
+      <label>E-mail</label>
+      <input type="text" id="master-arq-email" placeholder="email@arquiteta.com">
+      <button class="btn secondary" id="master-arq-criar">Cadastrar arquiteto</button>
+    </div>
+
+    <div class="card">
+      <h2>Seu e-mail de acesso master</h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Só quem estiver aqui vê esta tela. Você pode trocar pra outro e-mail quando quiser.</div>
+      <input type="text" id="master-email-atual" placeholder="novoemail@exemplo.com">
+      <button class="btn" id="master-email-salvar" style="background:#eee;margin-top:10px;">Trocar e-mail master</button>
+    </div>
+
+    <button class="btn" id="master-meus-projetos" style="background:#eee;margin-top:8px;">Ver meus projetos pessoais</button>
+    <button class="btn" id="master-sair" style="background:#eee;margin-top:8px;">Sair da conta</button>
+  </div>
+</div>
+
+<!-- TELA DE SELEÇÃO / CRIAÇÃO DE PROJETO -->
+<div id="project-screen" style="display:none;min-height:100vh;padding:24px 16px;background:var(--paper);">
+  <div style="max-width:420px;margin:0 auto;">
+    <p class="eyebrow">Reforma do apartamento</p>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:24px;margin:0 0 6px;">Seus projetos</h1>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;" id="project-user-email"></div>
+    <div id="project-voltar-master" style="display:none;margin-bottom:12px;"></div>
+
+    <div id="project-list"></div>
+
+    <div class="card" id="new-project-card">
+      <h2>Criar novo projeto</h2>
+      <label>Nome do projeto</label>
+      <input type="text" id="new-project-nome" placeholder="Ex: Apartamento Fran e Richard">
+      <button class="btn secondary" id="new-project-criar">Criar projeto</button>
+    </div>
+
+    <button class="btn" id="project-sair" style="background:#eee;margin-top:8px;">Sair da conta</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-shell" style="display:none;">
+
+<header>
+  <div class="header-deco" id="header-deco"></div>
+  <p class="eyebrow">Reforma do apartamento</p>
+  <h1 id="app-projeto-nome">Central de Cotações</h1>
+  <p class="sub">Suba cotações e arquivos da arquiteta. Cada item pode levar o número de um profissional — quem tiver esse número encontra só o que é dele na aba Buscar.</p>
+  <span id="conn-status" class="ok">conectado ✓</span>
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button id="btn-trocar-projeto" style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:5px 12px;cursor:pointer;">↺ trocar projeto</button>
+    <button id="btn-sair" style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:5px 12px;cursor:pointer;">sair</button>
+  </div>
+</header>
+
+<div id="verify-warning" style="display:none;background:#FBF0DF;border:1.5px solid var(--caution);color:var(--caution-dark);padding:12px 16px;font-size:12.5px;margin:0 16px;border-radius:var(--radius-btn);line-height:1.5;">
+  ✉️ Confirme seu e-mail pra garantir o acesso — mandamos um link pra <strong id="verify-email-alvo"></strong>.
+  <button id="verify-reenviar" style="background:none;border:none;color:var(--caution-dark);text-decoration:underline;cursor:pointer;padding:0;font-size:12.5px;font-weight:700;">Reenviar e-mail</button>
+</div>
+
+<div id="config-warning" class="config-warning" style="display:none">
+  ⚠️ Configuração do Firebase não encontrada. Abra o arquivo HTML e preencha o objeto <code>firebaseConfig</code> no início do <code>&lt;script&gt;</code> com as chaves do seu projeto Firebase (veja instruções que te enviei junto com este arquivo).
+</div>
+
+<nav>
+  <button class="tab-btn active" data-tab="cronograma">Cronograma</button>
+  <button class="tab-btn" data-tab="projeto3d">Projeto 3D</button>
+  <button class="tab-btn" data-tab="cotacoes">Cotações</button>
+  <button class="tab-btn" data-tab="tipos">Por Tipo</button>
+  <button class="tab-btn" data-tab="aprovados">Aprovados</button>
+  <button class="tab-btn" data-tab="cartoes">Cartões</button>
+  <button class="tab-btn" data-tab="arquiteta">Arq. Arquiteta</button>
+  <button class="tab-btn" data-tab="prestadores">Prestadores</button>
+  <button class="tab-btn" data-tab="buscar">Buscar por nº</button>
+  <button class="tab-btn" data-tab="admin" id="nav-admin-btn" style="display:none;background:var(--caution);">⚙ Admin</button>
+</nav>
+
+<main>
+
+  <!-- ADMIN (só quem criou o projeto vê esta aba) -->
+  <section id="tab-admin">
+
+    <div class="card">
+      <h2>Nome deste projeto</h2>
+      <input type="text" id="admin-nome-projeto" placeholder="Ex: Apartamento Fran e Richard">
+      <button class="btn secondary" id="admin-salvar-identidade" style="margin-top:12px;">Salvar</button>
+    </div>
+
+    <div class="card" id="admin-logo-card">
+      <h2>Sua logo <span class="tag">fixa em todos os clientes</span></h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Essa logo aparece pra você e pra todos os seus clientes — muda aqui uma vez só.</div>
+      <div class="file-drop" id="admin-logo-drop">Toque para escolher a logo (até 300KB)</div>
+      <input type="file" id="admin-logo-file" accept="image/*">
+      <button class="btn secondary" id="admin-salvar-logo" style="margin-top:12px;">Salvar logo</button>
+    </div>
+
+    <div class="card">
+      <h2>Aparência deste cliente <span class="tag">tudo editável</span></h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Só muda pra este projeto — a logo continua a mesma. Se você subir uma foto de logo, ela cobre o banner inteiro e essas cores de banner ficam em segundo plano.</div>
+
+      <label>Fundo da página</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-fundo" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-fundo-hex" placeholder="#F4F5F3" style="flex:1;">
+      </div>
+
+      <label>Banner / cabeçalho (sem foto)</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-cabecalho" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-cabecalho-hex" placeholder="#14171C" style="flex:1;">
+      </div>
+
+      <label>Fundo dos cards</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-card" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-card-hex" placeholder="#FFFFFF" style="flex:1;">
+      </div>
+
+      <label>Fundo do menu (abas)</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-menu" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-menu-hex" placeholder="#FFFFFF" style="flex:1;">
+      </div>
+
+      <label>Botões / destaque</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-botao" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-botao-hex" placeholder="#2F6F5E" style="flex:1;">
+      </div>
+
+      <label>Texto</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-texto" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-texto-hex" placeholder="#14171C" style="flex:1;">
+      </div>
+
+      <label>Cor de "aprovado"</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-sucesso" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-sucesso-hex" placeholder="#2F6F5E" style="flex:1;">
+      </div>
+
+      <label>Cor de "pendente"</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-destaque" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-destaque-hex" placeholder="#C7862B" style="flex:1;">
+      </div>
+
+      <label>Cor de "recusado"</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-cor-recusado" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-cor-recusado-hex" placeholder="#C1443A" style="flex:1;">
+      </div>
+
+      <label>Estilo dos cantos</label>
+      <select id="admin-cantos">
+        <option value="arredondado">Arredondado</option>
+        <option value="reto">Reto / técnico</option>
+        <option value="suave">Bem suave</option>
+      </select>
+
+      <button class="btn secondary" id="admin-salvar-tema" style="margin-top:14px;">Aplicar cores</button>
+      <button class="btn" id="admin-resetar-tema" style="margin-top:8px;background:#eee;">Usar cores padrão</button>
+    </div>
+
+    <div class="card">
+      <h2>Cores por tipo <span class="tag">opcional</span></h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Dá uma faixa colorida nos itens de cada tipo, pra identificar rápido nas listas.</div>
+      <label>Tipo</label>
+      <select id="admin-tipo-select"></select>
+      <label>Cor</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="color" id="admin-tipo-cor" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+        <input type="text" id="admin-tipo-cor-hex" placeholder="#2F6F5E" style="flex:1;">
+      </div>
+      <button class="btn secondary" id="admin-tipo-salvar" style="margin-top:12px;">Salvar cor deste tipo</button>
+      <div id="admin-tipo-legenda" style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Decorações do banner <span class="tag">opcional</span></h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Toque nos emojis pra deixar o topo com a cara do studio.</div>
+      <div id="admin-deco-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px;"></div>
+      <button class="btn secondary" id="admin-deco-salvar">Salvar decorações</button>
+    </div>
+
+    <div class="card">
+      <h2>Quem tem acesso a este projeto</h2>
+      <div id="membros-list" style="margin-bottom:12px;"></div>
+      <label>Adicionar por e-mail</label>
+      <input type="text" id="novo-membro-email" placeholder="email@exemplo.com">
+      <button class="btn secondary" id="add-membro-btn">Adicionar acesso</button>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;">A pessoa precisa criar uma conta (com esse mesmo e-mail) na tela de login para acessar.</div>
+    </div>
+
+    <div class="card">
+      <h2>Importar prestadores em massa <span class="tag">PDF ou TXT</span></h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Uma linha por prestador. Melhor formato: Nome; Empresa; Telefone; Especialidade — mas funciona mesmo sem seguir à risca, você revisa antes de confirmar.</div>
+      <div class="file-drop" id="prest-import-drop">Toque para escolher o arquivo (PDF ou TXT)</div>
+      <input type="file" id="prest-import-file" accept=".pdf,.txt">
+      <div id="prest-import-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+    </div>
+    <div id="prest-import-preview"></div>
+
+    <div class="card">
+      <h2>Cronograma da obra <span class="tag">importar</span></h2>
+      <div id="cron-arquivo-atual" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
+      <label>Arquivo do cronograma (PDF)</label>
+      <div class="file-drop" id="cron-drop">Toque para escolher o PDF do cronograma</div>
+      <input type="file" id="cron-file" accept=".pdf">
+      <div id="cron-import-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+    </div>
+    <div id="cron-preview"></div>
+
+    <div class="card">
+      <h2>Projeto 3D <span class="tag">PDF único</span></h2>
+      <div id="admin-3d-atual" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
+      <label>Arquivo do projeto 3D (PDF)</label>
+      <div class="file-drop" id="admin-3d-drop">Toque para escolher o PDF do projeto 3D</div>
+      <input type="file" id="admin-3d-file" accept=".pdf">
+      <div id="admin-3d-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Dados de antes do login</h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Se você usava o app antes de existir login, importe esses dados antigos pra dentro deste projeto (só precisa fazer uma vez).</div>
+      <button class="btn" id="btn-migrar" style="background:#eee;">↑ importar dados de antes do login</button>
+    </div>
+
+  </section>
+
+  <!-- CRONOGRAMA -->
+  <section id="tab-cronograma" class="active">
+
+    <div id="cron-proxima"></div>
+
+    <div id="cron-linha-do-tempo"></div>
+
+  </section>
+
+  <!-- PROJETO 3D -->
+  <section id="tab-projeto3d">
+    <div class="card" style="text-align:center;">
+      <h2 style="justify-content:center;">Projeto 3D</h2>
+      <div id="projeto3d-status" style="font-size:13px;color:var(--muted);margin-bottom:14px;">Carregando...</div>
+      <button class="btn secondary" id="projeto3d-abrir" style="display:none;">Abrir projeto 3D</button>
+    </div>
+  </section>
+
+  <!-- COTAÇÕES -->
+  <section id="tab-cotacoes">
+    <div class="card">
+      <h2 id="c-form-title">Nova cotação <span class="tag">upload</span></h2>
+      <label>Item</label>
+      <input type="text" id="c-item" placeholder="Ex: Sofá 3 lugares">
+
+      <label>Tipo</label>
+      <select id="c-tipo"></select>
+
+      <label>Local da cotação</label>
+      <input type="text" id="c-local" placeholder="Ex: Loja XYZ / Site ABC">
+
+      <label>Preço (R$)</label>
+      <input type="number" id="c-preco" placeholder="0,00">
+
+      <label>Número do profissional (opcional)</label>
+      <input type="text" id="c-prof" placeholder="Ex: 01, 02...">
+
+      <label>Status</label>
+      <select id="c-status">
+        <option value="Pendente">Pendente</option>
+        <option value="Aprovado">Aprovado</option>
+        <option value="Recusado">Recusado</option>
+      </select>
+
+      <div id="c-pagamento-wrap" style="display:none;margin-top:14px;padding:12px;background:var(--paper);border-radius:var(--radius-btn);">
+        <label style="margin-top:0;">Forma de pagamento</label>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="c-pag-vista" class="pag-toggle-btn active" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">À vista</button>
+          <button type="button" id="c-pag-parcelado" class="pag-toggle-btn" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Parcelado</button>
+        </div>
+        <div id="c-pag-parcelas-wrap" style="display:none;margin-top:12px;">
+          <label>Nº de parcelas</label>
+          <input type="number" id="c-pag-n" min="1" max="24" value="2">
+          <label>Cartão (opcional)</label>
+          <input type="text" id="c-pag-cartao" placeholder="Ex: Nubank Richard">
+          <label>Dia de fechamento (opcional)</label>
+          <input type="number" id="c-pag-fechamento" min="1" max="31" placeholder="Ex: 10">
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;">
+            <input type="checkbox" id="c-pag-autopay" checked style="margin-top:3px;">
+            <label style="margin:0;text-transform:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);letter-spacing:0;">Marcar parcela como paga automaticamente quando a data vencer (sem confirmação bancária real)</label>
+          </div>
+        </div>
+      </div>
+
+      <label>Documento da cotação</label>
+      <div class="file-drop" id="c-drop">Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)</div>
+      <input type="file" id="c-file" accept=".pdf,image/*" multiple>
+
+      <div id="c-bulk-list" style="display:none;margin-top:12px;"></div>
+
+      <button class="btn" id="c-save">Salvar cotação</button>
+      <button class="btn" id="c-cancel" style="display:none;background:#eee;">Cancelar edição</button>
+    </div>
+
+    <div id="c-list"></div>
+  </section>
+
+  <!-- POR TIPO -->
+  <section id="tab-tipos">
+    <div class="card" style="text-align:center;">
+      <h2 style="justify-content:center;">Controle por tipo</h2>
+      <div style="font-size:12px;color:var(--muted);">Veja o que já foi cotado em cada categoria</div>
+    </div>
+    <div id="tipos-list"></div>
+  </section>
+
+  <!-- APROVADOS -->
+  <section id="tab-aprovados">
+    <div class="card" style="text-align:center;">
+      <h2 style="justify-content:center;">Total aprovado</h2>
+      <div id="ap-total" style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:700;color:var(--accent);">R$ 0,00</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;" id="ap-count">0 orçamentos aprovados</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <div class="card" style="flex:1;text-align:center;padding:14px;margin-bottom:0;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--ok);" id="ap-pago">R$ 0,00</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;margin-top:2px;">Já pago</div>
+      </div>
+      <div class="card" style="flex:1;text-align:center;padding:14px;margin-bottom:0;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--caution-dark);" id="ap-falta">R$ 0,00</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;margin-top:2px;">Falta pagar</div>
+      </div>
+    </div>
+    <div id="ap-list"></div>
+  </section>
+
+  <!-- CARTÕES -->
+  <section id="tab-cartoes">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <button id="cart-mes-prev" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--muted);">‹</button>
+        <div style="text-align:center;">
+          <div id="cart-mes-label" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;text-transform:capitalize;"></div>
+          <div id="cart-mes-total" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--accent);font-weight:700;"></div>
+        </div>
+        <button id="cart-mes-next" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--muted);">›</button>
+      </div>
+    </div>
+    <div id="cart-lista"></div>
+  </section>
+
+  <!-- ARQUITETA -->
+  <section id="tab-arquiteta">
+    <div class="card">
+      <h2 id="a-form-title">Arquivo da arquiteta <span class="tag">upload</span></h2>
+      <label>Descrição do arquivo</label>
+      <input type="text" id="a-nome" placeholder="Ex: Projeto elétrico - sala">
+
+      <label>Categoria</label>
+      <select id="a-categoria"></select>
+
+      <label>Número do profissional destinatário (opcional)</label>
+      <input type="text" id="a-prof" placeholder="Ex: 03 (eletricista)">
+
+      <label>Arquivo(s)</label>
+      <div class="file-drop" id="a-drop">Toque para escolher um ou vários arquivos de uma vez (até 3MB cada)</div>
+      <input type="file" id="a-file" accept=".pdf,image/*" multiple>
+
+      <div id="a-bulk-list" style="display:none;margin-top:12px;"></div>
+
+      <button class="btn secondary" id="a-save">Salvar arquivo</button>
+      <button class="btn" id="a-cancel" style="display:none;background:#eee;">Cancelar edição</button>
+    </div>
+
+    <div id="a-list"></div>
+  </section>
+
+  <!-- PRESTADORES -->
+  <section id="tab-prestadores">
+    <div class="card">
+      <h2 id="p-form-title">Novo prestador <span class="tag">contato</span></h2>
+      <label>Número (gerado automaticamente)</label>
+      <input type="text" id="p-num" readonly style="background:#EEEBE1;color:var(--muted);">
+
+      <label>Nome</label>
+      <input type="text" id="p-nome" placeholder="Ex: João Silva">
+
+      <label>Nome da empresa</label>
+      <input type="text" id="p-empresa" placeholder="Ex: Silva Elétrica Ltda">
+
+      <label>Especialidade</label>
+      <select id="p-esp"></select>
+
+      <label>Telefone</label>
+      <input type="text" id="p-tel" placeholder="Ex: (11) 99999-9999">
+
+      <label>Status</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button type="button" class="p-status-chip active" data-status="Cotação" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;">Cotação</button>
+        <button type="button" class="p-status-chip" data-status="Contratado" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;">Contratado</button>
+        <button type="button" class="p-status-chip" data-status="Recusado" style="flex:1;min-width:80px;padding:8px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;">Recusado</button>
+      </div>
+      <input type="hidden" id="p-status">
+
+      <label>Endereço (opcional)</label>
+      <input type="text" id="p-endereco" placeholder="Ex: Rua das Flores, 123 - São Paulo">
+
+      <button type="button" id="p-mais-toggle" style="background:none;border:none;color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:14px;cursor:pointer;padding:0;text-decoration:underline;">+ mais detalhes</button>
+      <div id="p-mais-wrap" style="display:none;margin-top:10px;">
+        <label>E-mail (opcional)</label>
+        <input type="text" id="p-email" placeholder="email@exemplo.com">
+        <label>Indicado por (opcional)</label>
+        <input type="text" id="p-indicado" placeholder="Ex: Marcos (eletricista)">
+        <label>Observações internas (só você vê)</label>
+        <input type="text" id="p-obs" placeholder="Ex: atrasa entrega, mas preço bom">
+      </div>
+
+      <button class="btn secondary" id="p-save">Salvar prestador</button>
+      <button class="btn" id="p-cancel" style="display:none;background:#eee;">Cancelar edição</button>
+    </div>
+
+    <div id="p-list"></div>
+  </section>
+
+  <!-- BUSCAR -->
+  <section id="tab-buscar">
+    <div class="card">
+      <h2>Buscar por especialidade</h2>
+      <div class="search-box">
+        <select id="s-esp"></select>
+        <button id="s-esp-btn">Buscar</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Buscar por número do profissional</h2>
+      <div class="search-box">
+        <input type="text" id="s-input" placeholder="Digite o número, ex: 03">
+        <button id="s-btn">Buscar</button>
+      </div>
+    </div>
+    <div id="s-list"></div>
+  </section>
+
+</main>
+
+</div><!-- fecha #app-shell -->
+
+<div class="toast" id="toast"></div>
+
+<div id="whats-modal" style="display:none;position:fixed;inset:0;background:rgba(43,29,24,0.55);z-index:100;align-items:flex-end;justify-content:center;">
+  <div style="background:#fff;width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:20px;max-height:75vh;overflow-y:auto;">
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin:0 0 4px;">Enviar arquivo</h2>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="whats-modal-sub"></div>
+    <div id="whats-modal-lista"></div>
+    <button class="btn" id="whats-modal-fechar" style="background:#eee;margin-top:10px;">Cancelar</button>
+  </div>
+</div>
+
+<script>
+/* ======================================================================
+   1) COLE AQUI AS CHAVES DO SEU PROJETO FIREBASE
+      (Firebase Console > Configurações do projeto > Seus apps > Config)
+   ====================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyAe0CME4qkQp67sACcc0dp0aljKVnEL04M",
+  authDomain: "pessuti-apartamento.firebaseapp.com",
+  projectId: "pessuti-apartamento",
+  storageBucket: "pessuti-apartamento.firebasestorage.app",
+  messagingSenderId: "959011152454",
+  appId: "1:959011152454:web:bf7eabc22f369dfdeae047"
+};
+/* ====================================================================== */
+
+let db = null;
+let auth = null;
+let currentProjetoId = null;
+let isAdmin = false;
+let currentArquitetoId = null;
+let projetoArquitetoId = null; // arquiteto DONO do projeto aberto (só usado pra buscar/salvar a logo)
+let masterEmailAtual = null;
+const MASTER_EMAIL_FALLBACK = 'richardpessuti@hotmail.com';
+let modoMasterVendoArquitetoId = null; // quando master está "entrando como" um arquiteto
+let temaAtual = {};
+
+const TEMA_CAMPOS = {
+  corFundo: '--paper',
+  corCabecalho: '--blueprint',
+  corDestaque: '--caution',
+  corTexto: '--ink',
+  corSucesso: '--ok',
+  corCard: '--card-bg',
+  corMenu: '--nav-bg',
+  corBotao: '--accent',
+  corRecusado: '--danger'
+};
+
+const CANTOS_PRESETS = {
+  arredondado: {card:'16px', btn:'10px'},
+  reto: {card:'4px', btn:'4px'},
+  suave: {card:'24px', btn:'16px'}
+};
+
+function contrastText(hex){
+  const v = (hex||'').replace('#','');
+  if(!/^[0-9A-Fa-f]{6}$/.test(v)) return '#F4F5F3';
+  const r = parseInt(v.slice(0,2),16), g = parseInt(v.slice(2,4),16), b = parseInt(v.slice(4,6),16);
+  const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+  return lum > 0.6 ? '#14171C' : '#F4F5F3';
+}
+
+function aplicarTema(tema){
+  const root = document.documentElement.style;
+  Object.entries(TEMA_CAMPOS).forEach(([campo, cssVar])=>{
+    if(tema && tema[campo]) root.setProperty(cssVar, tema[campo]);
+    else root.removeProperty(cssVar);
+  });
+
+  const cantos = (tema && tema.cantos) || 'arredondado';
+  const preset = CANTOS_PRESETS[cantos] || CANTOS_PRESETS.arredondado;
+  root.setProperty('--radius-card', preset.card);
+  root.setProperty('--radius-btn', preset.btn);
+
+  // cor por tipo (usada nas listas de cotações e etapas)
+  window._tipoCores = (tema && tema.tipoCores) || {};
+}
+
+function aplicarLogoBanner(logoBase64){
+  const root = document.documentElement.style;
+  if(logoBase64){
+    root.setProperty('--banner-img', `url('${logoBase64}')`);
+    root.setProperty('--banner-overlay', 'linear-gradient(180deg, rgba(20,23,28,0.15) 0%, rgba(20,23,28,0.72) 100%)');
+    root.setProperty('--banner-text', '#F4F5F3');
+  }else{
+    root.setProperty('--banner-img', 'none');
+    root.setProperty('--banner-overlay', 'none');
+    const corCabecalho = getComputedStyle(document.documentElement).getPropertyValue('--blueprint').trim() || '#14171C';
+    root.setProperty('--banner-text', contrastText(corCabecalho));
+  }
+}
+
+function renderDecoracoes(lista){
+  const el = document.getElementById('header-deco');
+  if(!el) return;
+  el.textContent = (lista && lista.length) ? lista.join(' ') : '';
+}
+
+function normalizarHex(valor, padrao){
+  let v = (valor || '').trim();
+  if(!v) return padrao;
+  if(!v.startsWith('#')) v = '#' + v;
+  return v;
+}
+
+function wireColorPair(colorId, hexId){
+  const colorInput = document.getElementById(colorId);
+  const hexInput = document.getElementById(hexId);
+  colorInput.addEventListener('input', ()=>{ hexInput.value = colorInput.value; });
+  hexInput.addEventListener('input', ()=>{
+    const v = normalizarHex(hexInput.value, null);
+    if(v && /^#[0-9A-Fa-f]{6}$/.test(v)) colorInput.value = v;
+  });
+}
+wireColorPair('admin-cor-fundo','admin-cor-fundo-hex');
+wireColorPair('admin-cor-cabecalho','admin-cor-cabecalho-hex');
+wireColorPair('admin-cor-destaque','admin-cor-destaque-hex');
+wireColorPair('admin-cor-texto','admin-cor-texto-hex');
+wireColorPair('admin-cor-sucesso','admin-cor-sucesso-hex');
+wireColorPair('admin-cor-card','admin-cor-card-hex');
+wireColorPair('admin-cor-menu','admin-cor-menu-hex');
+wireColorPair('admin-cor-botao','admin-cor-botao-hex');
+wireColorPair('admin-cor-recusado','admin-cor-recusado-hex');
+wireColorPair('admin-tipo-cor','admin-tipo-cor-hex');
+let currentProjetoNome = null;
+let currentUserEmail = null;
+let firebaseOk = false;
+
+try{
+  if(firebaseConfig.apiKey === "COLE_AQUI"){
+    throw new Error("config-missing");
+  }
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  auth = firebase.auth();
+  firebaseOk = true;
+}catch(e){
+  document.getElementById('config-warning').style.display = 'block';
+  document.getElementById('auth-erro') && (document.getElementById('auth-erro').textContent = 'Firebase não configurado. Veja o aviso no topo do app.');
+}
+
+function col(name){
+  if(!currentProjetoId) throw new Error('Nenhum projeto selecionado');
+  return db.collection('projetos').doc(currentProjetoId).collection(name);
+}
+
+let activeUnsubscribes = [];
+function trackUnsub(fn){ activeUnsubscribes.push(fn); }
+function unsubscribeAll(){ activeUnsubscribes.forEach(u=>{ try{u();}catch(e){} }); activeUnsubscribes = []; }
+
+const toastEl = document.getElementById('toast');
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'), 2200);
+}
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('main section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function nomeJaExiste(cache, filename, excludeId){
+  return cache.some(item => item.fileName === filename && item.id !== excludeId);
+}
+
+let cotacoesCache = [];
+let arquitetaCache = [];
+let prestadoresCache = [];
+let editingCotacaoId = null;
+let editingArquitetaId = null;
+let editingPrestadorId = null;
+
+const TIPOS = [
+  "Móveis", "Eletrodomésticos", "Materiais de Construção", "Marcenaria",
+  "Marmoraria", "Elétrica", "Hidráulica", "Vidraçaria", "Gesso/Drywall",
+  "Piso", "Pintura", "Ar-condicionado", "Decoração", "Mão de obra", "Outro"
+];
+
+const ESPECIALIDADES = [
+  "Pedreiro", "Pintura", "Elétrica", "Hidráulica", "Piso", "Marcenaria",
+  "Marmoraria", "Vidraçaria", "Gesso/Drywall", "Serralheria", "Ar-condicionado",
+  "Móveis planejados", "Impermeabilização", "Jardinagem",
+  "Limpeza pós-obra", "Arquitetura", "Outro"
+];
+
+function populateEspecialidades(){
+  const opts = ESPECIALIDADES.map(e=>`<option value="${e}">${e}</option>`).join('');
+  document.getElementById('p-esp').innerHTML = opts;
+  document.getElementById('s-esp').innerHTML = opts;
+  const catOpts = ['Geral', ...ESPECIALIDADES].map(e=>`<option value="${e}">${e}</option>`).join('');
+  document.getElementById('a-categoria').innerHTML = catOpts;
+  document.getElementById('c-tipo').innerHTML = TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('');
+  const adminTipoSel = document.getElementById('admin-tipo-select');
+  if(adminTipoSel) adminTipoSel.innerHTML = TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('');
+}
+populateEspecialidades();
+
+const DECO_EMOJIS = ['🪴','🌿','🌸','📐','🧱','🖌️','✨','🏠','📏','🪑','💡','🧭','🎨','🌵'];
+
+function renderTipoCoresLegenda(){
+  const el = document.getElementById('admin-tipo-legenda');
+  if(!el) return;
+  const cores = temaAtual.tipoCores || {};
+  const tipos = Object.keys(cores);
+  if(tipos.length===0){ el.innerHTML = '<div style="font-size:11px;color:var(--muted);">Nenhum tipo colorido ainda.</div>'; return; }
+  el.innerHTML = tipos.map(t=>`
+    <span class="badge-prof" style="background:${cores[t]};display:flex;align-items:center;gap:6px;">
+      ${escapeHtml(t)}
+      <button type="button" data-tipo-cor-del="${escapeHtml(t)}" style="background:none;border:none;color:#fff;cursor:pointer;font-size:11px;padding:0;">✕</button>
+    </span>
+  `).join('');
+}
+
+function renderDecoGrid(){
+  const el = document.getElementById('admin-deco-grid');
+  if(!el) return;
+  const ativos = temaAtual.decoracoes || [];
+  el.innerHTML = DECO_EMOJIS.map(e=>`
+    <button type="button" data-deco-emoji="${e}" style="aspect-ratio:1;border-radius:8px;border:1.5px solid ${ativos.includes(e)?'var(--accent)':'var(--paper-line)'};background:${ativos.includes(e)?'var(--accent-soft, #E4EFEB)':'#fff'};font-size:17px;cursor:pointer;">${e}</button>
+  `).join('');
+}
+
+document.addEventListener('click', (e)=>{
+  const emoji = e.target.getAttribute('data-deco-emoji');
+  if(emoji){
+    const lista = temaAtual.decoracoes || (temaAtual.decoracoes = []);
+    const idx = lista.indexOf(emoji);
+    if(idx>-1) lista.splice(idx,1); else lista.push(emoji);
+    renderDecoGrid();
+  }
+  const delTipo = e.target.getAttribute('data-tipo-cor-del');
+  if(delTipo){
+    if(temaAtual.tipoCores) delete temaAtual.tipoCores[delTipo];
+    renderTipoCoresLegenda();
+  }
+});
+
+function nextProfNumber(){
+  let max = 0;
+  prestadoresCache.forEach(p=>{
+    const n = parseInt(p.num, 10);
+    if(!isNaN(n) && n > max) max = n;
+  });
+  return String(max + 1).padStart(2, '0');
+}
+
+// ==================== CRONOGRAMA ====================
+if(typeof pdfjsLib !== 'undefined'){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+let etapasCache = [];
+let cronArquivoAtual = null; // {hasFile, fileName}
+let projeto3dAtual = null; // {hasFile, fileName}
+let importPreview = []; // [{nome, tipo, ordem}]
+
+const ETAPA_TIPO_KEYWORDS = [
+  [/demoli|remo[cç][aã]o de itens/i, 'Mão de obra'],
+  [/hidross?anit/i, 'Hidráulica'],
+  [/hidr[aá]ul/i, 'Hidráulica'],
+  [/el[eé]tric/i, 'Elétrica'],
+  [/revestimento/i, 'Materiais de Construção'],
+  [/cimento queimado/i, 'Materiais de Construção'],
+  [/gesso|drywall|forro/i, 'Gesso/Drywall'],
+  [/piso|porcelanato|laminado|assentamento/i, 'Piso'],
+  [/marmor|granito|m[aá]rmore/i, 'Marmoraria'],
+  [/pintura|tinta/i, 'Pintura'],
+  [/ar.?condicionado|climatiza/i, 'Ar-condicionado'],
+  [/marcenaria|planejado/i, 'Marcenaria'],
+  [/vidro|vidra[cç]aria/i, 'Vidraçaria'],
+  [/ilumina[cç][aã]o|pendente|led|cortina|decora/i, 'Decoração'],
+  [/eletrodom[eé]stico/i, 'Eletrodomésticos'],
+  [/m[oó]veis? solt/i, 'Móveis'],
+  [/limpeza|mudan[cç]a/i, 'Mão de obra'],
+];
+
+function guessTipoEtapa(nome){
+  for(const [regex, tipo] of ETAPA_TIPO_KEYWORDS){
+    if(regex.test(nome)) return tipo;
+  }
+  return 'Outro';
+}
+
+// ==================== ENVIAR ARQUIVO PELO WHATSAPP ====================
+function listarArquivosDisponiveis(){
+  const itens = [];
+  cotacoesCache.forEach(q=>{
+    if(q.hasFile) itens.push({label: q.item + ' (cotação)', colecao:'cotacoes', id:q.id, fileName:q.fileName});
+  });
+  arquitetaCache.forEach(f=>{
+    if(f.fileName) itens.push({label: f.nome + ' (arquiteta)', colecao:'arquiteta', id:f.id, fileName:f.fileName});
+  });
+  if(cronArquivoAtual && cronArquivoAtual.hasFile){
+    itens.push({label: 'Cronograma da obra', colecao:'cronograma_arquivo', id:'atual', fileName: cronArquivoAtual.fileName});
+  }
+  if(projeto3dAtual && projeto3dAtual.hasFile){
+    itens.push({label: 'Projeto 3D', colecao:'projeto3d', id:'atual', fileName: projeto3dAtual.fileName});
+  }
+  return itens;
+}
+
+function abrirModalWhatsApp(tel, nomeContato){
+  const modal = document.getElementById('whats-modal');
+  const lista = document.getElementById('whats-modal-lista');
+  document.getElementById('whats-modal-sub').textContent = `Pra ${nomeContato} — escolha um arquivo pra baixar antes de abrir o WhatsApp, ou vá direto sem nada.`;
+
+  const arquivos = listarArquivosDisponiveis();
+  let html = `<div class="list-item" style="cursor:pointer;" data-whats-opcao="nenhum">
+    <div class="item-title">Ir direto pro WhatsApp</div>
+    <div class="meta">Sem anexar nenhum arquivo</div>
+  </div>`;
+  arquivos.forEach((a,i)=>{
+    html += `<div class="list-item" style="cursor:pointer;" data-whats-opcao="${i}">
+      <div class="item-title">${escapeHtml(a.label)}</div>
+      <div class="meta">${escapeHtml(a.fileName)}</div>
+    </div>`;
+  });
+  lista.innerHTML = html;
+  modal.dataset.tel = tel;
+  modal.dataset.arquivos = JSON.stringify(arquivos);
+  modal.style.display = 'flex';
+}
+
+document.getElementById('whats-modal-fechar').addEventListener('click', ()=>{
+  document.getElementById('whats-modal').style.display = 'none';
+});
+
+document.addEventListener('click', async (e)=>{
+  const arquivoTel = e.target.getAttribute('data-whats-arquivo-tel');
+  if(arquivoTel){
+    const nome = e.target.getAttribute('data-whats-arquivo-nome');
+    abrirModalWhatsApp(arquivoTel, nome);
+    return;
+  }
+
+  const opcao = e.target.closest('[data-whats-opcao]')?.getAttribute('data-whats-opcao');
+  if(opcao !== undefined && opcao !== null){
+    const modal = document.getElementById('whats-modal');
+    const tel = modal.dataset.tel;
+    modal.style.display = 'none';
+
+    if(opcao === 'nenhum'){
+      window.open(waLink(tel), '_blank');
+      return;
+    }
+
+    const arquivos = JSON.parse(modal.dataset.arquivos || '[]');
+    const escolhido = arquivos[Number(opcao)];
+    if(!escolhido) return;
+
+    const newWin = window.open('', '_blank'); // abre já, dentro do gesto de clique
+    toast('Preparando arquivo...');
+    try{
+      const base64 = await loadFileChunked(escolhido.colecao, escolhido.id);
+      if(!base64){ if(newWin) newWin.close(); toast('Arquivo não encontrado'); return; }
+
+      const arquivo = base64ToFile(base64, escolhido.fileName);
+
+      // Celular moderno: abre a tela nativa de compartilhar, com o WhatsApp como opção direta
+      if(navigator.canShare && navigator.canShare({files:[arquivo]})){
+        try{
+          if(newWin) newWin.close();
+          await navigator.share({files:[arquivo], title: escolhido.fileName, text: 'Segue o arquivo: ' + escolhido.fileName});
+          return;
+        }catch(shareErr){
+          if(shareErr && shareErr.name === 'AbortError') return; // usuário cancelou, tudo bem
+          console.error(shareErr);
+        }
+      }
+
+      // Fallback: abre o arquivo na tela — o usuário toca no ícone de compartilhar do navegador e escolhe o WhatsApp
+      openBase64(base64, escolhido.fileName, newWin);
+      toast('Arquivo aberto — toque no ícone de compartilhar (□↑) e escolha o WhatsApp');
+    }catch(err){
+      console.error(err);
+      if(newWin && !newWin.closed) newWin.close();
+      toast('Erro ao preparar arquivo');
+    }
+  }
+});
+
+
+// Palavras de cabeçalho/rodapé a ignorar ao ler a tabela do PDF
+const IGNORAR_LINHA_CRONOGRAMA = /^(s|t|q|sem|semana\s?\d*|rev\d*|cronograma de obra|apartamento.*|milena|celante|arquiteta|presta[cç][aã]o de servi[cç]os|produtos.*|itens feitos sob medida)$/i;
+
+async function parsePdfCronograma(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  const linhas = [];
+
+  for(let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent();
+    // Agrupa itens de texto por linha (mesma altura aproximada), guardando a posição X mais à esquerda
+    const porLinha = {};
+    content.items.forEach(item=>{
+      const x = item.transform[4];
+      const y = Math.round(item.transform[5] / 4) * 4; // agrupa alturas próximas
+      const texto = item.str.trim();
+      if(!texto) return;
+      if(!porLinha[y]) porLinha[y] = [];
+      porLinha[y].push({x, texto});
+    });
+    // Para cada linha, pega o texto mais à esquerda (nome da etapa fica na 1ª coluna)
+    Object.keys(porLinha).sort((a,b)=> b-a).forEach(y=>{
+      const itens = porLinha[y].sort((a,b)=>a.x-b.x);
+      const primeiro = itens[0];
+      if(primeiro.x < 160 && primeiro.texto.length > 2){
+        linhas.push(primeiro.texto);
+      }
+    });
+  }
+
+  // Remove cabeçalhos/rodapés e duplicados consecutivos
+  const etapas = [];
+  linhas.forEach(l=>{
+    const limpo = l.trim();
+    if(IGNORAR_LINHA_CRONOGRAMA.test(limpo)) return;
+    if(etapas.length && etapas[etapas.length-1] === limpo) return;
+    etapas.push(limpo);
+  });
+  return etapas;
+}
+
+function renderImportPreview(){
+  const el = document.getElementById('cron-preview');
+  if(importPreview.length===0){ el.innerHTML=''; return; }
+  el.innerHTML = `
+    <div class="card">
+      <h2>Revisão antes de importar <span class="tag">${importPreview.length} etapas</span></h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Confira a ordem, o nome e o tipo de cada etapa. Ajuste o que precisar antes de confirmar.</div>
+      ${importPreview.map((et,i)=>`
+        <div class="bulk-row">
+          <div class="bulk-file">#${i+1}</div>
+          <input type="text" data-imp-nome="${i}" value="${escapeHtml(et.nome)}">
+          <select data-imp-tipo="${i}">
+            ${TIPOS.map(t=>`<option value="${t}" ${t===et.tipo?'selected':''}>${t}</option>`).join('')}
+          </select>
+          <button type="button" class="bulk-remove" data-imp-remove="${i}">✕ remover esta linha</button>
+        </div>
+      `).join('')}
+      <button class="btn secondary" id="cron-confirmar">Confirmar e importar ${importPreview.length} etapas</button>
+      <button class="btn" id="cron-cancelar-import" style="background:#eee;">Cancelar</button>
+    </div>
+  `;
+}
+
+document.addEventListener('input', (e)=>{
+  const i = e.target.getAttribute('data-imp-nome');
+  if(i !== null) importPreview[i].nome = e.target.value;
+});
+document.addEventListener('change', (e)=>{
+  const i = e.target.getAttribute('data-imp-tipo');
+  if(i !== null) importPreview[i].tipo = e.target.value;
+});
+document.addEventListener('click', (e)=>{
+  const i = e.target.getAttribute('data-imp-remove');
+  if(i !== null){ importPreview.splice(Number(i),1); renderImportPreview(); }
+  if(e.target.id === 'cron-cancelar-import'){ importPreview = []; renderImportPreview(); document.getElementById('cron-file').value=''; }
+});
+
+const cronDrop = document.getElementById('cron-drop');
+const cronFile = document.getElementById('cron-file');
+cronDrop.addEventListener('click', ()=>cronFile.click());
+cronFile.addEventListener('change', async ()=>{
+  if(!cronFile.files[0]) return;
+  const file = cronFile.files[0];
+  const statusEl = document.getElementById('cron-import-status');
+  cronDrop.textContent = '✓ ' + file.name;
+  cronDrop.classList.add('has-file');
+  statusEl.textContent = 'Lendo o PDF...';
+  try{
+    const nomes = await parsePdfCronograma(file);
+    if(nomes.length === 0){
+      statusEl.textContent = 'Não consegui identificar etapas nesse PDF. Você pode adicionar manualmente na lista abaixo.';
+      importPreview = [];
+    }else{
+      importPreview = nomes.map(nome=>({nome, tipo: guessTipoEtapa(nome)}));
+      statusEl.textContent = `${nomes.length} etapas encontradas — revise abaixo antes de confirmar.`;
+    }
+    renderImportPreview();
+    window._cronFileToSave = file;
+  }catch(e){
+    console.error(e);
+    statusEl.textContent = 'Erro ao ler o PDF: ' + e.message;
+  }
+});
+
+document.addEventListener('click', async (e)=>{
+  if(e.target.id === 'cron-confirmar'){
+    if(!db){ toast('Configure o Firebase primeiro'); return; }
+    if(importPreview.length===0){ toast('Nada para importar'); return; }
+    e.target.disabled = true; e.target.textContent = 'Importando...';
+    try{
+      // salva o PDF original (substitui o anterior, se houver)
+      if(window._cronFileToSave){
+        if(cronArquivoAtual && cronArquivoAtual.hasFile) await deleteFileChunked('cronograma_arquivo','atual');
+        const base64 = await fileToBase64(window._cronFileToSave);
+        await saveFileChunked('cronograma_arquivo','atual', base64);
+        await col('cronograma_arquivo').doc('atual').set({
+          hasFile:true, fileName: window._cronFileToSave.name,
+          atualizado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      // apaga etapas antigas e cria as novas na ordem revisada
+      const antigasSnap = await col('etapas').get();
+      await Promise.all(antigasSnap.docs.map(d=>d.ref.delete()));
+      for(let i=0;i<importPreview.length;i++){
+        const et = importPreview[i];
+        await col('etapas').doc(uid()).set({
+          ordem: i+1, nome: et.nome, tipos: [et.tipo],
+          status: 'Não iniciada', tiposCompletos: {},
+          criado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      toast('Cronograma importado!');
+      importPreview = [];
+      renderImportPreview();
+      document.getElementById('cron-import-status').textContent = '';
+      document.getElementById('cron-file').value='';
+    }catch(err){
+      console.error(err);
+      toast('Erro ao importar: ' + err.message);
+    }
+    e.target.disabled = false; e.target.textContent = 'Confirmar e importar';
+  }
+
+  if(e.target.id === 'cron-abrir-arquivo'){
+    const newWin = window.open('', '_blank');
+    const base64 = await loadFileChunked('cronograma_arquivo','atual');
+    if(base64) openBase64(base64, cronArquivoAtual?.fileName, newWin);
+    else { if(newWin) newWin.close(); toast('Arquivo não encontrado'); }
+  }
+
+  if(e.target.id === 'projeto3d-abrir' || e.target.id === 'admin-3d-abrir'){
+    const newWin = window.open('', '_blank');
+    const base64 = await loadFileChunked('projeto3d','atual');
+    if(base64) openBase64(base64, projeto3dAtual?.fileName, newWin);
+    else { if(newWin) newWin.close(); toast('Arquivo não encontrado'); }
+  }
+
+  const marcarTipo = e.target.getAttribute('data-marcar-tipo');
+  if(marcarTipo){
+    const [etapaId, tipo] = marcarTipo.split('|');
+    const etapa = etapasCache.find(x=>x.id===etapaId);
+    if(!etapa) return;
+    const tiposCompletos = {...(etapa.tiposCompletos||{})};
+    tiposCompletos[tipo] = !tiposCompletos[tipo];
+    await col('etapas').doc(etapaId).update({tiposCompletos});
+    return;
+  }
+
+  const concluirId = e.target.getAttribute('data-concluir-etapa');
+  if(concluirId){
+    await col('etapas').doc(concluirId).update({status:'Concluída'});
+    toast('Etapa concluída');
+    return;
+  }
+  const pularId = e.target.getAttribute('data-pular-etapa');
+  if(pularId){
+    await col('etapas').doc(pularId).update({status:'Pulada'});
+    toast('Etapa marcada como pulada');
+    return;
+  }
+  const reabrirId = e.target.getAttribute('data-reabrir-etapa');
+  if(reabrirId){
+    await col('etapas').doc(reabrirId).update({status:'Não iniciada'});
+    return;
+  }
+  const delEtapaId = e.target.getAttribute('data-del-etapa');
+  if(delEtapaId){
+    if(!confirm('Excluir esta etapa do cronograma?')) return;
+    await col('etapas').doc(delEtapaId).delete();
+    toast('Etapa excluída');
+    return;
+  }
+  const subirId = e.target.getAttribute('data-subir-etapa');
+  if(subirId){ reordenarEtapa(subirId, -1); return; }
+  const descerId = e.target.getAttribute('data-descer-etapa');
+  if(descerId){ reordenarEtapa(descerId, 1); return; }
+});
+
+async function reordenarEtapa(id, direcao){
+  const ordenadas = [...etapasCache].sort((a,b)=>a.ordem-b.ordem);
+  const idx = ordenadas.findIndex(e=>e.id===id);
+  const alvo = idx + direcao;
+  if(alvo < 0 || alvo >= ordenadas.length) return;
+  const a = ordenadas[idx], b = ordenadas[alvo];
+  await Promise.all([
+    col('etapas').doc(a.id).update({ordem: b.ordem}),
+    col('etapas').doc(b.id).update({ordem: a.ordem})
+  ]);
+}
+
+function statusEtapaCor(status){
+  if(status==='Concluída') return 'var(--ok)';
+  if(status==='Pulada') return 'var(--muted)';
+  if(status==='Em andamento') return 'var(--caution-dark)';
+  return '#B9C4CE';
+}
+
+function checarTipo(etapa, tipo){
+  const cots = cotacoesCache.filter(q=>q.tipo===tipo);
+  const aprovadas = cots.filter(q=>q.status==='Aprovado');
+  const manual = etapa.tiposCompletos && etapa.tiposCompletos[tipo];
+  if(manual) return {label:'Completo (marcado manualmente)', cor:'var(--ok)', icone:'✅'};
+  if(aprovadas.length>0) return {label: aprovadas.length+' aprovada(s) de '+cots.length, cor:'var(--ok)', icone:'✅'};
+  if(cots.length>0) return {label: cots.length+' cotação(ões), nenhuma aprovada', cor:'var(--caution-dark)', icone:'⚠️'};
+  return {label:'Nenhuma cotação ainda', cor:'var(--danger)', icone:'❌'};
+}
+
+function renderProximaEtapa(){
+  const el = document.getElementById('cron-proxima');
+  const ordenadas = [...etapasCache].sort((a,b)=>a.ordem-b.ordem);
+  const proxima = ordenadas.find(e=> e.status!=='Concluída' && e.status!=='Pulada');
+
+  if(ordenadas.length===0){
+    el.innerHTML = '';
+    return;
+  }
+  if(!proxima){
+    el.innerHTML = `<div class="card" style="text-align:center;">
+      <h2 style="justify-content:center;">🎉 Cronograma concluído</h2>
+      <div style="font-size:12px;color:var(--muted);">Todas as etapas foram concluídas ou puladas.</div>
+    </div>`;
+    return;
+  }
+
+  const tipos = proxima.tipos || [];
+  el.innerHTML = `
+    <div class="card" style="border-color:var(--blueprint);">
+      <h2>Próxima etapa <span class="tag">${escapeHtml(proxima.nome)}</span></h2>
+      ${tipos.map(t=>{
+        const c = checarTipo(proxima, t);
+        return `<div class="list-item" style="padding:9px 10px;">
+          <div class="row1">
+            <div class="item-title" style="font-size:13px;">${c.icone} ${escapeHtml(t)}</div>
+          </div>
+          <div class="meta" style="color:${c.cor};font-weight:600;">${c.label}</div>
+          <div class="actions">
+            <button data-marcar-tipo="${proxima.id}|${t}" style="border-color:${c.cor};color:${c.cor};">
+              ${(proxima.tiposCompletos&&proxima.tiposCompletos[t]) ? 'Desmarcar completo' : 'Marcar como completo'}
+            </button>
+          </div>
+        </div>`;
+      }).join('')}
+      <div class="actions" style="margin-top:12px;">
+        <button class="view" data-concluir-etapa="${proxima.id}" style="border-color:var(--ok);color:var(--ok);">Marcar etapa como concluída</button>
+        <button class="view" data-pular-etapa="${proxima.id}" style="border-color:var(--muted);color:var(--muted);">Pular etapa</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderLinhaDoTempo(){
+  const el = document.getElementById('cron-linha-do-tempo');
+  const ordenadas = [...etapasCache].sort((a,b)=>a.ordem-b.ordem);
+  if(ordenadas.length===0){
+    el.innerHTML = `<div class="empty"><div class="big">— · —</div>${isAdmin ? 'Nenhum cronograma importado ainda. Suba o PDF na aba Admin.' : 'A arquiteta ainda não subiu o cronograma da obra.'}</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="card"><h2>Linha do tempo completa</h2>` +
+    ordenadas.map((et,i)=>`
+      <div class="list-item" style="border-left:4px solid ${statusEtapaCor(et.status)};">
+        <div class="row1">
+          <div>
+            <div class="item-title">${i+1}. ${escapeHtml(et.nome)}</div>
+            <div class="meta">${(et.tipos||[]).join(', ')}</div>
+          </div>
+          <span class="badge-prof" style="background:${statusEtapaCor(et.status)};">${escapeHtml(et.status)}</span>
+        </div>
+        ${isAdmin ? `<div class="actions">
+          <button data-subir-etapa="${et.id}" style="flex:0 0 44px;">↑</button>
+          <button data-descer-etapa="${et.id}" style="flex:0 0 44px;">↓</button>
+          ${et.status!=='Não iniciada' ? `<button data-reabrir-etapa="${et.id}">Reabrir</button>` : ''}
+          <button class="del" data-del-etapa="${et.id}">Excluir</button>
+        </div>` : ''}
+      </div>
+    `).join('') + `</div>`;
+}
+
+function listenCronograma(){
+  if(!db) return;
+  trackUnsub(col('cronograma_arquivo').doc('atual').onSnapshot(doc=>{
+    cronArquivoAtual = doc.exists ? doc.data() : null;
+    const el = document.getElementById('cron-arquivo-atual');
+    el.innerHTML = cronArquivoAtual && cronArquivoAtual.hasFile
+      ? `Arquivo atual: <strong>${escapeHtml(cronArquivoAtual.fileName)}</strong> — <button id="cron-abrir-arquivo" style="border:none;background:none;color:var(--blueprint);text-decoration:underline;cursor:pointer;padding:0;">abrir</button>`
+      : 'Nenhum cronograma importado ainda.';
+  }));
+  trackUnsub(col('etapas').onSnapshot(snap=>{
+    const docs = [];
+    snap.forEach(d=> docs.push({id:d.id, ...d.data()}));
+    etapasCache = docs;
+    renderProximaEtapa();
+    renderLinhaDoTempo();
+  }, err=>{ console.error(err); toast('Erro ao carregar cronograma'); }));
+}
+
+function listenProjeto3D(){
+  if(!db) return;
+  trackUnsub(col('projeto3d').doc('atual').onSnapshot(doc=>{
+    projeto3dAtual = doc.exists ? doc.data() : null;
+    const temArquivo = projeto3dAtual && projeto3dAtual.hasFile;
+
+    const statusEl3d = document.getElementById('projeto3d-status');
+    const btnAbrir = document.getElementById('projeto3d-abrir');
+    if(temArquivo){
+      statusEl3d.textContent = projeto3dAtual.fileName;
+      btnAbrir.style.display = 'inline-block';
+    }else{
+      statusEl3d.textContent = 'A arquiteta ainda não subiu o projeto 3D.';
+      btnAbrir.style.display = 'none';
+    }
+
+    const adminEl = document.getElementById('admin-3d-atual');
+    if(adminEl){
+      adminEl.innerHTML = temArquivo
+        ? `Arquivo atual: <strong>${escapeHtml(projeto3dAtual.fileName)}</strong> — <button id="admin-3d-abrir" style="border:none;background:none;color:var(--blueprint);text-decoration:underline;cursor:pointer;padding:0;">abrir</button>`
+        : 'Nenhum projeto 3D enviado ainda.';
+    }
+  }));
+}
+
+const admin3dDrop = document.getElementById('admin-3d-drop');
+const admin3dFile = document.getElementById('admin-3d-file');
+admin3dDrop.addEventListener('click', ()=>admin3dFile.click());
+admin3dFile.addEventListener('change', async ()=>{
+  const file = admin3dFile.files[0];
+  if(!file) return;
+  const statusEl3dAdmin = document.getElementById('admin-3d-status');
+  if(file.size > 3*1024*1024){ statusEl3dAdmin.textContent = 'Arquivo muito grande (máx 3MB)'; admin3dFile.value=''; return; }
+  admin3dDrop.textContent = '✓ ' + file.name;
+  admin3dDrop.classList.add('has-file');
+  statusEl3dAdmin.textContent = 'Enviando...';
+  try{
+    if(projeto3dAtual && projeto3dAtual.hasFile) await deleteFileChunked('projeto3d','atual');
+    const base64 = await fileToBase64(file);
+    await saveFileChunked('projeto3d','atual', base64);
+    await col('projeto3d').doc('atual').set({
+      hasFile: true, fileName: file.name,
+      atualizado: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    statusEl3dAdmin.textContent = 'Projeto 3D salvo!';
+    admin3dFile.value = '';
+    admin3dDrop.textContent = 'Toque para escolher o PDF do projeto 3D';
+    admin3dDrop.classList.remove('has-file');
+  }catch(e){
+    console.error(e);
+    statusEl3dAdmin.textContent = 'Erro ao enviar: ' + e.message;
+  }
+});
+
+// ==================== IMPORTAR PRESTADORES EM MASSA ====================
+let prestImportPreview = []; // [{nome, empresa, telefone, especialidade}]
+
+const TELEFONE_REGEX = /(\+?\d{2}\s?)?\(?\d{2}\)?[\s.-]?\d{4,5}[\s.-]?\d{4}/;
+
+function guessEspecialidadeTexto(texto){
+  const lower = texto.toLowerCase();
+  for(const esp of ESPECIALIDADES){
+    if(lower.includes(esp.toLowerCase())) return esp;
+  }
+  for(const [regex, tipo] of ETAPA_TIPO_KEYWORDS){
+    if(regex.test(lower)){
+      const match = ESPECIALIDADES.find(e=>e===tipo);
+      if(match) return match;
+    }
+  }
+  return null;
+}
+
+function parseLinhaPrestador(linha){
+  const telMatch = linha.match(TELEFONE_REGEX);
+  const telefone = telMatch ? telMatch[0].trim() : '';
+  let resto = telefone ? linha.replace(telefone, '') : linha;
+
+  let especialidade = guessEspecialidadeTexto(resto) || 'Outro';
+  // remove a palavra da especialidade encontrada do texto restante, se vier junto
+  ESPECIALIDADES.forEach(esp=>{
+    resto = resto.replace(new RegExp(esp, 'i'), '');
+  });
+
+  const delimitadores = ['\t', ' - ', ';', ','];
+  let partes = [resto];
+  for(const d of delimitadores){
+    if(resto.includes(d)){ partes = resto.split(d); break; }
+  }
+  partes = partes.map(p=>p.trim()).filter(Boolean);
+
+  return {
+    nome: partes[0] || linha.trim(),
+    empresa: partes[1] || '',
+    telefone,
+    especialidade
+  };
+}
+
+async function parseArquivoPrestadores(file){
+  let texto = '';
+  if(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')){
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    for(let p=1; p<=pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      const porLinha = {};
+      content.items.forEach(item=>{
+        const y = Math.round(item.transform[5] / 4) * 4;
+        if(!porLinha[y]) porLinha[y] = [];
+        porLinha[y].push(item.str);
+      });
+      Object.keys(porLinha).sort((a,b)=>b-a).forEach(y=>{
+        texto += porLinha[y].join(' ') + '\n';
+      });
+    }
+  }else{
+    texto = await file.text();
+  }
+  return texto.split('\n').map(l=>l.trim()).filter(l=>l.length>2);
+}
+
+function renderPrestImportPreview(){
+  const el = document.getElementById('prest-import-preview');
+  if(prestImportPreview.length===0){ el.innerHTML=''; return; }
+  el.innerHTML = `
+    <div class="card">
+      <h2>Revisão antes de importar <span class="tag">${prestImportPreview.length} prestadores</span></h2>
+      ${prestImportPreview.map((p,i)=>`
+        <div class="bulk-row">
+          <div class="bulk-file">#${i+1}</div>
+          <input type="text" data-pi-nome="${i}" value="${escapeHtml(p.nome)}" placeholder="Nome">
+          <input type="text" data-pi-empresa="${i}" value="${escapeHtml(p.empresa)}" placeholder="Empresa">
+          <input type="text" data-pi-tel="${i}" value="${escapeHtml(p.telefone)}" placeholder="Telefone">
+          <select data-pi-esp="${i}">
+            ${ESPECIALIDADES.map(e=>`<option value="${e}" ${e===p.especialidade?'selected':''}>${e}</option>`).join('')}
+          </select>
+          <button type="button" class="bulk-remove" data-pi-remove="${i}">✕ remover esta linha</button>
+        </div>
+      `).join('')}
+      <button class="btn secondary" id="prest-confirmar">Confirmar e importar ${prestImportPreview.length} prestadores</button>
+      <button class="btn" id="prest-cancelar" style="background:#eee;">Cancelar</button>
+    </div>
+  `;
+}
+
+document.addEventListener('input', (e)=>{
+  const iN = e.target.getAttribute('data-pi-nome');
+  if(iN !== null) prestImportPreview[iN].nome = e.target.value;
+  const iE = e.target.getAttribute('data-pi-empresa');
+  if(iE !== null) prestImportPreview[iE].empresa = e.target.value;
+  const iT = e.target.getAttribute('data-pi-tel');
+  if(iT !== null) prestImportPreview[iT].telefone = e.target.value;
+});
+document.addEventListener('change', (e)=>{
+  const iEsp = e.target.getAttribute('data-pi-esp');
+  if(iEsp !== null) prestImportPreview[iEsp].especialidade = e.target.value;
+});
+document.addEventListener('click', async (e)=>{
+  const iRem = e.target.getAttribute('data-pi-remove');
+  if(iRem !== null){ prestImportPreview.splice(Number(iRem),1); renderPrestImportPreview(); }
+
+  if(e.target.id === 'prest-cancelar'){
+    prestImportPreview = [];
+    renderPrestImportPreview();
+    document.getElementById('prest-import-file').value = '';
+    document.getElementById('prest-import-status').textContent = '';
+  }
+
+  if(e.target.id === 'prest-confirmar'){
+    if(!db){ toast('Configure o Firebase primeiro'); return; }
+    if(prestImportPreview.length===0){ toast('Nada para importar'); return; }
+    e.target.disabled = true; e.target.textContent = 'Importando...';
+    try{
+      let max = 0;
+      prestadoresCache.forEach(p=>{ const n = parseInt(p.num,10); if(!isNaN(n) && n>max) max=n; });
+      for(let i=0;i<prestImportPreview.length;i++){
+        max++;
+        const p = prestImportPreview[i];
+        const num = String(max).padStart(2,'0');
+        await col('prestadores').doc(num).set({
+          num, nome: p.nome, empresa: p.empresa, esp: p.especialidade, tel: p.telefone,
+          criado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      toast(prestImportPreview.length + ' prestadores importados');
+      prestImportPreview = [];
+      renderPrestImportPreview();
+      document.getElementById('prest-import-file').value = '';
+      document.getElementById('prest-import-status').textContent = '';
+    }catch(err){
+      console.error(err);
+      toast('Erro ao importar: ' + err.message);
+    }
+    e.target.disabled = false; e.target.textContent = 'Confirmar e importar';
+  }
+});
+
+const prestImportDrop = document.getElementById('prest-import-drop');
+const prestImportFile = document.getElementById('prest-import-file');
+prestImportDrop.addEventListener('click', ()=>prestImportFile.click());
+prestImportFile.addEventListener('change', async ()=>{
+  if(!prestImportFile.files[0]) return;
+  const file = prestImportFile.files[0];
+  const statusEl2 = document.getElementById('prest-import-status');
+  prestImportDrop.textContent = '✓ ' + file.name;
+  prestImportDrop.classList.add('has-file');
+  statusEl2.textContent = 'Lendo o arquivo...';
+  try{
+    const linhas = await parseArquivoPrestadores(file);
+    if(linhas.length===0){
+      statusEl2.textContent = 'Não encontrei nenhuma linha nesse arquivo.';
+      prestImportPreview = [];
+    }else{
+      prestImportPreview = linhas.map(parseLinhaPrestador);
+      statusEl2.textContent = `${linhas.length} linha(s) encontradas — revise abaixo antes de confirmar.`;
+    }
+    renderPrestImportPreview();
+  }catch(e){
+    console.error(e);
+    statusEl2.textContent = 'Erro ao ler o arquivo: ' + e.message;
+  }
+});
+
+// ---------- Upload em lote (arquiteta) ----------
+let bulkFiles = []; // { file, nome, categoria }
+
+const CATEGORIA_KEYWORDS = {
+  'Elétrica': ['eletric','elétric','eletr'],
+  'Hidráulica': ['hidraul','hidr'],
+  'Piso': ['piso','porcelanato','laminado'],
+  'Pintura': ['pintura','tinta'],
+  'Marcenaria': ['marcen','movel','móvel','planejado'],
+  'Marmoraria': ['marmor','granito','mármore'],
+  'Vidraçaria': ['vidro','vidraç'],
+  'Gesso/Drywall': ['gesso','drywall'],
+  'Serralheria': ['serralh','metal'],
+  'Ar-condicionado': ['ar condicionado','arcondicionado','climatiza'],
+  'Impermeabilização': ['imperme'],
+  'Jardinagem': ['jardim','paisag'],
+  'Limpeza pós-obra': ['limpeza'],
+  'Arquitetura': ['projeto','planta','arquitet','layout']
+};
+
+function guessCategoria(filename){
+  const lower = filename.toLowerCase();
+  for(const [cat, keywords] of Object.entries(CATEGORIA_KEYWORDS)){
+    if(keywords.some(k=>lower.includes(k))) return cat;
+  }
+  return 'Geral';
+}
+
+function renderBulkPreview(){
+  const el = document.getElementById('a-bulk-list');
+  if(bulkFiles.length===0){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='block';
+  const catOptions = ['Geral', ...ESPECIALIDADES];
+  el.innerHTML = `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px;">
+    ${bulkFiles.length} arquivo(s) selecionado(s) — categoria sugerida automaticamente, revise se quiser
+  </div>` + bulkFiles.map((bf, i)=>`
+    <div class="bulk-row">
+      <div class="bulk-file">${escapeHtml(bf.file.name)}</div>
+      <input type="text" data-bulk-nome="${i}" value="${escapeHtml(bf.nome)}" placeholder="Descrição">
+      <select data-bulk-cat="${i}">
+        ${catOptions.map(c=>`<option value="${c}" ${c===bf.categoria?'selected':''}>${c}</option>`).join('')}
+      </select>
+      <button type="button" class="bulk-remove" data-bulk-remove="${i}">✕ remover da lista</button>
+    </div>
+  `).join('');
+}
+
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function base64ToFile(base64, filename){
+  const commaIdx = base64.indexOf(',');
+  const meta = base64.slice(0, commaIdx);
+  const data = base64.slice(commaIdx + 1);
+  const mimeMatch = meta.match(/data:(.*);base64/);
+  const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+  const binary = atob(data);
+  const array = new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) array[i] = binary.charCodeAt(i);
+  return new File([array], filename, {type: mime});
+}
+
+function openBase64(base64, filename, targetWindow){
+  try{
+    const commaIdx = base64.indexOf(',');
+    const meta = base64.slice(0, commaIdx);
+    const data = base64.slice(commaIdx + 1);
+    const mimeMatch = meta.match(/data:(.*);base64/);
+    const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    const binary = atob(data);
+    const array = new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) array[i] = binary.charCodeAt(i);
+    const blob = new Blob([array], {type: mime});
+    const url = URL.createObjectURL(blob);
+
+    if(targetWindow && !targetWindow.closed){
+      targetWindow.location.href = url;
+    }else{
+      const win = window.open(url, '_blank');
+      if(!win){
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename || 'documento';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+    }
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(e){
+    console.error(e);
+    toast('Não consegui abrir o arquivo');
+    if(targetWindow && !targetWindow.closed) targetWindow.close();
+  }
+}
+
+// ---------- Firestore helpers (arquivos grandes: divididos em pedaços) ----------
+const CHUNK_SIZE = 700000; // ~700KB por documento (limite do Firestore é 1MB/doc)
+
+async function saveFileChunked(collectionName, docId, base64){
+  const chunks = [];
+  for(let i=0;i<base64.length;i+=CHUNK_SIZE){
+    chunks.push(base64.slice(i, i+CHUNK_SIZE));
+  }
+  const batchWrites = chunks.map((chunk, idx)=>
+    col(collectionName).doc(docId).collection('chunks').doc(String(idx)).set({data:chunk})
+  );
+  await Promise.all(batchWrites);
+  return chunks.length;
+}
+
+async function loadFileChunked(collectionName, docId){
+  const snap = await col(collectionName).doc(docId).collection('chunks').orderBy(firebase.firestore.FieldPath.documentId()).get();
+  let base64 = '';
+  snap.forEach(doc=> base64 += doc.data().data);
+  return base64 || null;
+}
+
+async function deleteFileChunked(collectionName, docId){
+  const snap = await col(collectionName).doc(docId).collection('chunks').get();
+  const dels = [];
+  snap.forEach(doc=> dels.push(doc.ref.delete()));
+  await Promise.all(dels);
+}
+
+// ---------- File drop UI wiring ----------
+function wireFileDrop(dropId, inputId){
+  const drop = document.getElementById(dropId);
+  const input = document.getElementById(inputId);
+  drop.addEventListener('click', ()=>input.click());
+  input.addEventListener('change', ()=>{
+    if(input.files[0]){
+      drop.textContent = '✓ ' + input.files[0].name;
+      drop.classList.add('has-file');
+    }
+  });
+}
+// Cotações: suporta seleção múltipla (upload em lote)
+let cotBulkFiles = []; // { file, item, tipo, local, preco }
+
+function renderCotBulkPreview(){
+  const el = document.getElementById('c-bulk-list');
+  if(cotBulkFiles.length===0){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display='block';
+  el.innerHTML = `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px;">
+    ${cotBulkFiles.length} arquivo(s) selecionado(s) — revise item, tipo, local e preço de cada um
+  </div>` + cotBulkFiles.map((cf, i)=>`
+    <div class="bulk-row">
+      <div class="bulk-file">${escapeHtml(cf.file.name)}</div>
+      <input type="text" data-cb-item="${i}" value="${escapeHtml(cf.item)}" placeholder="Item">
+      <select data-cb-tipo="${i}">
+        ${TIPOS.map(t=>`<option value="${t}" ${t===cf.tipo?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <input type="text" data-cb-local="${i}" value="${escapeHtml(cf.local)}" placeholder="Local da cotação">
+      <input type="number" data-cb-preco="${i}" value="${cf.preco}" placeholder="Preço (R$)">
+      <button type="button" class="bulk-remove" data-cb-remove="${i}">✕ remover esta linha</button>
+    </div>
+  `).join('');
+}
+
+document.addEventListener('input', (e)=>{
+  const iItem = e.target.getAttribute('data-cb-item');
+  if(iItem !== null) cotBulkFiles[iItem].item = e.target.value;
+  const iLocal = e.target.getAttribute('data-cb-local');
+  if(iLocal !== null) cotBulkFiles[iLocal].local = e.target.value;
+  const iPreco = e.target.getAttribute('data-cb-preco');
+  if(iPreco !== null) cotBulkFiles[iPreco].preco = e.target.value;
+});
+document.addEventListener('change', (e)=>{
+  const iTipo = e.target.getAttribute('data-cb-tipo');
+  if(iTipo !== null) cotBulkFiles[iTipo].tipo = e.target.value;
+});
+document.addEventListener('click', (e)=>{
+  const iRem = e.target.getAttribute('data-cb-remove');
+  if(iRem !== null){ cotBulkFiles.splice(Number(iRem),1); renderCotBulkPreview(); }
+});
+
+const cDrop = document.getElementById('c-drop');
+const cFile = document.getElementById('c-file');
+cDrop.addEventListener('click', ()=>cFile.click());
+cFile.addEventListener('change', ()=>{
+  if(cFile.files.length > 1){
+    cotBulkFiles = Array.from(cFile.files).map(file=>({
+      file,
+      item: file.name.replace(/\.[^.]+$/,''),
+      tipo: guessTipoEtapa(file.name),
+      local: '',
+      preco: ''
+    }));
+    cDrop.textContent = `✓ ${cFile.files.length} arquivos selecionados`;
+    cDrop.classList.add('has-file');
+    document.getElementById('c-item').disabled = true;
+    document.getElementById('c-tipo').disabled = true;
+    document.getElementById('c-local').disabled = true;
+    document.getElementById('c-preco').disabled = true;
+    renderCotBulkPreview();
+  }else if(cFile.files.length === 1){
+    cotBulkFiles = [];
+    renderCotBulkPreview();
+    document.getElementById('c-item').disabled = false;
+    document.getElementById('c-tipo').disabled = false;
+    document.getElementById('c-local').disabled = false;
+    document.getElementById('c-preco').disabled = false;
+    cDrop.textContent = '✓ ' + cFile.files[0].name;
+    cDrop.classList.add('has-file');
+  }
+});
+
+// Arquivo da arquiteta: suporta seleção múltipla (upload em lote)
+const aDrop = document.getElementById('a-drop');
+const aFile = document.getElementById('a-file');
+aDrop.addEventListener('click', ()=>aFile.click());
+aFile.addEventListener('change', ()=>{
+  if(aFile.files.length > 1){
+    bulkFiles = Array.from(aFile.files).map(file=>({
+      file,
+      nome: file.name.replace(/\.[^.]+$/,''),
+      categoria: guessCategoria(file.name)
+    }));
+    aDrop.textContent = `✓ ${aFile.files.length} arquivos selecionados`;
+    aDrop.classList.add('has-file');
+    document.getElementById('a-nome').disabled = true;
+    document.getElementById('a-nome').placeholder = 'Descrição individual abaixo, por arquivo';
+    document.getElementById('a-categoria').disabled = true;
+    renderBulkPreview();
+  }else if(aFile.files.length === 1){
+    bulkFiles = [];
+    renderBulkPreview();
+    document.getElementById('a-nome').disabled = false;
+    document.getElementById('a-categoria').disabled = false;
+    aDrop.textContent = '✓ ' + aFile.files[0].name;
+    aDrop.classList.add('has-file');
+  }
+});
+document.addEventListener('input', (e)=>{
+  const idxN = e.target.getAttribute('data-bulk-nome');
+  if(idxN !== null){ bulkFiles[idxN].nome = e.target.value; }
+});
+document.addEventListener('change', (e)=>{
+  const idxC = e.target.getAttribute('data-bulk-cat');
+  if(idxC !== null){ bulkFiles[idxC].categoria = e.target.value; }
+});
+document.addEventListener('click', (e)=>{
+  const idxR = e.target.getAttribute('data-bulk-remove');
+  if(idxR !== null){
+    bulkFiles.splice(Number(idxR), 1);
+    renderBulkPreview();
+    if(bulkFiles.length===0){
+      document.getElementById('a-nome').disabled = false;
+      document.getElementById('a-categoria').disabled = false;
+      document.getElementById('a-file').value = '';
+      aDrop.textContent = 'Toque para escolher um ou vários arquivos de uma vez (até 3MB cada)';
+      aDrop.classList.remove('has-file');
+    }
+  }
+});
+
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function waLink(tel){
+  if(!tel) return null;
+  let digits = tel.replace(/\D/g,'');
+  if(digits.length===0) return null;
+  // se não vier com código do país, assume Brasil (55)
+  if(!(digits.startsWith('55') && digits.length>=12)){
+    digits = '55' + digits;
+  }
+  return 'https://wa.me/' + digits;
+}
+
+// ---------- Cotações ----------
+function renderCotacoesList(docs){
+  const el = document.getElementById('c-list');
+  if(docs.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhuma cotação salva ainda.</div>';
+    return;
+  }
+
+  // agrupa por tipo, pra visualizar e escolher mais rápido
+  const grupos = {};
+  docs.forEach(q=>{
+    const t = q.tipo || 'Outro';
+    if(!grupos[t]) grupos[t] = [];
+    grupos[t].push(q);
+  });
+  const tiposOrdenados = Object.keys(grupos).sort((a,b)=>a.localeCompare(b));
+
+  el.innerHTML = tiposOrdenados.map(tipo=>`
+    <div class="card">
+      <h2>${escapeHtml(tipo)} <span class="tag">${grupos[tipo].length}</span></h2>
+      ${grupos[tipo].map(q=>`
+        <div class="list-item" style="border-left:4px solid ${(window._tipoCores && window._tipoCores[q.tipo]) || 'var(--paper-line)'};">
+          <div class="row1">
+            <div>
+              <div class="item-title">${escapeHtml(q.item)}</div>
+              <div class="meta">${escapeHtml(q.local)}</div>
+            </div>
+            <div class="price">${q.preco ? 'R$ '+Number(q.preco).toLocaleString('pt-BR',{minimumFractionDigits:2}) : ''}</div>
+          </div>
+          ${q.prof ? `<span class="badge-prof">Profissional nº ${escapeHtml(q.prof)}</span>` : ''}
+          <label style="margin-top:10px;">Status</label>
+          <select data-status-id="${q.id}" class="status-select ${statusClass(q.status)}">
+            <option value="Pendente" ${q.status==='Pendente'?'selected':''}>Pendente</option>
+            <option value="Aprovado" ${q.status==='Aprovado'?'selected':''}>Aprovado</option>
+            <option value="Recusado" ${q.status==='Recusado'?'selected':''}>Recusado</option>
+          </select>
+          <div class="actions">
+            ${q.hasFile ? `<button class="view" data-view="cotacoes" data-id="${q.id}" data-name="${escapeHtml(q.fileName)}">Abrir documento</button>` : `<button disabled style="opacity:.4">Sem arquivo</button>`}
+            <button class="edit" data-editq="${q.id}" style="border-color:var(--blueprint);color:var(--blueprint);">Editar</button>
+            <button class="del" data-del="cotacoes" data-id="${q.id}">Excluir</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function statusClass(status){
+  if(status==='Aprovado') return 'status-aprovado';
+  if(status==='Recusado') return 'status-recusado';
+  return 'status-pendente';
+}
+
+// ---------- Pagamento / parcelas ----------
+function primeiraFaturaISO(fechamento){
+  const hoje = new Date();
+  const d = new Date(hoje);
+  if(fechamento){
+    if(d.getDate() > fechamento) d.setMonth(d.getMonth()+1);
+    d.setDate(fechamento);
+  }
+  return d;
+}
+function gerarDadosParcelas(total, n, fechamento){
+  const base = Math.floor((total/n)*100)/100;
+  const resto = Math.round((total - base*n)*100)/100;
+  const primeira = primeiraFaturaISO(fechamento);
+  const dados = [];
+  for(let i=0;i<n;i++){
+    const d = new Date(primeira); d.setMonth(d.getMonth()+i);
+    dados.push({
+      valor: i===n-1 ? Math.round((base+resto)*100)/100 : base,
+      data: d.toISOString().slice(0,10),
+      pagaManual: null,
+      editado: false
+    });
+  }
+  return dados;
+}
+function parcelaEstaPaga(p, autoPay){
+  if(p.pagaManual === true || p.pagaManual === false) return p.pagaManual;
+  return !!autoPay && new Date(p.data+'T00:00:00') <= new Date();
+}
+function redistribuirParcelas(dados, total){
+  const editadas = dados.filter(p=>p.editado);
+  const somaEditadas = editadas.reduce((s,p)=>s+p.valor,0);
+  const naoEditadas = dados.filter(p=>!p.editado);
+  if(naoEditadas.length===0) return;
+  const restante = Math.round((total - somaEditadas)*100)/100;
+  const cada = Math.floor((restante/naoEditadas.length)*100)/100;
+  let acumulado = 0;
+  naoEditadas.forEach((p,i)=>{
+    if(i===naoEditadas.length-1){ p.valor = Math.round((restante-acumulado)*100)/100; }
+    else { p.valor = cada; acumulado += cada; }
+  });
+}
+
+// ---------- Por Tipo (controle do que já foi feito) ----------
+function renderTipos(docs){
+  const el = document.getElementById('tipos-list');
+  if(docs.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhuma cotação cadastrada ainda.</div>';
+    return;
+  }
+  const grupos = {};
+  docs.forEach(q=>{
+    const t = q.tipo || 'Outro';
+    if(!grupos[t]) grupos[t] = [];
+    grupos[t].push(q);
+  });
+  const tipos = Object.keys(grupos).sort((a,b)=>a.localeCompare(b));
+
+  el.innerHTML = tipos.map(t=>{
+    const items = grupos[t];
+    const aprovados = items.filter(q=>q.status==='Aprovado').length;
+    const recusados = items.filter(q=>q.status==='Recusado').length;
+    const pendentes = items.length - aprovados - recusados;
+    const valorAprovado = items.filter(q=>q.status==='Aprovado').reduce((s,q)=>s+(Number(q.preco)||0),0);
+    const temAprovado = aprovados > 0;
+
+    return `
+    <div class="card">
+      <h2>${escapeHtml(t)} <span class="tag">${items.length} cotação${items.length===1?'':'ões'}</span></h2>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="badge-prof" style="background:${temAprovado?'var(--ok)':'#B9C4CE'}">✓ ${aprovados} aprovado${aprovados===1?'':'s'}</span>
+        <span class="badge-prof" style="background:var(--caution-dark)">${pendentes} pendente${pendentes===1?'':'s'}</span>
+        <span class="badge-prof" style="background:var(--danger)">${recusados} recusado${recusados===1?'':'s'}</span>
+      </div>
+      ${temAprovado ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ok);font-weight:700;margin-bottom:10px;">Já definido: R$ ${valorAprovado.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>` : `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Ainda sem cotação aprovada nessa categoria</div>`}
+      ${items.map(q=>`
+        <div class="list-item" style="padding:9px 10px;">
+          <div class="row1">
+            <div class="item-title" style="font-size:13px;">${escapeHtml(q.item)}</div>
+            <div class="price" style="font-size:12px;">${q.preco?'R$ '+Number(q.preco).toLocaleString('pt-BR',{minimumFractionDigits:2}):''}</div>
+          </div>
+          <div class="meta">${escapeHtml(q.local)} · <span style="font-weight:700;color:${q.status==='Aprovado'?'var(--ok)':q.status==='Recusado'?'var(--danger)':'var(--caution-dark)'}">${escapeHtml(q.status||'Pendente')}</span></div>
+        </div>
+      `).join('')}
+    </div>`;
+  }).join('');
+}
+
+function listenCotacoes(){
+  if(!db) return;
+  trackUnsub(col('cotacoes').orderBy('criado','desc').onSnapshot(snap=>{
+    const docs = [];
+    snap.forEach(doc=> docs.push({id:doc.id, ...doc.data()}));
+    cotacoesCache = docs;
+    renderCotacoesList(docs);
+    renderAprovados(docs);
+    renderCartoes(docs);
+    renderTipos(docs);
+    renderProximaEtapa();
+    renderLinhaDoTempo();
+  }, err=>{ console.error(err); toast('Erro ao carregar cotações'); }));
+}
+
+// ---------- Cartões (consolidado) ----------
+let cartMesOffset = 0; // 0 = mês atual
+function mesKeyFromOffset(offset){
+  const d = new Date(); d.setDate(1); d.setMonth(d.getMonth()+offset);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function labelMesKey(key){
+  const [y,m] = key.split('-');
+  return new Date(parseInt(y),parseInt(m)-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+}
+function initialsCartao(nome){
+  return (nome||'?').trim().split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+}
+function renderCartoes(docs){
+  const mesKey = mesKeyFromOffset(cartMesOffset);
+  document.getElementById('cart-mes-label').textContent = labelMesKey(mesKey);
+
+  const porCartao = {};
+  docs.forEach(q=>{
+    if(q.status!=='Aprovado' || !q.pagamento || q.pagamento.modo!=='parcelado') return;
+    const cartaoNome = q.pagamento.cartao || 'Sem cartão definido';
+    (q.pagamento.dados||[]).forEach((p,i)=>{
+      if((p.data||'').slice(0,7) !== mesKey) return;
+      if(!porCartao[cartaoNome]) porCartao[cartaoNome] = [];
+      porCartao[cartaoNome].push({item:q, parcela:p, idx:i, total:(q.pagamento.dados||[]).length});
+    });
+  });
+
+  const cartoes = Object.keys(porCartao);
+  let totalMes = 0;
+  const el = document.getElementById('cart-lista');
+  if(cartoes.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhuma parcela prevista neste mês.</div>';
+  }else{
+    el.innerHTML = cartoes.map(cartao=>{
+      const entradas = porCartao[cartao];
+      const totalCartao = entradas.reduce((s,e)=>s+e.parcela.valor,0);
+      totalMes += totalCartao;
+      return `
+      <div class="card">
+        <div class="row1" style="cursor:pointer;" data-cart-toggle="${escapeHtml(cartao)}">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="badge-prof" style="background:var(--ink);">${escapeHtml(initialsCartao(cartao))}</span>
+            <div>
+              <div class="item-title">${escapeHtml(cartao)}</div>
+              <div class="meta">${entradas.length} parcela${entradas.length===1?'':'s'} este mês</div>
+            </div>
+          </div>
+          <div class="price">R$ ${totalCartao.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+        </div>
+        <div id="cart-detail-${escapeHtml(cartao).replace(/\s/g,'_')}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--paper-line);">
+          ${entradas.map(e=>`
+            <div class="list-item" style="padding:9px 10px;">
+              <div class="row1">
+                <div>
+                  <div class="item-title" style="font-size:13px;">${escapeHtml(e.item.item)}</div>
+                  <div class="meta">${escapeHtml(e.item.tipo)} · parcela ${e.idx+1}/${e.total}${parcelaEstaPaga(e.parcela, e.item.pagamento.autoPay)?' · paga':''}</div>
+                </div>
+                <div class="price" style="font-size:12px;">R$ ${e.parcela.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('cart-mes-total').textContent = 'R$ ' + totalMes.toLocaleString('pt-BR',{minimumFractionDigits:2}) + ' no total';
+
+  el.querySelectorAll('[data-cart-toggle]').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const key = row.getAttribute('data-cart-toggle').replace(/\s/g,'_');
+      const d = document.getElementById('cart-detail-'+key);
+      if(d) d.style.display = d.style.display==='none' ? 'block' : 'none';
+    });
+  });
+}
+document.getElementById('cart-mes-prev').addEventListener('click', ()=>{ cartMesOffset--; renderCartoes(cotacoesCache); });
+document.getElementById('cart-mes-next').addEventListener('click', ()=>{ cartMesOffset++; renderCartoes(cotacoesCache); });
+
+document.getElementById('c-save').addEventListener('click', async ()=>{
+  if(!db){ toast('Configure o Firebase primeiro'); return; }
+  const btn = document.getElementById('c-save');
+  const isEditing = !!editingCotacaoId;
+  const prof = document.getElementById('c-prof').value.trim();
+  const status = document.getElementById('c-status').value;
+
+  // ---- Modo lote: vários arquivos de uma vez ----
+  if(!isEditing && cotBulkFiles.length > 0){
+    const semItemOuLocal = cotBulkFiles.find(cf=>!cf.item.trim() || !cf.local.trim());
+    if(semItemOuLocal){ toast('Preencha item e local de todas as linhas'); return; }
+    const tooBig = cotBulkFiles.find(cf=>cf.file.size > 3*1024*1024);
+    if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 3MB'); return; }
+    const nomesNoLote = cotBulkFiles.map(cf=>cf.file.name);
+    const duplicadoNoLote = nomesNoLote.find((n,i)=> nomesNoLote.indexOf(n) !== i);
+    if(duplicadoNoLote){ toast('Você selecionou "'+duplicadoNoLote+'" mais de uma vez'); return; }
+    const duplicadoExistente = cotBulkFiles.find(cf=> nomeJaExiste(cotacoesCache, cf.file.name, null));
+    if(duplicadoExistente){ toast('Já existe um arquivo salvo com o nome "'+duplicadoExistente.file.name+'"'); return; }
+
+    btn.disabled = true;
+    try{
+      for(let i=0;i<cotBulkFiles.length;i++){
+        const cf = cotBulkFiles[i];
+        btn.textContent = `Enviando ${i+1}/${cotBulkFiles.length}...`;
+        const id = uid();
+        const base64 = await fileToBase64(cf.file);
+        await saveFileChunked('cotacoes', id, base64);
+        await col('cotacoes').doc(id).set({
+          item: cf.item, tipo: cf.tipo, local: cf.local, preco: cf.preco,
+          prof, status, hasFile: true, fileName: cf.file.name,
+          criado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      toast(cotBulkFiles.length + ' cotações salvas');
+      cotBulkFiles = [];
+      renderCotBulkPreview();
+      document.getElementById('c-item').disabled = false;
+      document.getElementById('c-tipo').disabled = false;
+      document.getElementById('c-local').disabled = false;
+      document.getElementById('c-preco').disabled = false;
+      cancelEditCotacao();
+    }catch(err){
+      console.error(err);
+      toast('Erro ao salvar: ' + err.message);
+    }
+    btn.disabled = false; btn.textContent = 'Salvar cotação';
+    return;
+  }
+
+  // ---- Modo normal: um arquivo (novo ou edição) ----
+  const item = document.getElementById('c-item').value.trim();
+  const tipo = document.getElementById('c-tipo').value;
+  const local = document.getElementById('c-local').value.trim();
+  const preco = document.getElementById('c-preco').value;
+  const fileInput = document.getElementById('c-file');
+
+  if(!item || !local){ toast('Preencha item e local'); return; }
+
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    const id = isEditing ? editingCotacaoId : uid();
+    let hasFile = isEditing ? (cotacoesCache.find(q=>q.id===id)?.hasFile || false) : false;
+    let fileName = isEditing ? (cotacoesCache.find(q=>q.id===id)?.fileName || '') : '';
+
+    if(fileInput.files[0]){
+      const file = fileInput.files[0];
+      if(file.size > 3*1024*1024){ toast('Arquivo muito grande (máx 3MB)'); btn.disabled=false; btn.textContent = isEditing ? 'Salvar edição' : 'Salvar cotação'; return; }
+      if(nomeJaExiste(cotacoesCache, file.name, isEditing ? id : null)){
+        toast('Já existe um arquivo com esse nome: "'+file.name+'"');
+        btn.disabled=false; btn.textContent = isEditing ? 'Salvar edição' : 'Salvar cotação';
+        return;
+      }
+      if(isEditing && hasFile) await deleteFileChunked('cotacoes', id);
+      const base64 = await fileToBase64(file);
+      await saveFileChunked('cotacoes', id, base64);
+      hasFile = true; fileName = file.name;
+    }
+
+    const payload = { item, tipo, local, preco, prof, status, hasFile, fileName };
+
+    if(status === 'Aprovado'){
+      const modo = document.getElementById('c-pag-parcelado').classList.contains('active') ? 'parcelado' : 'vista';
+      const pagamentoAnterior = isEditing ? (cotacoesCache.find(q=>q.id===id)?.pagamento || null) : null;
+      if(modo === 'vista'){
+        payload.pagamento = { modo:'vista' };
+      }else{
+        const n = Math.max(1, parseInt(document.getElementById('c-pag-n').value,10) || 1);
+        const cartao = document.getElementById('c-pag-cartao').value.trim();
+        const fechamento = parseInt(document.getElementById('c-pag-fechamento').value,10) || null;
+        const autoPay = document.getElementById('c-pag-autopay').checked;
+        const precisaRegenerar = !pagamentoAnterior || pagamentoAnterior.modo!=='parcelado' ||
+          pagamentoAnterior.parcelas !== n || pagamentoAnterior.fechamento !== fechamento || Number(pagamentoAnterior.total) !== Number(preco);
+        payload.pagamento = {
+          modo:'parcelado', parcelas:n, cartao, fechamento, autoPay, total:Number(preco)||0,
+          dados: precisaRegenerar ? gerarDadosParcelas(Number(preco)||0, n, fechamento) : pagamentoAnterior.dados
+        };
+      }
+    }else if(isEditing){
+      payload.pagamento = firebase.firestore.FieldValue.delete();
+    }
+
+    if(isEditing){
+      await col('cotacoes').doc(id).update(payload);
+    }else{
+      payload.criado = firebase.firestore.FieldValue.serverTimestamp();
+      await col('cotacoes').doc(id).set(payload);
+    }
+
+    document.getElementById('c-item').value='';
+    document.getElementById('c-local').value='';
+    document.getElementById('c-preco').value='';
+    document.getElementById('c-prof').value='';
+    document.getElementById('c-status').value='Pendente';
+    fileInput.value='';
+    document.getElementById('c-drop').textContent = 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)';
+    document.getElementById('c-drop').classList.remove('has-file');
+    toast(isEditing ? 'Cotação atualizada' : 'Cotação salva');
+    cancelEditCotacao();
+  }catch(e){
+    console.error(e);
+    toast('Erro ao salvar: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = editingCotacaoId ? 'Salvar edição' : 'Salvar cotação';
+});
+
+function cancelEditCotacao(){
+  editingCotacaoId = null;
+  cotBulkFiles = [];
+  renderCotBulkPreview();
+  document.getElementById('c-form-title').innerHTML = 'Nova cotação <span class="tag">upload</span>';
+  document.getElementById('c-save').textContent = 'Salvar cotação';
+  document.getElementById('c-cancel').style.display = 'none';
+  document.getElementById('c-item').disabled = false;
+  document.getElementById('c-item').value='';
+  document.getElementById('c-tipo').disabled = false;
+  document.getElementById('c-tipo').value='Móveis';
+  document.getElementById('c-local').disabled = false;
+  document.getElementById('c-local').value='';
+  document.getElementById('c-preco').disabled = false;
+  document.getElementById('c-preco').value='';
+  document.getElementById('c-prof').value='';
+  document.getElementById('c-status').value='Pendente';
+  document.getElementById('c-file').value='';
+  document.getElementById('c-drop').textContent = 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)';
+  document.getElementById('c-drop').classList.remove('has-file');
+  document.getElementById('c-pagamento-wrap').style.display = 'none';
+  document.getElementById('c-pag-vista').click();
+  document.getElementById('c-pag-n').value = 2;
+  document.getElementById('c-pag-cartao').value = '';
+  document.getElementById('c-pag-fechamento').value = '';
+  document.getElementById('c-pag-autopay').checked = true;
+}
+document.getElementById('c-cancel').addEventListener('click', cancelEditCotacao);
+
+document.getElementById('c-pag-vista').addEventListener('click', ()=>{
+  document.getElementById('c-pag-vista').classList.add('active');
+  document.getElementById('c-pag-parcelado').classList.remove('active');
+  document.getElementById('c-pag-parcelas-wrap').style.display = 'none';
+});
+document.getElementById('c-pag-parcelado').addEventListener('click', ()=>{
+  document.getElementById('c-pag-parcelado').classList.add('active');
+  document.getElementById('c-pag-vista').classList.remove('active');
+  document.getElementById('c-pag-parcelas-wrap').style.display = 'block';
+});
+document.querySelectorAll('.pag-toggle-btn').forEach(b=>{
+  // reflete visualmente qual está ativo
+});
+document.getElementById('c-status').addEventListener('change', ()=>{
+  document.getElementById('c-pagamento-wrap').style.display = document.getElementById('c-status').value==='Aprovado' ? 'block' : 'none';
+});
+
+// ---------- Arquiteta ----------
+function renderArquitetaList(docs){
+  const el = document.getElementById('a-list');
+  if(docs.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhum arquivo salvo ainda.</div>';
+    return;
+  }
+
+  // agrupa por categoria (arquivos sem categoria caem em "Geral")
+  const grupos = {};
+  docs.forEach(f=>{
+    const cat = f.categoria || 'Geral';
+    if(!grupos[cat]) grupos[cat] = [];
+    grupos[cat].push(f);
+  });
+  const categoriasOrdenadas = Object.keys(grupos).sort((a,b)=> a==='Geral' ? 1 : b==='Geral' ? -1 : a.localeCompare(b));
+
+  el.innerHTML = categoriasOrdenadas.map(cat=>`
+    <div class="card">
+      <h2>${escapeHtml(cat)} <span class="tag">${grupos[cat].length}</span></h2>
+      ${grupos[cat].map(f=>`
+        <div class="list-item">
+          <div class="row1">
+            <div>
+              <div class="item-title">${escapeHtml(f.nome)}</div>
+              <div class="meta">${escapeHtml(f.fileName||'')}</div>
+            </div>
+          </div>
+          ${f.prof ? `<span class="badge-prof">Para profissional nº ${escapeHtml(f.prof)}</span>` : ''}
+          <div class="actions">
+            <button class="view" data-view="arquiteta" data-id="${f.id}" data-name="${escapeHtml(f.fileName)}">Abrir arquivo</button>
+            <button class="edit" data-edita="${f.id}" style="border-color:var(--blueprint);color:var(--blueprint);">Editar</button>
+            <button class="del" data-del="arquiteta" data-id="${f.id}">Excluir</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function listenArquiteta(){
+  if(!db) return;
+  trackUnsub(col('arquiteta').orderBy('criado','desc').onSnapshot(snap=>{
+    const docs = [];
+    snap.forEach(doc=> docs.push({id:doc.id, ...doc.data()}));
+    arquitetaCache = docs;
+    renderArquitetaList(docs);
+  }, err=>{ console.error(err); toast('Erro ao carregar arquivos'); }));
+}
+
+document.getElementById('a-save').addEventListener('click', async ()=>{
+  if(!db){ toast('Configure o Firebase primeiro'); return; }
+  const btn = document.getElementById('a-save');
+  const isEditing = !!editingArquitetaId;
+
+  // ---- Modo lote: vários arquivos de uma vez ----
+  if(!isEditing && bulkFiles.length > 0){
+    const prof = document.getElementById('a-prof').value.trim();
+    const tooBig = bulkFiles.find(bf=>bf.file.size > 3*1024*1024);
+    if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 3MB'); return; }
+
+    // nomes repetidos dentro do próprio lote selecionado
+    const nomesNoLote = bulkFiles.map(bf=>bf.file.name);
+    const duplicadoNoLote = nomesNoLote.find((n,i)=> nomesNoLote.indexOf(n) !== i);
+    if(duplicadoNoLote){
+      toast('Você selecionou "'+duplicadoNoLote+'" mais de uma vez');
+      return;
+    }
+    // nomes que já existem salvos
+    const duplicadoExistente = bulkFiles.find(bf=> nomeJaExiste(arquitetaCache, bf.file.name, null));
+    if(duplicadoExistente){
+      toast('Já existe um arquivo salvo com o nome "'+duplicadoExistente.file.name+'"');
+      return;
+    }
+
+    btn.disabled = true;
+    try{
+      for(let i=0;i<bulkFiles.length;i++){
+        const bf = bulkFiles[i];
+        btn.textContent = `Enviando ${i+1}/${bulkFiles.length}...`;
+        const id = uid();
+        const base64 = await fileToBase64(bf.file);
+        await saveFileChunked('arquiteta', id, base64);
+        await col('arquiteta').doc(id).set({
+          nome: bf.nome || bf.file.name,
+          categoria: bf.categoria,
+          prof, fileName: bf.file.name,
+          criado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      toast(bulkFiles.length + ' arquivos salvos');
+      bulkFiles = [];
+      renderBulkPreview();
+      document.getElementById('a-nome').disabled = false;
+      document.getElementById('a-categoria').disabled = false;
+      document.getElementById('a-nome').placeholder = 'Ex: Projeto elétrico - sala';
+      cancelEditArquiteta();
+    }catch(e){
+      console.error(e);
+      toast('Erro ao salvar: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = 'Salvar arquivo';
+    return;
+  }
+
+  // ---- Modo normal: um arquivo (novo ou edição) ----
+  const nome = document.getElementById('a-nome').value.trim();
+  const categoria = document.getElementById('a-categoria').value;
+  const prof = document.getElementById('a-prof').value.trim();
+  const fileInput = document.getElementById('a-file');
+
+  if(!nome || (!isEditing && !fileInput.files[0])){ toast('Preencha a descrição e escolha um arquivo'); return; }
+
+  if(fileInput.files[0] && fileInput.files[0].size > 3*1024*1024){ toast('Arquivo muito grande (máx 3MB)'); return; }
+
+  if(fileInput.files[0] && nomeJaExiste(arquitetaCache, fileInput.files[0].name, isEditing ? editingArquitetaId : null)){
+    toast('Já existe um arquivo com esse nome: "'+fileInput.files[0].name+'"');
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    const id = isEditing ? editingArquitetaId : uid();
+    let fileName = isEditing ? (arquitetaCache.find(f=>f.id===id)?.fileName || '') : '';
+
+    if(fileInput.files[0]){
+      const file = fileInput.files[0];
+      if(isEditing) await deleteFileChunked('arquiteta', id);
+      const base64 = await fileToBase64(file);
+      await saveFileChunked('arquiteta', id, base64);
+      fileName = file.name;
+    }
+
+    const payload = { nome, categoria, prof, fileName };
+    if(isEditing){
+      await col('arquiteta').doc(id).update(payload);
+    }else{
+      payload.criado = firebase.firestore.FieldValue.serverTimestamp();
+      await col('arquiteta').doc(id).set(payload);
+    }
+
+    document.getElementById('a-nome').value='';
+    document.getElementById('a-categoria').selectedIndex = 0;
+    document.getElementById('a-prof').value='';
+    fileInput.value='';
+    document.getElementById('a-drop').textContent='Toque para escolher um ou vários arquivos de uma vez (até 3MB cada)';
+    document.getElementById('a-drop').classList.remove('has-file');
+    toast(isEditing ? 'Arquivo atualizado' : 'Arquivo salvo');
+    cancelEditArquiteta();
+  }catch(e){
+    console.error(e);
+    toast('Erro ao salvar: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = editingArquitetaId ? 'Salvar edição' : 'Salvar arquivo';
+});
+
+function cancelEditArquiteta(){
+  editingArquitetaId = null;
+  bulkFiles = [];
+  renderBulkPreview();
+  document.getElementById('a-form-title').innerHTML = 'Arquivo da arquiteta <span class="tag">upload</span>';
+  document.getElementById('a-save').textContent = 'Salvar arquivo';
+  document.getElementById('a-cancel').style.display = 'none';
+  document.getElementById('a-nome').disabled = false;
+  document.getElementById('a-nome').placeholder = 'Ex: Projeto elétrico - sala';
+  document.getElementById('a-nome').value='';
+  document.getElementById('a-categoria').disabled = false;
+  document.getElementById('a-categoria').selectedIndex = 0;
+  document.getElementById('a-prof').value='';
+  document.getElementById('a-file').value='';
+  document.getElementById('a-drop').textContent='Toque para escolher um ou vários arquivos de uma vez (até 3MB cada)';
+  document.getElementById('a-drop').classList.remove('has-file');
+}
+document.getElementById('a-cancel').addEventListener('click', cancelEditArquiteta);
+
+// ---------- Prestadores ----------
+function statusPrestadorCor(status){
+  if(status==='Contratado') return 'var(--ok)';
+  if(status==='Recusado') return 'var(--danger)';
+  return 'var(--caution)';
+}
+
+function renderPrestadoresList(docs){
+  const el = document.getElementById('p-list');
+  if(docs.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhum prestador cadastrado ainda.</div>';
+    return;
+  }
+
+  const grupos = {};
+  docs.forEach(p=>{
+    const esp = p.esp || 'Outro';
+    if(!grupos[esp]) grupos[esp] = [];
+    grupos[esp].push(p);
+  });
+  const especialidadesOrdenadas = Object.keys(grupos).sort((a,b)=>a.localeCompare(b));
+  Object.values(grupos).forEach(lista=> lista.sort((a,b)=> (b.favorito?1:0) - (a.favorito?1:0)));
+
+  el.innerHTML = especialidadesOrdenadas.map(esp=>`
+    <div class="card">
+      <h2>${escapeHtml(esp)} <span class="tag">${grupos[esp].length}</span></h2>
+      ${grupos[esp].map(p=>`
+        <div class="list-item">
+          <div class="row1">
+            <div>
+              <div class="item-title">${p.favorito?'⭐ ':''}${escapeHtml(p.nome)}</div>
+              <div class="meta">${escapeHtml(p.empresa||'')}</div>
+              ${p.status ? `<span class="badge-prof" style="background:${statusPrestadorCor(p.status)};">${escapeHtml(p.status)}</span>` : ''}
+            </div>
+            <span class="badge-prof">Nº ${escapeHtml(p.num)}</span>
+          </div>
+          <div class="meta" style="margin-top:8px;font-size:14px;color:var(--ink);font-weight:600;">${escapeHtml(p.tel||'sem telefone')}</div>
+          <div class="actions">
+            <button data-fav-prest="${p.id}" style="${p.favorito?'border-color:var(--caution);color:var(--caution);':''}">${p.favorito?'⭐ Favorito':'☆ Favoritar'}</button>
+            ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="tel:${escapeHtml(p.tel.replace(/[^0-9+]/g,''))}">Ligar</a>` : `<button disabled style="opacity:.4">Sem telefone</button>`}
+            ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ok);border-color:var(--ok);" href="${waLink(p.tel)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+            ${p.tel ? `<button class="view" style="color:var(--blueprint);border-color:var(--blueprint);" data-whats-arquivo-tel="${escapeHtml(p.tel)}" data-whats-arquivo-nome="${escapeHtml(p.nome)}">📎 Enviar arquivo</button>` : ''}
+            ${p.endereco ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.endereco)}" target="_blank" rel="noopener">📍 Ver no mapa</a>` : ''}
+            <button class="edit" data-editp="${p.id}" style="border-color:var(--blueprint);color:var(--blueprint);">Editar</button>
+            <button class="del" data-delp="${p.id}">Excluir</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function listenPrestadores(){
+  if(!db) return;
+  trackUnsub(col('prestadores').orderBy('num','asc').onSnapshot(snap=>{
+    const docs = [];
+    snap.forEach(doc=> docs.push({id:doc.id, ...doc.data()}));
+    prestadoresCache = docs;
+    renderPrestadoresList(docs);
+    if(!editingPrestadorId){
+      document.getElementById('p-num').value = nextProfNumber();
+    }
+  }, err=>{ console.error(err); toast('Erro ao carregar prestadores'); }));
+}
+
+document.getElementById('p-save').addEventListener('click', async ()=>{
+  if(!db){ toast('Configure o Firebase primeiro'); return; }
+  const num = document.getElementById('p-num').value.trim();
+  const nome = document.getElementById('p-nome').value.trim();
+  const empresa = document.getElementById('p-empresa').value.trim();
+  const esp = document.getElementById('p-esp').value.trim();
+  const tel = document.getElementById('p-tel').value.trim();
+  const btn = document.getElementById('p-save');
+
+  if(!num || !nome){ toast('Preencha ao menos número e nome'); return; }
+
+  const isEditing = !!editingPrestadorId;
+
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try{
+    const status = document.getElementById('p-status').value || 'Cotação';
+    const endereco = document.getElementById('p-endereco').value.trim();
+    const email = document.getElementById('p-email').value.trim();
+    const indicadoPor = document.getElementById('p-indicado').value.trim();
+    const obs = document.getElementById('p-obs').value.trim();
+    const payload = { num, nome, empresa, esp, tel, status, endereco, email, indicadoPor, obs };
+    if(isEditing){
+      await col('prestadores').doc(editingPrestadorId).update(payload);
+    }else{
+      payload.favorito = false;
+      payload.criado = firebase.firestore.FieldValue.serverTimestamp();
+      await col('prestadores').doc(num).set(payload);
+    }
+    toast(isEditing ? 'Prestador atualizado' : 'Prestador salvo');
+    cancelEditPrestador();
+  }catch(e){
+    console.error(e);
+    toast('Erro ao salvar: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = editingPrestadorId ? 'Salvar edição' : 'Salvar prestador';
+});
+
+function cancelEditPrestador(){
+  editingPrestadorId = null;
+  document.getElementById('p-form-title').innerHTML = 'Novo prestador <span class="tag">contato</span>';
+  document.getElementById('p-save').textContent = 'Salvar prestador';
+  document.getElementById('p-cancel').style.display = 'none';
+  document.getElementById('p-num').disabled = false;
+  document.getElementById('p-num').value = nextProfNumber();
+  document.getElementById('p-nome').value='';
+  document.getElementById('p-empresa').value='';
+  document.getElementById('p-esp').selectedIndex = 0;
+  document.getElementById('p-tel').value='';
+  selecionarStatusPrestador('Cotação');
+  document.getElementById('p-endereco').value='';
+  document.getElementById('p-email').value='';
+  document.getElementById('p-indicado').value='';
+  document.getElementById('p-obs').value='';
+  document.getElementById('p-mais-wrap').style.display = 'none';
+}
+document.getElementById('p-cancel').addEventListener('click', cancelEditPrestador);
+
+function selecionarStatusPrestador(status){
+  document.getElementById('p-status').value = status;
+  document.querySelectorAll('.p-status-chip').forEach(c=>{
+    c.classList.toggle('active', c.getAttribute('data-status')===status);
+  });
+}
+document.querySelectorAll('.p-status-chip').forEach(chip=>{
+  chip.addEventListener('click', ()=> selecionarStatusPrestador(chip.getAttribute('data-status')));
+});
+selecionarStatusPrestador('Cotação');
+document.getElementById('p-mais-toggle').addEventListener('click', ()=>{
+  const w = document.getElementById('p-mais-wrap');
+  w.style.display = w.style.display==='none' ? 'block' : 'none';
+});
+
+document.addEventListener('change', async (e)=>{
+  const statusId = e.target.getAttribute('data-status-id');
+  if(statusId){
+    const novoStatus = e.target.value;
+    e.target.className = 'status-select ' + statusClass(novoStatus);
+    try{
+      await col('cotacoes').doc(statusId).update({status: novoStatus});
+      toast('Status atualizado');
+    }catch(err){
+      console.error(err);
+      toast('Erro ao atualizar status');
+    }
+  }
+});
+
+function renderAprovados(docs){
+  const aprovados = docs.filter(q=>q.status==='Aprovado');
+  const total = aprovados.reduce((sum,q)=> sum + (Number(q.preco)||0), 0);
+  let totalPago = 0;
+  aprovados.forEach(q=>{
+    if(!q.pagamento || q.pagamento.modo!=='parcelado'){ totalPago += Number(q.preco)||0; return; }
+    (q.pagamento.dados||[]).forEach(p=>{ if(parcelaEstaPaga(p, q.pagamento.autoPay)) totalPago += p.valor; });
+  });
+  document.getElementById('ap-total').textContent = 'R$ ' + total.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  document.getElementById('ap-count').textContent = aprovados.length + (aprovados.length===1 ? ' orçamento aprovado' : ' orçamentos aprovados');
+  const pagoEl = document.getElementById('ap-pago');
+  const faltaEl = document.getElementById('ap-falta');
+  if(pagoEl) pagoEl.textContent = 'R$ ' + totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  if(faltaEl) faltaEl.textContent = 'R$ ' + (total-totalPago).toLocaleString('pt-BR',{minimumFractionDigits:2});
+
+  const el = document.getElementById('ap-list');
+  if(aprovados.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhum orçamento aprovado ainda.</div>';
+    return;
+  }
+  el.innerHTML = aprovados.map(q=>{
+    const parcelado = q.pagamento && q.pagamento.modo==='parcelado';
+    const chip = !q.pagamento ? ''
+      : parcelado ? `<span class="badge-prof" style="background:var(--caution);">${q.pagamento.parcelas}x de R$ ${((q.pagamento.dados&&q.pagamento.dados[0]&&q.pagamento.dados[0].valor)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`
+      : `<span class="badge-prof">À vista</span>`;
+    return `
+    <div class="list-item">
+      <div class="row1" ${parcelado?`style="cursor:pointer;" data-ap-toggle="${q.id}"`:''}>
+        <div>
+          <div class="item-title">${escapeHtml(q.item)}</div>
+          <div class="meta">${escapeHtml(q.tipo)} · ${escapeHtml(q.local)}</div>
+          ${q.prof ? `<span class="badge-prof">Profissional nº ${escapeHtml(q.prof)}</span>` : ''}
+          ${chip}
+        </div>
+        <div class="price">${q.preco ? 'R$ '+Number(q.preco).toLocaleString('pt-BR',{minimumFractionDigits:2}) : ''}${parcelado?' <span style="font-size:11px;">▾</span>':''}</div>
+      </div>
+      ${q.hasFile ? `<div class="actions"><button class="view" data-view="cotacoes" data-id="${q.id}" data-name="${escapeHtml(q.fileName)}">Abrir documento</button></div>` : ''}
+      ${parcelado ? `<div id="ap-detail-${q.id}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--paper-line);">${renderParcelasHtml(q)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderParcelasHtml(q){
+  const dados = (q.pagamento && q.pagamento.dados) || [];
+  return dados.map((p,i)=>{
+    const paga = parcelaEstaPaga(p, q.pagamento.autoPay);
+    return `
+    <div class="list-item" style="padding:9px 10px;margin-bottom:6px;background:#fff;">
+      <div class="row1">
+        <div>
+          <div class="item-title" style="font-size:13px;${paga?'text-decoration:line-through;color:var(--muted);':''}">R$ ${p.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+          <div class="meta">Parcela ${i+1}/${dados.length} · vence ${new Date(p.data+'T00:00:00').toLocaleDateString('pt-BR')}${q.pagamento.cartao?' · '+escapeHtml(q.pagamento.cartao):''}</div>
+        </div>
+        <div class="actions" style="margin:0;flex:0 0 auto;">
+          <button type="button" data-parcela-editar="${q.id}|${i}" style="flex:0 0 34px;">✎</button>
+          <button type="button" data-parcela-pagar="${q.id}|${i}" style="border-color:var(--ok);color:${paga?'#fff':'var(--ok)'};background:${paga?'var(--ok)':'#fff'};">${paga?'✓ Paga':'Marcar paga'}</button>
+        </div>
+      </div>
+      <div id="ap-edit-${q.id}-${i}" style="display:none;margin-top:10px;display:flex;gap:8px;">
+        <input type="text" id="ap-edit-valor-${q.id}-${i}" value="${p.valor.toFixed(2)}" style="width:100px;padding:8px;border:1.5px solid var(--paper-line);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;">
+        <input type="date" id="ap-edit-data-${q.id}-${i}" value="${p.data}" style="flex:1;padding:8px;border:1.5px solid var(--paper-line);border-radius:8px;font-size:12px;">
+        <button type="button" data-parcela-salvar="${q.id}|${i}" style="padding:8px 12px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-size:11px;font-family:'IBM Plex Mono',monospace;">OK</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('click', (e)=>{
+  const apToggle = e.target.closest('[data-ap-toggle]')?.getAttribute('data-ap-toggle');
+  if(apToggle){
+    const d = document.getElementById('ap-detail-'+apToggle);
+    if(d) d.style.display = d.style.display==='none' ? 'block' : 'none';
+    return;
+  }
+  const parcEdit = e.target.getAttribute('data-parcela-editar');
+  if(parcEdit){
+    const [qid, idx] = parcEdit.split('|');
+    const box = document.getElementById(`ap-edit-${qid}-${idx}`);
+    if(box) box.style.display = box.style.display==='none' ? 'flex' : 'none';
+    return;
+  }
+  const parcPagar = e.target.getAttribute('data-parcela-pagar');
+  if(parcPagar){
+    const [qid, idx] = parcPagar.split('|');
+    const q = cotacoesCache.find(x=>x.id===qid);
+    if(!q) return;
+    const p = q.pagamento.dados[idx];
+    const atual = parcelaEstaPaga(p, q.pagamento.autoPay);
+    p.pagaManual = !atual;
+    col('cotacoes').doc(qid).update({'pagamento.dados': q.pagamento.dados}).catch(err=>{ console.error(err); toast('Erro ao atualizar parcela'); });
+    return;
+  }
+  const parcSalvar = e.target.getAttribute('data-parcela-salvar');
+  if(parcSalvar){
+    const [qid, idx] = parcSalvar.split('|');
+    const q = cotacoesCache.find(x=>x.id===qid);
+    if(!q) return;
+    const novoValor = parseFloat(document.getElementById(`ap-edit-valor-${qid}-${idx}`).value.replace(',','.'));
+    const novaData = document.getElementById(`ap-edit-data-${qid}-${idx}`).value;
+    if(!isNaN(novoValor)){ q.pagamento.dados[idx].valor = novoValor; q.pagamento.dados[idx].editado = true; }
+    if(novaData) q.pagamento.dados[idx].data = novaData;
+    redistribuirParcelas(q.pagamento.dados, q.pagamento.total || Number(q.preco)||0);
+    col('cotacoes').doc(qid).update({'pagamento.dados': q.pagamento.dados}).catch(err=>{ console.error(err); toast('Erro ao salvar parcela'); });
+    return;
+  }
+});
+
+// ---------- Delete + View (event delegation) ----------
+document.addEventListener('click', async (e)=>{
+  const editQ = e.target.getAttribute('data-editq');
+  if(editQ){
+    const q = cotacoesCache.find(x=>x.id===editQ);
+    if(!q) return;
+    editingCotacaoId = editQ;
+    cotBulkFiles = [];
+    renderCotBulkPreview();
+    document.getElementById('c-item').disabled = false;
+    document.getElementById('c-item').value = q.item || '';
+    document.getElementById('c-tipo').disabled = false;
+    document.getElementById('c-tipo').value = q.tipo || 'Móveis';
+    document.getElementById('c-local').disabled = false;
+    document.getElementById('c-local').value = q.local || '';
+    document.getElementById('c-preco').disabled = false;
+    document.getElementById('c-preco').value = q.preco || '';
+    document.getElementById('c-prof').value = q.prof || '';
+    document.getElementById('c-status').value = q.status || 'Pendente';
+    document.getElementById('c-pagamento-wrap').style.display = (q.status==='Aprovado') ? 'block' : 'none';
+    const pag = q.pagamento || {modo:'vista'};
+    if(pag.modo === 'parcelado'){
+      document.getElementById('c-pag-parcelado').click();
+      document.getElementById('c-pag-n').value = pag.parcelas || 2;
+      document.getElementById('c-pag-cartao').value = pag.cartao || '';
+      document.getElementById('c-pag-fechamento').value = pag.fechamento || '';
+      document.getElementById('c-pag-autopay').checked = pag.autoPay !== false;
+    }else{
+      document.getElementById('c-pag-vista').click();
+    }
+    document.getElementById('c-file').value = '';
+    document.getElementById('c-drop').textContent = q.hasFile ? ('Arquivo atual: '+q.fileName+' (toque para substituir)') : 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)';
+    document.getElementById('c-form-title').innerHTML = 'Editando cotação <span class="tag">edição</span>';
+    document.getElementById('c-save').textContent = 'Salvar edição';
+    document.getElementById('c-cancel').style.display = 'block';
+    document.getElementById('tab-cotacoes').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+
+  const editA = e.target.getAttribute('data-edita');
+  if(editA){
+    const f = arquitetaCache.find(x=>x.id===editA);
+    if(!f) return;
+    editingArquitetaId = editA;
+    bulkFiles = [];
+    renderBulkPreview();
+    document.getElementById('a-nome').disabled = false;
+    document.getElementById('a-categoria').disabled = false;
+    document.getElementById('a-nome').value = f.nome || '';
+    document.getElementById('a-categoria').value = f.categoria || 'Geral';
+    document.getElementById('a-prof').value = f.prof || '';
+    document.getElementById('a-file').value = '';
+    document.getElementById('a-drop').textContent = 'Arquivo atual: '+f.fileName+' (toque para substituir)';
+    document.getElementById('a-form-title').innerHTML = 'Editando arquivo <span class="tag">edição</span>';
+    document.getElementById('a-save').textContent = 'Salvar edição';
+    document.getElementById('a-cancel').style.display = 'block';
+    document.getElementById('tab-arquiteta').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+
+  const editP = e.target.getAttribute('data-editp');
+  if(editP){
+    const p = prestadoresCache.find(x=>x.id===editP);
+    if(!p) return;
+    editingPrestadorId = editP;
+    document.getElementById('p-num').value = p.num || '';
+    document.getElementById('p-num').disabled = true;
+    document.getElementById('p-nome').value = p.nome || '';
+    document.getElementById('p-empresa').value = p.empresa || '';
+    document.getElementById('p-esp').value = p.esp || '';
+    document.getElementById('p-tel').value = p.tel || '';
+    selecionarStatusPrestador(p.status || 'Cotação');
+    document.getElementById('p-endereco').value = p.endereco || '';
+    document.getElementById('p-email').value = p.email || '';
+    document.getElementById('p-indicado').value = p.indicadoPor || '';
+    document.getElementById('p-obs').value = p.obs || '';
+    document.getElementById('p-mais-wrap').style.display = (p.email||p.indicadoPor||p.obs) ? 'block' : 'none';
+    document.getElementById('p-form-title').innerHTML = 'Editando prestador <span class="tag">edição</span>';
+    document.getElementById('p-save').textContent = 'Salvar edição';
+    document.getElementById('p-cancel').style.display = 'block';
+    document.getElementById('tab-prestadores').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+
+  const viewCol = e.target.getAttribute('data-view');
+  if(viewCol){
+    const id = e.target.getAttribute('data-id');
+    const name = e.target.getAttribute('data-name');
+    const originalText = e.target.textContent;
+    const newWin = window.open('', '_blank'); // abre já, dentro do gesto de clique
+    e.target.textContent = 'Abrindo...';
+    let base64 = null;
+    try{
+      base64 = await loadFileChunked(viewCol, id);
+    }catch(err){
+      console.error(err);
+    }
+    e.target.textContent = originalText;
+    if(base64){
+      openBase64(base64, name, newWin);
+    }else{
+      if(newWin && !newWin.closed) newWin.close();
+      toast('Arquivo não encontrado');
+    }
+    return;
+  }
+  const favP = e.target.getAttribute('data-fav-prest');
+  if(favP){
+    const p = prestadoresCache.find(x=>x.id===favP);
+    if(!p) return;
+    try{
+      await col('prestadores').doc(favP).update({favorito: !p.favorito});
+    }catch(err){
+      console.error(err);
+      toast('Erro ao favoritar');
+    }
+    return;
+  }
+  const delP = e.target.getAttribute('data-delp');
+  if(delP){
+    if(!confirm('Excluir este prestador?')) return;
+    await col('prestadores').doc(delP).delete();
+    toast('Excluído');
+    return;
+  }
+  const delCol = e.target.getAttribute('data-del');
+  if(delCol){
+    const id = e.target.getAttribute('data-id');
+    if(!confirm('Excluir este item?')) return;
+    await deleteFileChunked(delCol, id);
+    await col(delCol).doc(id).delete();
+    toast('Excluído');
+    return;
+  }
+});
+
+// ---------- Buscar por profissional ----------
+document.getElementById('s-btn').addEventListener('click', buscar);
+document.getElementById('s-input').addEventListener('keydown', e=>{ if(e.key==='Enter') buscar(); });
+document.getElementById('s-esp-btn').addEventListener('click', buscarPorEspecialidade);
+
+async function buscarPorEspecialidade(){
+  if(!db){ toast('Configure o Firebase primeiro'); return; }
+  const esp = document.getElementById('s-esp').value;
+  const el = document.getElementById('s-list');
+  el.innerHTML = '<div class="empty">Buscando...</div>';
+
+  const presSnap = await col('prestadores').where('esp','==',esp).get();
+  const prestadores = []; presSnap.forEach(d=>prestadores.push({id:d.id, ...d.data()}));
+
+  if(prestadores.length===0){
+    el.innerHTML = `<div class="empty"><div class="big">— · —</div>Nenhum prestador cadastrado como "${escapeHtml(esp)}".</div>`;
+    return;
+  }
+
+  const nums = prestadores.map(p=>p.num);
+  const [cotSnap, arqSnap] = await Promise.all([
+    col('cotacoes').where('prof','in',nums.slice(0,10)).get(),
+    col('arquiteta').where('prof','in',nums.slice(0,10)).get()
+  ]);
+  const cot = []; cotSnap.forEach(d=>cot.push({id:d.id, ...d.data()}));
+  const arq = []; arqSnap.forEach(d=>arq.push({id:d.id, ...d.data()}));
+
+  let html = `<div class="card"><h2>Prestadores — ${escapeHtml(esp)} <span class="tag">${prestadores.length}</span></h2>` +
+    prestadores.map(pres=>`
+      <div class="list-item">
+        <div class="row1">
+          <div>
+            <div class="item-title">${escapeHtml(pres.nome)}</div>
+            <div class="meta">${escapeHtml(pres.empresa||'')}</div>
+          </div>
+          <span class="badge-prof">Nº ${escapeHtml(pres.num)}</span>
+        </div>
+        <div class="meta" style="margin-top:6px;font-size:14px;color:var(--ink);font-weight:600;">${escapeHtml(pres.tel||'sem telefone')}</div>
+        ${pres.tel ? `<div class="actions">
+          <a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="tel:${escapeHtml(pres.tel.replace(/[^0-9+]/g,''))}">Ligar</a>
+          <a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ok);border-color:var(--ok);" href="${waLink(pres.tel)}" target="_blank" rel="noopener">WhatsApp</a>
+          <button class="view" style="color:var(--blueprint);border-color:var(--blueprint);" data-whats-arquivo-tel="${escapeHtml(pres.tel)}" data-whats-arquivo-nome="${escapeHtml(pres.nome)}">📎 Enviar arquivo</button>
+        </div>` : ''}
+      </div>
+    `).join('') + `</div>`;
+
+  if(cot.length){
+    html += `<div class="card"><h2>Cotações relacionadas <span class="tag">${cot.length}</span></h2>` +
+      cot.map(q=>`
+        <div class="list-item">
+          <div class="row1">
+            <div>
+              <div class="item-title">${escapeHtml(q.item)}</div>
+              <div class="meta">${escapeHtml(q.tipo)} · ${escapeHtml(q.local)} · nº ${escapeHtml(q.prof)}</div>
+            </div>
+            <div class="price">${q.preco ? 'R$ '+Number(q.preco).toLocaleString('pt-BR',{minimumFractionDigits:2}) : ''}</div>
+          </div>
+          ${q.hasFile ? `<div class="actions"><button class="view" data-view="cotacoes" data-id="${q.id}" data-name="${escapeHtml(q.fileName)}">Abrir documento</button></div>` : ''}
+        </div>
+      `).join('') + `</div>`;
+  }
+  if(arq.length){
+    html += `<div class="card"><h2>Arquivos relacionados <span class="tag">${arq.length}</span></h2>` +
+      arq.map(f=>`
+        <div class="list-item">
+          <div class="item-title">${escapeHtml(f.nome)}</div>
+          <div class="meta">${escapeHtml(f.fileName||'')} · nº ${escapeHtml(f.prof)}</div>
+          <div class="actions"><button class="view" data-view="arquiteta" data-id="${f.id}" data-name="${escapeHtml(f.fileName)}">Abrir arquivo</button></div>
+        </div>
+      `).join('') + `</div>`;
+  }
+  el.innerHTML = html;
+}
+
+async function buscar(){
+  if(!db){ toast('Configure o Firebase primeiro'); return; }
+  const num = document.getElementById('s-input').value.trim();
+  const el = document.getElementById('s-list');
+  if(!num){ el.innerHTML=''; return; }
+
+  el.innerHTML = '<div class="empty">Buscando...</div>';
+
+  const [cotSnap, arqSnap, presSnap] = await Promise.all([
+    col('cotacoes').where('prof','==',num).get(),
+    col('arquiteta').where('prof','==',num).get(),
+    col('prestadores').doc(num).get()
+  ]);
+  const cot = []; cotSnap.forEach(d=>cot.push({id:d.id, ...d.data()}));
+  const arq = []; arqSnap.forEach(d=>arq.push({id:d.id, ...d.data()}));
+  const pres = presSnap.exists ? presSnap.data() : null;
+
+  if(cot.length===0 && arq.length===0 && !pres){
+    el.innerHTML = `<div class="empty"><div class="big">— · —</div>Nada encontrado para o profissional nº ${escapeHtml(num)}.</div>`;
+    return;
+  }
+
+  let html = '';
+  if(pres){
+    html += `<div class="card">
+      <h2>Prestador</h2>
+      <div class="list-item">
+        <div class="item-title">${escapeHtml(pres.nome)}</div>
+        <div class="meta">${escapeHtml(pres.empresa||'')}${pres.empresa && pres.esp ? ' · ' : ''}${escapeHtml(pres.esp||'')}</div>
+        <div class="meta" style="margin-top:6px;font-size:14px;color:var(--ink);font-weight:600;">${escapeHtml(pres.tel||'sem telefone')}</div>
+        ${pres.tel ? `<div class="actions">
+          <a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="tel:${escapeHtml(pres.tel.replace(/[^0-9+]/g,''))}">Ligar</a>
+          <a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ok);border-color:var(--ok);" href="${waLink(pres.tel)}" target="_blank" rel="noopener">WhatsApp</a>
+          <button class="view" style="color:var(--blueprint);border-color:var(--blueprint);" data-whats-arquivo-tel="${escapeHtml(pres.tel)}" data-whats-arquivo-nome="${escapeHtml(pres.nome)}">📎 Enviar arquivo</button>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }
+  if(cot.length){
+    html += `<div class="card"><h2>Cotações <span class="tag">${cot.length}</span></h2>` +
+      cot.map(q=>`
+        <div class="list-item">
+          <div class="row1">
+            <div>
+              <div class="item-title">${escapeHtml(q.item)}</div>
+              <div class="meta">${escapeHtml(q.tipo)} · ${escapeHtml(q.local)}</div>
+            </div>
+            <div class="price">${q.preco ? 'R$ '+Number(q.preco).toLocaleString('pt-BR',{minimumFractionDigits:2}) : ''}</div>
+          </div>
+          ${q.hasFile ? `<div class="actions"><button class="view" data-view="cotacoes" data-id="${q.id}" data-name="${escapeHtml(q.fileName)}">Abrir documento</button></div>` : ''}
+        </div>
+      `).join('') + `</div>`;
+  }
+  if(arq.length){
+    html += `<div class="card"><h2>Arquivos da arquiteta <span class="tag">${arq.length}</span></h2>` +
+      arq.map(f=>`
+        <div class="list-item">
+          <div class="item-title">${escapeHtml(f.nome)}</div>
+          <div class="meta">${escapeHtml(f.fileName||'')}</div>
+          <div class="actions"><button class="view" data-view="arquiteta" data-id="${f.id}" data-name="${escapeHtml(f.fileName)}">Abrir arquivo</button></div>
+        </div>
+      `).join('') + `</div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ==================== AUTENTICAÇÃO E PROJETOS ====================
+function showScreen(id){
+  ['auth-screen','project-screen','master-screen','app-shell'].forEach(s=>{
+    document.getElementById(s).style.display = (s===id) ? 'block' : 'none';
+  });
+}
+
+function friendlyAuthError(code){
+  const map = {
+    'auth/invalid-email': 'E-mail inválido.',
+    'auth/user-not-found': 'Não existe conta com esse e-mail. Toque em "Criar conta nova".',
+    'auth/wrong-password': 'Senha incorreta.',
+    'auth/invalid-login-credentials': 'E-mail ou senha incorretos.',
+    'auth/invalid-credential': 'E-mail ou senha incorretos.',
+    'auth/email-already-in-use': 'Já existe uma conta com esse e-mail. Toque em "Entrar".',
+    'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
+    'auth/missing-password': 'Digite uma senha.',
+  };
+  return map[code] || 'Erro: ' + code;
+}
+
+if(firebaseOk){
+  document.getElementById('auth-entrar').addEventListener('click', async ()=>{
+    const email = document.getElementById('auth-email').value.trim();
+    const senha = document.getElementById('auth-senha').value;
+    const erroEl = document.getElementById('auth-erro');
+    erroEl.textContent = '';
+    if(!email || !senha){ erroEl.textContent = 'Preencha e-mail e senha.'; return; }
+    try{
+      await auth.signInWithEmailAndPassword(email, senha);
+    }catch(e){
+      erroEl.textContent = friendlyAuthError(e.code);
+    }
+  });
+
+  async function emailFoiConvidado(email){
+    if(email === masterEmailAtual) return true;
+    try{
+      const arqSnap = await db.collection('arquitetos').where('email','==',email).limit(1).get();
+      if(!arqSnap.empty) return true;
+    }catch(e){ console.error(e); }
+    try{
+      const projSnap = await db.collection('projetos').where('membrosEmails','array-contains',email).limit(1).get();
+      if(!projSnap.empty) return true;
+    }catch(e){ console.error(e); }
+    return false;
+  }
+
+  document.getElementById('auth-cadastrar').addEventListener('click', async ()=>{
+    const email = document.getElementById('auth-email').value.trim().toLowerCase();
+    const senha = document.getElementById('auth-senha').value;
+    const erroEl = document.getElementById('auth-erro');
+    erroEl.style.color = 'var(--danger)';
+    erroEl.textContent = '';
+    if(!email || !senha){ erroEl.textContent = 'Preencha e-mail e senha.'; return; }
+    const btn = document.getElementById('auth-cadastrar');
+    btn.disabled = true; btn.textContent = 'Verificando convite...';
+    try{
+      await resolverMasterEmail();
+      const convidado = await emailFoiConvidado(email);
+      if(!convidado){
+        erroEl.textContent = 'Esse e-mail ainda não foi convidado. Peça pra quem administra o projeto (ou o studio) te adicionar primeiro.';
+        btn.disabled = false; btn.textContent = 'Criar conta nova';
+        return;
+      }
+      btn.textContent = 'Criando conta...';
+      const cred = await auth.createUserWithEmailAndPassword(email, senha);
+      try{ await cred.user.sendEmailVerification(); }
+      catch(verErr){ console.error(verErr); }
+      erroEl.style.color = 'var(--ok)';
+      erroEl.textContent = 'Conta criada! Mandamos um e-mail de confirmação — confirme quando puder.';
+    }catch(e){
+      erroEl.textContent = friendlyAuthError(e.code);
+    }
+    btn.disabled = false; btn.textContent = 'Criar conta nova';
+  });
+
+  document.getElementById('project-sair').addEventListener('click', ()=> auth.signOut());
+  document.getElementById('btn-sair').addEventListener('click', ()=>{
+    unsubscribeAll();
+    currentProjetoId = null;
+    isAdmin = false;
+    auth.signOut();
+  });
+
+  document.getElementById('btn-trocar-projeto').addEventListener('click', ()=>{
+    unsubscribeAll();
+    currentProjetoId = null;
+    currentProjetoNome = null;
+    isAdmin = false;
+    document.getElementById('nav-admin-btn').style.display = 'none';
+    showScreen('project-screen');
+    carregarProjetosDoUsuario();
+  });
+
+  document.getElementById('new-project-criar').addEventListener('click', async ()=>{
+    const nome = document.getElementById('new-project-nome').value.trim();
+    if(!nome){ toast('Digite um nome pro projeto'); return; }
+    const btn = document.getElementById('new-project-criar');
+    btn.disabled = true; btn.textContent = 'Criando...';
+    try{
+      const efetivoArquitetoId = modoMasterVendoArquitetoId || currentArquitetoId;
+      const payload = {
+        nome,
+        membrosEmails: [currentUserEmail],
+        criadoPor: currentUserEmail,
+        criado: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      if(efetivoArquitetoId) payload.arquitetoId = efetivoArquitetoId;
+      const ref = await db.collection('projetos').add(payload);
+      abrirProjeto(ref.id, nome);
+    }catch(e){
+      console.error(e);
+      toast('Erro ao criar projeto: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = 'Criar projeto';
+  });
+
+  document.getElementById('btn-migrar').addEventListener('click', async ()=>{
+    if(!confirm('Isso vai trazer as cotações, prestadores e cronograma que você cadastrou antes de existir login, pra dentro deste projeto. Pode continuar?')) return;
+    const btn = document.getElementById('btn-migrar');
+    btn.disabled = true; btn.textContent = 'Importando...';
+    try{
+      await migrarDadosAntigos();
+      toast('Dados antigos importados!');
+    }catch(e){
+      console.error(e);
+      toast('Erro na importação: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = '↑ importar dados de antes do login';
+  });
+
+  async function migrarColecaoAntiga(nome){
+    const snap = await db.collection(nome).get();
+    for(const d of snap.docs){
+      await col(nome).doc(d.id).set(d.data());
+      const chunksSnap = await db.collection(nome).doc(d.id).collection('chunks').get();
+      for(const c of chunksSnap.docs){
+        await col(nome).doc(d.id).collection('chunks').doc(c.id).set(c.data());
+      }
+    }
+  }
+
+  async function migrarDadosAntigos(){
+    await migrarColecaoAntiga('cotacoes');
+    await migrarColecaoAntiga('arquiteta');
+    await migrarColecaoAntiga('prestadores');
+    await migrarColecaoAntiga('etapas');
+    const cronDoc = await db.collection('cronograma_arquivo').doc('atual').get();
+    if(cronDoc.exists){
+      await col('cronograma_arquivo').doc('atual').set(cronDoc.data());
+      const chunksSnap = await db.collection('cronograma_arquivo').doc('atual').collection('chunks').get();
+      for(const c of chunksSnap.docs){
+        await col('cronograma_arquivo').doc('atual').collection('chunks').doc(c.id).set(c.data());
+      }
+    }
+  }
+
+  // ---------- Exclusão em cascata ----------
+  async function contarConteudoProjeto(projetoId){
+    const base = db.collection('projetos').doc(projetoId);
+    const [cot, arq, pres, etp] = await Promise.all([
+      base.collection('cotacoes').get(),
+      base.collection('arquiteta').get(),
+      base.collection('prestadores').get(),
+      base.collection('etapas').get()
+    ]);
+    return { cotacoes: cot.size, arquiteta: arq.size, prestadores: pres.size, etapas: etp.size };
+  }
+
+  async function excluirColecaoComChunks(projetoId, nomeColecao){
+    const snap = await db.collection('projetos').doc(projetoId).collection(nomeColecao).get();
+    for(const d of snap.docs){
+      const chunksSnap = await d.ref.collection('chunks').get();
+      for(const c of chunksSnap.docs) await c.ref.delete();
+      await d.ref.delete();
+    }
+  }
+
+  async function excluirProjetoCompleto(projetoId){
+    await excluirColecaoComChunks(projetoId, 'cotacoes');
+    await excluirColecaoComChunks(projetoId, 'arquiteta');
+    await excluirColecaoComChunks(projetoId, 'cronograma_arquivo');
+    const presSnap = await db.collection('projetos').doc(projetoId).collection('prestadores').get();
+    for(const d of presSnap.docs) await d.ref.delete();
+    const etpSnap = await db.collection('projetos').doc(projetoId).collection('etapas').get();
+    for(const d of etpSnap.docs) await d.ref.delete();
+    await db.collection('projetos').doc(projetoId).delete();
+  }
+
+  async function excluirArquitetoCompleto(arquitetoId){
+    const snap = await db.collection('projetos').where('arquitetoId','==',arquitetoId).get();
+    for(const d of snap.docs){
+      await excluirProjetoCompleto(d.id);
+    }
+    await db.collection('arquitetos').doc(arquitetoId).delete();
+  }
+
+
+  document.getElementById('admin-salvar-identidade').addEventListener('click', async ()=>{
+    const nome = document.getElementById('admin-nome-projeto').value.trim();
+    if(!nome){ toast('Digite um nome pro projeto'); return; }
+    const btn = document.getElementById('admin-salvar-identidade');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    try{
+      await db.collection('projetos').doc(currentProjetoId).update({nome});
+      currentProjetoNome = nome;
+      document.getElementById('app-projeto-nome').textContent = nome;
+      toast('Nome salvo');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = 'Salvar';
+  });
+
+  const adminLogoDrop = document.getElementById('admin-logo-drop');
+  const adminLogoFile = document.getElementById('admin-logo-file');
+  let logoBase64Pendente = null;
+  adminLogoDrop.addEventListener('click', ()=>adminLogoFile.click());
+  adminLogoFile.addEventListener('change', async ()=>{
+    const file = adminLogoFile.files[0];
+    if(!file) return;
+    if(file.size > 300*1024){ toast('Logo muito grande (máx 300KB)'); adminLogoFile.value=''; return; }
+    logoBase64Pendente = await fileToBase64(file);
+    adminLogoDrop.textContent = '✓ ' + file.name + ' (toque em Salvar logo pra confirmar)';
+    adminLogoDrop.classList.add('has-file');
+  });
+
+  document.getElementById('admin-salvar-logo').addEventListener('click', async ()=>{
+    if(!logoBase64Pendente){ toast('Escolha uma imagem primeiro'); return; }
+    const btn = document.getElementById('admin-salvar-logo');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    try{
+      if(projetoArquitetoId){
+        await db.collection('arquitetos').doc(projetoArquitetoId).update({logoBase64: logoBase64Pendente});
+      }else{
+        await db.collection('projetos').doc(currentProjetoId).update({logoBase64: logoBase64Pendente});
+      }
+      aplicarLogoBanner(logoBase64Pendente);
+      logoBase64Pendente = null;
+      adminLogoDrop.textContent = 'Toque para escolher a logo (até 300KB)';
+      toast('Logo salva');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = 'Salvar logo';
+  });
+
+  document.getElementById('admin-tipo-salvar').addEventListener('click', async ()=>{
+    const tipo = document.getElementById('admin-tipo-select').value;
+    const cor = normalizarHex(document.getElementById('admin-tipo-cor-hex').value, '#2F6F5E');
+    temaAtual.tipoCores = temaAtual.tipoCores || {};
+    temaAtual.tipoCores[tipo] = cor;
+    try{
+      await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
+      aplicarTema(temaAtual);
+      renderTipoCoresLegenda();
+      renderCotacoesList(cotacoesCache);
+      toast('Cor do tipo salva');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+  });
+
+  document.getElementById('admin-deco-salvar').addEventListener('click', async ()=>{
+    try{
+      await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
+      renderDecoracoes(temaAtual.decoracoes || []);
+      toast('Decorações salvas');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+  });
+
+  document.getElementById('admin-salvar-tema').addEventListener('click', async ()=>{
+    Object.assign(temaAtual, {
+      corFundo: normalizarHex(document.getElementById('admin-cor-fundo-hex').value, '#F4F5F3'),
+      corCabecalho: normalizarHex(document.getElementById('admin-cor-cabecalho-hex').value, '#14171C'),
+      corDestaque: normalizarHex(document.getElementById('admin-cor-destaque-hex').value, '#C7862B'),
+      corTexto: normalizarHex(document.getElementById('admin-cor-texto-hex').value, '#14171C'),
+      corSucesso: normalizarHex(document.getElementById('admin-cor-sucesso-hex').value, '#2F6F5E'),
+      corCard: normalizarHex(document.getElementById('admin-cor-card-hex').value, '#FFFFFF'),
+      corMenu: normalizarHex(document.getElementById('admin-cor-menu-hex').value, '#FFFFFF'),
+      corBotao: normalizarHex(document.getElementById('admin-cor-botao-hex').value, '#2F6F5E'),
+      corRecusado: normalizarHex(document.getElementById('admin-cor-recusado-hex').value, '#C1443A'),
+      cantos: document.getElementById('admin-cantos').value
+    });
+    try{
+      await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
+      aplicarTema(temaAtual);
+      toast('Cores aplicadas');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+  });
+
+  document.getElementById('admin-resetar-tema').addEventListener('click', async ()=>{
+    try{
+      temaAtual = { tipoCores: temaAtual.tipoCores || {}, decoracoes: temaAtual.decoracoes || [] };
+      await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
+      ['fundo','cabecalho','destaque','texto','sucesso','card','menu','botao','recusado'].forEach(campo=>{
+        document.getElementById('admin-cor-'+campo+'-hex').value = '';
+      });
+      document.getElementById('admin-cantos').value = 'arredondado';
+      aplicarTema(temaAtual);
+      toast('Cores padrão restauradas');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+  });
+
+  document.getElementById('add-membro-btn').addEventListener('click', async ()=>{
+    const email = document.getElementById('novo-membro-email').value.trim().toLowerCase();
+    if(!email || !email.includes('@')){ toast('Digite um e-mail válido'); return; }
+    try{
+      await db.collection('projetos').doc(currentProjetoId).update({
+        membrosEmails: firebase.firestore.FieldValue.arrayUnion(email)
+      });
+      document.getElementById('novo-membro-email').value = '';
+      toast('Acesso adicionado');
+      renderMembros();
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+  });
+
+  document.addEventListener('click', async (e)=>{
+    const remMembro = e.target.getAttribute('data-rem-membro');
+    if(remMembro){
+      if(!confirm('Remover o acesso de '+remMembro+'?')) return;
+      await db.collection('projetos').doc(currentProjetoId).update({
+        membrosEmails: firebase.firestore.FieldValue.arrayRemove(remMembro)
+      });
+      renderMembros();
+    }
+  });
+
+  async function renderMembros(){
+    const doc = await db.collection('projetos').doc(currentProjetoId).get();
+    const membros = (doc.data() && doc.data().membrosEmails) || [];
+    document.getElementById('membros-list').innerHTML = membros.map(m=>`
+      <div class="list-item" style="padding:8px 10px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;">${escapeHtml(m)}${m===currentUserEmail?' (você)':''}</span>
+        ${membros.length>1 ? `<button data-rem-membro="${escapeHtml(m)}" style="border:1px solid var(--danger);color:var(--danger);background:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;">remover</button>` : ''}
+      </div>
+    `).join('');
+  }
+
+  async function carregarProjetosDoUsuario(){
+    document.getElementById('project-user-email').textContent = currentUserEmail;
+    const el = document.getElementById('project-list');
+    const voltarEl = document.getElementById('project-voltar-master');
+
+    if(modoMasterVendoArquitetoId || currentUserEmail === masterEmailAtual){
+      voltarEl.style.display = 'block';
+      voltarEl.innerHTML = `<button class="btn" id="voltar-pro-master" style="background:#eee;">← voltar pro painel master</button>`;
+    }else{
+      voltarEl.style.display = 'none';
+      voltarEl.innerHTML = '';
+    }
+
+    const podecriarProjeto = !!currentArquitetoId || currentUserEmail === masterEmailAtual;
+    document.getElementById('new-project-card').style.display = podecriarProjeto ? 'block' : 'none';
+
+    el.innerHTML = '<div class="empty">Carregando...</div>';
+    try{
+      let snap;
+      if(modoMasterVendoArquitetoId){
+        snap = await db.collection('projetos').where('arquitetoId','==',modoMasterVendoArquitetoId).get();
+      }else{
+        snap = await db.collection('projetos').where('membrosEmails','array-contains',currentUserEmail).get();
+      }
+      if(snap.empty){
+        el.innerHTML = '<div class="empty" style="padding:16px 0;">Nenhum projeto ainda. Crie um abaixo, ou peça pra quem já tem um projeto te adicionar pelo seu e-mail.</div>';
+        return;
+      }
+      const projetos = [];
+      snap.forEach(d=>projetos.push({id:d.id, ...d.data()}));
+      el.innerHTML = projetos.map(p=>`
+        <div class="list-item">
+          <div style="cursor:pointer;" data-abrir-projeto="${p.id}" data-nome-projeto="${escapeHtml(p.nome)}">
+            <div class="item-title">${escapeHtml(p.nome)}</div>
+            <div class="meta">${(p.membrosEmails||[]).length} pessoa(s) com acesso</div>
+          </div>
+          ${(p.criadoPor===currentUserEmail || currentUserEmail===masterEmailAtual) ? `
+          <div class="actions">
+            <button class="del" data-del-projeto="${p.id}" data-nome-del-projeto="${escapeHtml(p.nome)}">Excluir projeto</button>
+          </div>` : ''}
+        </div>
+      `).join('');
+    }catch(e){
+      console.error(e);
+      el.innerHTML = '<div class="empty">Erro ao carregar projetos.</div>';
+    }
+  }
+
+  document.addEventListener('click', (e)=>{
+    const abrirId = e.target.closest('[data-abrir-projeto]')?.getAttribute('data-abrir-projeto');
+    if(abrirId){
+      const nome = e.target.closest('[data-abrir-projeto]').getAttribute('data-nome-projeto');
+      abrirProjeto(abrirId, nome);
+    }
+    if(e.target.id === 'voltar-pro-master'){
+      modoMasterVendoArquitetoId = null;
+      showScreen('master-screen');
+      renderMasterScreen();
+    }
+  });
+
+  function abrirProjeto(id, nome){
+    unsubscribeAll();
+    aplicarTema(null);
+    currentProjetoId = id;
+    currentProjetoNome = nome;
+    document.getElementById('app-projeto-nome').textContent = nome;
+    document.getElementById('conn-status').textContent = 'conectado ✓ — ' + currentUserEmail;
+    showScreen('app-shell');
+
+    db.collection('projetos').doc(id).get().then(async doc=>{
+      const data = doc.data() || {};
+      isAdmin = data.criadoPor === currentUserEmail || currentUserEmail === masterEmailAtual;
+      projetoArquitetoId = data.arquitetoId || null;
+      document.getElementById('nav-admin-btn').style.display = isAdmin ? 'block' : 'none';
+
+      temaAtual = data.tema || {};
+      aplicarTema(temaAtual);
+      Object.keys(TEMA_CAMPOS).forEach(campo=>{
+        const sufixo = campo.replace('cor','').toLowerCase(); // corFundo -> fundo
+        const valor = temaAtual[campo] || '';
+        const hexInput = document.getElementById('admin-cor-'+sufixo+'-hex');
+        const colorInput = document.getElementById('admin-cor-'+sufixo);
+        if(hexInput) hexInput.value = valor;
+        if(colorInput && /^#[0-9A-Fa-f]{6}$/.test(valor)) colorInput.value = valor;
+      });
+      const cantosSel = document.getElementById('admin-cantos');
+      if(cantosSel) cantosSel.value = temaAtual.cantos || 'arredondado';
+      renderTipoCoresLegenda();
+      renderDecoGrid();
+
+      let logoBase64 = data.logoBase64 || null;
+      if(projetoArquitetoId){
+        const arqDoc = await db.collection('arquitetos').doc(projetoArquitetoId).get();
+        logoBase64 = (arqDoc.data() && arqDoc.data().logoBase64) || null;
+      }
+      aplicarLogoBanner(logoBase64);
+
+      renderDecoracoes(data.decoracoes || []);
+
+      if(isAdmin){
+        document.getElementById('admin-nome-projeto').value = nome;
+        renderMembros();
+      }
+    });
+
+    listenCotacoes();
+    listenArquiteta();
+    listenPrestadores();
+    listenCronograma();
+    listenProjeto3D();
+  }
+
+  // ---------- Painel Master ----------
+  async function resolverMasterEmail(){
+    try{
+      const doc = await db.collection('config').doc('master').get();
+      masterEmailAtual = (doc.exists && doc.data().email) ? doc.data().email.toLowerCase() : MASTER_EMAIL_FALLBACK;
+    }catch(e){
+      masterEmailAtual = MASTER_EMAIL_FALLBACK;
+    }
+  }
+
+  async function renderMasterScreen(){
+    document.getElementById('master-email-atual').value = masterEmailAtual;
+    const el = document.getElementById('master-arquitetos-list');
+    el.innerHTML = '<div class="empty">Carregando...</div>';
+    try{
+      const snap = await db.collection('arquitetos').get();
+      if(snap.empty){
+        el.innerHTML = '<div class="empty" style="padding:16px 0;">Nenhum arquiteto cadastrado ainda.</div>';
+        return;
+      }
+      const arqs = [];
+      snap.forEach(d=>arqs.push({id:d.id, ...d.data()}));
+      el.innerHTML = arqs.map(a=>`
+        <div class="list-item">
+          <div class="row1">
+            <div>
+              <div class="item-title">${escapeHtml(a.nome)}</div>
+              <div class="meta">${escapeHtml(a.email)}</div>
+            </div>
+            <span class="badge-prof" style="background:${a.ativo!==false?'var(--ok)':'var(--danger)'};">${a.ativo!==false?'Ativo':'Bloqueado'}</span>
+          </div>
+          <div class="actions">
+            <button data-ver-arquiteto="${a.id}">Ver projetos</button>
+            <button data-toggle-arquiteto="${a.id}" data-ativo="${a.ativo!==false}">${a.ativo!==false?'Bloquear':'Ativar'}</button>
+            <button class="del" data-del-arquiteto="${a.id}" data-nome-arquiteto="${escapeHtml(a.nome)}">Excluir</button>
+          </div>
+        </div>
+      `).join('');
+    }catch(e){
+      console.error(e);
+      el.innerHTML = '<div class="empty">Erro ao carregar arquitetos.</div>';
+    }
+  }
+
+  document.getElementById('master-arq-criar').addEventListener('click', async ()=>{
+    const nome = document.getElementById('master-arq-nome').value.trim();
+    const email = document.getElementById('master-arq-email').value.trim().toLowerCase();
+    if(!nome || !email || !email.includes('@')){ toast('Preencha nome e e-mail válido'); return; }
+    const btn = document.getElementById('master-arq-criar');
+    btn.disabled = true; btn.textContent = 'Cadastrando...';
+    try{
+      await db.collection('arquitetos').add({
+        nome, email, ativo: true, criadoPor: currentUserEmail,
+        criado: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      document.getElementById('master-arq-nome').value = '';
+      document.getElementById('master-arq-email').value = '';
+      toast('Arquiteto cadastrado — avise a pessoa pra criar a conta com esse e-mail');
+      renderMasterScreen();
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = 'Cadastrar arquiteto';
+  });
+
+  document.getElementById('master-email-salvar').addEventListener('click', async ()=>{
+    const novoEmail = document.getElementById('master-email-atual').value.trim().toLowerCase();
+    if(!novoEmail || !novoEmail.includes('@')){ toast('Digite um e-mail válido'); return; }
+    if(!confirm('Isso troca quem tem acesso ao painel master pra: ' + novoEmail + '. Confirma?')) return;
+    try{
+      await db.collection('config').doc('master').set({email: novoEmail});
+      masterEmailAtual = novoEmail;
+      toast('E-mail master atualizado');
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
+  });
+
+  document.getElementById('master-sair').addEventListener('click', ()=>{
+    unsubscribeAll();
+    auth.signOut();
+  });
+
+  document.addEventListener('click', async (e)=>{
+    const verId = e.target.getAttribute('data-ver-arquiteto');
+    if(verId){
+      modoMasterVendoArquitetoId = verId;
+      showScreen('project-screen');
+      carregarProjetosDoUsuario();
+      return;
+    }
+    const toggleId = e.target.getAttribute('data-toggle-arquiteto');
+    if(toggleId){
+      const ativoAgora = e.target.getAttribute('data-ativo') === 'true';
+      await db.collection('arquitetos').doc(toggleId).update({ativo: !ativoAgora});
+      renderMasterScreen();
+      return;
+    }
+    const delArqId = e.target.getAttribute('data-del-arquiteto');
+    if(delArqId){
+      const nomeArq = e.target.getAttribute('data-nome-arquiteto');
+      e.target.disabled = true; e.target.textContent = 'Verificando...';
+      const snap = await db.collection('projetos').where('arquitetoId','==',delArqId).get();
+      const msg = snap.size > 0
+        ? `${nomeArq} tem ${snap.size} projeto(s). Excluir o arquiteto vai apagar TUDO: os projetos, cotações, arquivos e cronograma de cada um. Essa ação não pode ser desfeita. Confirma?`
+        : `Excluir o arquiteto ${nomeArq}? Essa ação não pode ser desfeita.`;
+      if(confirm(msg)){
+        e.target.textContent = 'Excluindo...';
+        try{
+          await excluirArquitetoCompleto(delArqId);
+          toast('Arquiteto e projetos excluídos');
+        }catch(err){
+          console.error(err);
+          toast('Erro ao excluir: ' + err.message);
+        }
+        renderMasterScreen();
+      }else{
+        e.target.disabled = false; e.target.textContent = 'Excluir';
+      }
+      return;
+    }
+    const delProjId = e.target.getAttribute('data-del-projeto');
+    if(delProjId){
+      const nomeProj = e.target.getAttribute('data-nome-del-projeto');
+      e.target.disabled = true; e.target.textContent = 'Verificando...';
+      const resumo = await contarConteudoProjeto(delProjId);
+      const msg = `Excluir "${nomeProj}"? Isso vai apagar:\n` +
+        `- ${resumo.cotacoes} cotação(ões)\n` +
+        `- ${resumo.arquiteta} arquivo(s) da arquiteta\n` +
+        `- ${resumo.prestadores} prestador(es)\n` +
+        `- ${resumo.etapas} etapa(s) do cronograma\n\n` +
+        `Essa ação não pode ser desfeita.`;
+      if(confirm(msg)){
+        e.target.textContent = 'Excluindo...';
+        try{
+          await excluirProjetoCompleto(delProjId);
+          toast('Projeto excluído');
+        }catch(err){
+          console.error(err);
+          toast('Erro ao excluir: ' + err.message);
+        }
+        carregarProjetosDoUsuario();
+      }else{
+        e.target.disabled = false; e.target.textContent = 'Excluir projeto';
+      }
+      return;
+    }
+  });
+
+  // ---------- Esqueci minha senha ----------
+  document.getElementById('auth-esqueci').addEventListener('click', async ()=>{
+    const email = document.getElementById('auth-email').value.trim();
+    const erroEl = document.getElementById('auth-erro');
+    if(!email){ erroEl.style.color = 'var(--danger)'; erroEl.textContent = 'Digite seu e-mail no campo acima primeiro.'; return; }
+    try{
+      await auth.sendPasswordResetEmail(email);
+      erroEl.style.color = 'var(--ok)';
+      erroEl.textContent = 'Te mandamos um e-mail com o link pra trocar a senha.';
+    }catch(e){
+      erroEl.style.color = 'var(--danger)';
+      erroEl.textContent = friendlyAuthError(e.code);
+    }
+  });
+
+  // ---------- Roteamento por papel ----------
+
+  auth.onAuthStateChanged(async user=>{
+    if(user){
+      currentUserEmail = (user.email || '').toLowerCase();
+      atualizarBannerVerificacao(user);
+      await resolverMasterEmail();
+
+      if(currentUserEmail === masterEmailAtual){
+        showScreen('master-screen');
+        renderMasterScreen();
+        return;
+      }
+
+      const arqSnap = await db.collection('arquitetos').where('email','==',currentUserEmail).limit(1).get();
+      if(!arqSnap.empty){
+        const arqDoc = arqSnap.docs[0];
+        if(arqDoc.data().ativo === false){
+          showScreen('auth-screen');
+          document.getElementById('auth-erro').textContent = 'Seu acesso foi bloqueado. Fale com quem administra o sistema.';
+          auth.signOut();
+          return;
+        }
+        currentArquitetoId = arqDoc.id;
+      }else{
+        currentArquitetoId = null;
+      }
+
+      modoMasterVendoArquitetoId = null;
+      showScreen('project-screen');
+      carregarProjetosDoUsuario();
+    }else{
+      unsubscribeAll();
+      currentUserEmail = null;
+      currentProjetoId = null;
+      currentArquitetoId = null;
+      modoMasterVendoArquitetoId = null;
+      aplicarTema(null);
+      document.getElementById('verify-warning').style.display = 'none';
+      showScreen('auth-screen');
+    }
+  });
+
+  function atualizarBannerVerificacao(user){
+    const banner = document.getElementById('verify-warning');
+    if(!banner) return;
+    if(user && !user.emailVerified){
+      document.getElementById('verify-email-alvo').textContent = user.email;
+      banner.style.display = 'block';
+    }else{
+      banner.style.display = 'none';
+    }
+  }
+
+  document.getElementById('verify-reenviar').addEventListener('click', async ()=>{
+    const btn = document.getElementById('verify-reenviar');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+    try{
+      await auth.currentUser.sendEmailVerification();
+      toast('E-mail de confirmação reenviado');
+    }catch(e){
+      console.error(e);
+      toast('Erro ao reenviar: ' + e.message);
+    }
+    btn.disabled = false; btn.textContent = 'Reenviar e-mail';
+  });
+}else{
+  showScreen('auth-screen');
+}
+</script>
+</body>
+</html>
