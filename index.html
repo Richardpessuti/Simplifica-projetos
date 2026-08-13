@@ -4281,7 +4281,7 @@ if(firebaseOk){
       `).join('');
     }catch(e){
       console.error(e);
-      el.innerHTML = '<div class="empty">Erro ao carregar projetos.</div>';
+      el.innerHTML = `<div class="empty">Erro ao carregar projetos.<br><span style="font-size:10px;color:var(--muted);">${escapeHtml(e.code || e.message || String(e))}</span></div>`;
     }
   }
 
@@ -4392,7 +4392,7 @@ if(firebaseOk){
       `).join('');
     }catch(e){
       console.error(e);
-      el.innerHTML = '<div class="empty">Erro ao carregar arquitetos.</div>';
+      el.innerHTML = `<div class="empty">Erro ao carregar arquitetos.<br><span style="font-size:10px;color:var(--muted);">${escapeHtml(e.code || e.message || String(e))}</span></div>`;
     }
   }
 
