@@ -1476,8 +1476,31 @@
         <button type="button" id="p3d-tab-3d" class="pag-toggle-btn active" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Projeto 3D</button>
         <button type="button" id="p3d-tab-fotos" class="pag-toggle-btn" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Imagens</button>
       </div>
-      <div id="p3d-pane-3d"><div id="projeto3d-galeria"></div></div>
-      <div id="p3d-pane-fotos" style="display:none;"><div id="fotos-galeria"></div></div>
+      <div id="p3d-pane-3d">
+        <div style="margin-bottom:16px;">
+          <label>Nome/local (opcional, ajuste por item na lista)</label>
+          <div class="file-drop" id="m3d-drop">Toque para escolher uma ou várias imagens/PDFs de uma vez (até 10MB cada)</div>
+          <input type="file" id="m3d-file" accept=".pdf,image/*" multiple>
+          <div id="m3d-bulk-list" style="display:none;margin-top:12px;"></div>
+          <button class="btn secondary" id="m3d-save" style="display:none;">Salvar</button>
+          <div id="m3d-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+        </div>
+        <div id="projeto3d-galeria"></div>
+      </div>
+      <div id="p3d-pane-fotos" style="display:none;">
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <button type="button" class="btn secondary" id="mfoto-camera-btn" style="flex:1;margin-top:0;">📷 Tirar foto agora</button>
+            <button type="button" class="btn secondary" id="mfoto-galeria-btn" style="flex:1;margin-top:0;">🖼️ Escolher da galeria</button>
+          </div>
+          <input type="file" id="mfoto-camera" accept="image/*" capture="environment" style="display:none;">
+          <input type="file" id="mfoto-galeria" accept="image/*" multiple style="display:none;">
+          <div id="mfoto-bulk-list" style="display:none;margin-top:12px;"></div>
+          <button class="btn secondary" id="mfoto-save" style="display:none;">Salvar</button>
+          <div id="mfoto-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+        </div>
+        <div id="fotos-galeria"></div>
+      </div>
     </div>
   </section>
 
@@ -3254,191 +3277,189 @@ document.addEventListener('click', async (e)=>{
   }
 });
 
-// -- Upload em lote: Projeto 3D (imagens/PDF) --
-let p3dBulkFiles = []; // {file, label}
+// -- Upload: Projeto 3D (imagens/PDF) — reutilizável, uma instância por lugar que precisar dele --
+function wireUploadP3D({dropId, fileId, bulkListId, saveId, statusId}){
+  let bulk = []; // {file, label}
+  const dropEl = document.getElementById(dropId);
+  const fileEl = document.getElementById(fileId);
+  const bulkListEl = document.getElementById(bulkListId);
+  const saveBtn = document.getElementById(saveId);
+  const statusEl = document.getElementById(statusId);
+  const textoPadrao = dropEl.textContent;
 
-function renderP3dBulkPreview(){
-  const el = document.getElementById('admin-3d-bulk-list');
-  const btn = document.getElementById('admin-3d-save');
-  if(p3dBulkFiles.length===0){ el.style.display='none'; el.innerHTML=''; btn.style.display='none'; return; }
-  el.style.display='block';
-  btn.style.display='block';
-  el.innerHTML = `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px;">${p3dBulkFiles.length} item(ns) selecionado(s)</div>` +
-    p3dBulkFiles.map((bf,i)=>`
-      <div class="bulk-row">
-        <div class="bulk-file">${escapeHtml(bf.file.name)}</div>
-        <input type="text" data-p3d-bulk-label="${i}" value="${escapeHtml(bf.label)}" placeholder="Nome/local (opcional)">
-        <button type="button" class="bulk-remove" data-p3d-bulk-remove="${i}">✕ remover da lista</button>
-      </div>
-    `).join('');
-}
-
-const admin3dDrop = document.getElementById('admin-3d-drop');
-const admin3dFile = document.getElementById('admin-3d-file');
-admin3dDrop.addEventListener('click', ()=>admin3dFile.click());
-admin3dFile.addEventListener('change', ()=>{
-  if(!admin3dFile.files.length) return;
-  Array.from(admin3dFile.files).forEach(file=>{
-    p3dBulkFiles.push({file, label: file.name.replace(/\.[^.]+$/,'')});
-  });
-  admin3dDrop.textContent = `✓ ${p3dBulkFiles.length} item(ns) selecionado(s)`;
-  admin3dDrop.classList.add('has-file');
-  renderP3dBulkPreview();
-  admin3dFile.value = '';
-});
-
-document.getElementById('admin-3d-save').addEventListener('click', async ()=>{
-  if(!db){ toast('Configure o Firebase primeiro'); return; }
-  const btn = document.getElementById('admin-3d-save');
-  const tooBig = p3dBulkFiles.find(bf=>bf.file.size > 10*1024*1024);
-  if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 10MB'); return; }
-  btn.disabled = true;
-  const statusEl = document.getElementById('admin-3d-status');
-  try{
-    for(let i=0;i<p3dBulkFiles.length;i++){
-      const bf = p3dBulkFiles[i];
-      btn.textContent = `Enviando ${i+1}/${p3dBulkFiles.length}...`;
-      const tipo = bf.file.type.startsWith('image/') ? 'imagem' : 'pdf';
-      const base64 = await fileToBase64(bf.file);
-      const thumb = tipo==='imagem' ? await resizeImageBase64(base64, 320) : null;
-      const id = uid();
-      await saveFileChunked('projeto3d', id, base64);
-      await col('projeto3d').doc(id).set({
-        tipo, label: bf.label || bf.file.name.replace(/\.[^.]+$/,''),
-        fileName: bf.file.name, thumb, ordem: Date.now(),
-        criado: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    statusEl.textContent = p3dBulkFiles.length + ' item(ns) salvo(s)!';
-    toast(p3dBulkFiles.length + ' item(ns) salvo(s)');
-    p3dBulkFiles = [];
-    renderP3dBulkPreview();
-    admin3dDrop.textContent = 'Toque para escolher uma ou várias imagens/PDFs de uma vez (até 10MB cada)';
-    admin3dDrop.classList.remove('has-file');
-  }catch(e){
-    console.error(e);
-    statusEl.textContent = 'Erro ao enviar: ' + e.message;
+  function render(){
+    if(bulk.length===0){ bulkListEl.style.display='none'; bulkListEl.innerHTML=''; saveBtn.style.display='none'; return; }
+    bulkListEl.style.display='block';
+    saveBtn.style.display='block';
+    bulkListEl.innerHTML = `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px;">${bulk.length} item(ns) selecionado(s)</div>` +
+      bulk.map((bf,i)=>`
+        <div class="bulk-row">
+          <div class="bulk-file">${escapeHtml(bf.file.name)}</div>
+          <input type="text" data-label-idx="${i}" value="${escapeHtml(bf.label)}" placeholder="Nome/local (opcional)">
+          <button type="button" class="bulk-remove" data-remove-idx="${i}">✕ remover da lista</button>
+        </div>
+      `).join('');
   }
-  btn.disabled = false;
-  btn.textContent = 'Salvar';
-});
 
-// -- Upload: Imagens (câmera ou galeria, com antes/depois) --
-let fotoBulkFiles = []; // {file, label, fase}
-
-function renderFotoBulkPreview(){
-  const el = document.getElementById('admin-foto-bulk-list');
-  const btn = document.getElementById('admin-foto-save');
-  if(fotoBulkFiles.length===0){ el.style.display='none'; el.innerHTML=''; btn.style.display='none'; return; }
-  el.style.display='block';
-  btn.style.display='block';
-  el.innerHTML = `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px;">${fotoBulkFiles.length} foto(s) selecionada(s)</div>` +
-    fotoBulkFiles.map((bf,i)=>`
-      <div class="bulk-row">
-        <div class="bulk-file">${escapeHtml(bf.file.name)}</div>
-        <input type="text" data-foto-bulk-label="${i}" value="${escapeHtml(bf.label)}" placeholder="Local (ex: Cozinha, opcional)">
-        <select data-foto-bulk-fase="${i}">
-          <option value="" ${!bf.fase?'selected':''}>— sem marcação —</option>
-          <option value="antes" ${bf.fase==='antes'?'selected':''}>Antes</option>
-          <option value="depois" ${bf.fase==='depois'?'selected':''}>Depois</option>
-        </select>
-        <button type="button" class="bulk-remove" data-foto-bulk-remove="${i}">✕ remover da lista</button>
-      </div>
-    `).join('');
-}
-
-function adicionarFotosNoLote(fileList){
-  Array.from(fileList).forEach(file=>{
-    fotoBulkFiles.push({file, label:'', fase:null});
+  dropEl.addEventListener('click', ()=>fileEl.click());
+  fileEl.addEventListener('change', ()=>{
+    if(!fileEl.files.length) return;
+    Array.from(fileEl.files).forEach(file=>{
+      bulk.push({file, label: file.name.replace(/\.[^.]+$/,'')});
+    });
+    dropEl.textContent = `✓ ${bulk.length} item(ns) selecionado(s)`;
+    dropEl.classList.add('has-file');
+    render();
+    fileEl.value = '';
   });
-  renderFotoBulkPreview();
-}
-document.getElementById('admin-foto-camera-btn').addEventListener('click', ()=>document.getElementById('admin-foto-camera').click());
-document.getElementById('admin-foto-galeria-btn').addEventListener('click', ()=>document.getElementById('admin-foto-galeria').click());
-document.getElementById('admin-foto-camera').addEventListener('change', (e)=>{
-  if(e.target.files.length) adicionarFotosNoLote(e.target.files);
-  e.target.value = '';
-});
-document.getElementById('admin-foto-galeria').addEventListener('change', (e)=>{
-  if(e.target.files.length) adicionarFotosNoLote(e.target.files);
-  e.target.value = '';
-});
 
-document.getElementById('admin-foto-save').addEventListener('click', async ()=>{
-  if(!db){ toast('Configure o Firebase primeiro'); return; }
-  const btn = document.getElementById('admin-foto-save');
-  const tooBig = fotoBulkFiles.find(bf=>bf.file.size > 10*1024*1024);
-  if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 10MB'); return; }
-  btn.disabled = true;
-  const statusEl = document.getElementById('admin-foto-status');
-  try{
-    for(let i=0;i<fotoBulkFiles.length;i++){
-      const bf = fotoBulkFiles[i];
-      btn.textContent = `Enviando ${i+1}/${fotoBulkFiles.length}...`;
-      const base64 = await fileToBase64(bf.file);
-      const thumb = await resizeImageBase64(base64, 320);
-      const id = uid();
-      await saveFileChunked('fotos', id, base64);
-      await col('fotos').doc(id).set({
-        label: bf.label || '', fase: bf.fase || null,
-        fileName: bf.file.name, thumb, ordem: Date.now(),
-        criado: firebase.firestore.FieldValue.serverTimestamp()
-      });
+  bulkListEl.addEventListener('input', (e)=>{
+    const idx = e.target.getAttribute('data-label-idx');
+    if(idx !== null) bulk[idx].label = e.target.value;
+  });
+  bulkListEl.addEventListener('click', (e)=>{
+    const idx = e.target.getAttribute('data-remove-idx');
+    if(idx !== null){ bulk.splice(Number(idx),1); render(); }
+  });
+
+  saveBtn.addEventListener('click', async ()=>{
+    if(!db){ toast('Configure o Firebase primeiro'); return; }
+    const tooBig = bulk.find(bf=>bf.file.size > 10*1024*1024);
+    if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 10MB'); return; }
+    saveBtn.disabled = true;
+    try{
+      for(let i=0;i<bulk.length;i++){
+        const bf = bulk[i];
+        saveBtn.textContent = `Enviando ${i+1}/${bulk.length}...`;
+        const tipo = bf.file.type.startsWith('image/') ? 'imagem' : 'pdf';
+        const base64 = await fileToBase64(bf.file);
+        const thumb = tipo==='imagem' ? await resizeImageBase64(base64, 320) : null;
+        const id = uid();
+        await saveFileChunked('projeto3d', id, base64);
+        await col('projeto3d').doc(id).set({
+          tipo, label: bf.label || bf.file.name.replace(/\.[^.]+$/,''),
+          fileName: bf.file.name, thumb, ordem: Date.now(),
+          criado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      statusEl.textContent = bulk.length + ' item(ns) salvo(s)!';
+      toast(bulk.length + ' item(ns) salvo(s)');
+      bulk = [];
+      render();
+      dropEl.textContent = textoPadrao;
+      dropEl.classList.remove('has-file');
+    }catch(e){
+      console.error(e);
+      statusEl.textContent = 'Erro ao enviar: ' + e.message;
     }
-    statusEl.textContent = fotoBulkFiles.length + ' foto(s) salva(s)!';
-    toast(fotoBulkFiles.length + ' foto(s) salva(s)');
-    fotoBulkFiles = [];
-    renderFotoBulkPreview();
-  }catch(e){
-    console.error(e);
-    statusEl.textContent = 'Erro ao enviar: ' + e.message;
-  }
-  btn.disabled = false;
-  btn.textContent = 'Salvar';
-});
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Salvar';
+  });
+}
+wireUploadP3D({dropId:'admin-3d-drop', fileId:'admin-3d-file', bulkListId:'admin-3d-bulk-list', saveId:'admin-3d-save', statusId:'admin-3d-status'});
+wireUploadP3D({dropId:'m3d-drop', fileId:'m3d-file', bulkListId:'m3d-bulk-list', saveId:'m3d-save', statusId:'m3d-status'});
 
-document.addEventListener('input', (e)=>{
-  const idxP3d = e.target.getAttribute('data-p3d-bulk-label');
-  if(idxP3d !== null){ p3dBulkFiles[idxP3d].label = e.target.value; }
-  const idxFoto = e.target.getAttribute('data-foto-bulk-label');
-  if(idxFoto !== null){ fotoBulkFiles[idxFoto].label = e.target.value; }
-});
-document.addEventListener('change', (e)=>{
-  const idxFase = e.target.getAttribute('data-foto-bulk-fase');
-  if(idxFase !== null){ fotoBulkFiles[idxFase].fase = e.target.value || null; }
-});
-document.addEventListener('click', (e)=>{
-  const idxP3dR = e.target.getAttribute('data-p3d-bulk-remove');
-  if(idxP3dR !== null){ p3dBulkFiles.splice(Number(idxP3dR),1); renderP3dBulkPreview(); }
-  const idxFotoR = e.target.getAttribute('data-foto-bulk-remove');
-  if(idxFotoR !== null){ fotoBulkFiles.splice(Number(idxFotoR),1); renderFotoBulkPreview(); }
-});
+// -- Upload: Imagens (câmera ou galeria, com antes/depois) — reutilizável --
+function wireUploadFotos({cameraBtnId, galeriaBtnId, cameraInputId, galeriaInputId, bulkListId, saveId, statusId}){
+  let bulk = []; // {file, label, fase}
+  const cameraInput = document.getElementById(cameraInputId);
+  const galeriaInput = document.getElementById(galeriaInputId);
+  const bulkListEl = document.getElementById(bulkListId);
+  const saveBtn = document.getElementById(saveId);
+  const statusEl = document.getElementById(statusId);
+
+  function render(){
+    if(bulk.length===0){ bulkListEl.style.display='none'; bulkListEl.innerHTML=''; saveBtn.style.display='none'; return; }
+    bulkListEl.style.display='block';
+    saveBtn.style.display='block';
+    bulkListEl.innerHTML = `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px;">${bulk.length} foto(s) selecionada(s)</div>` +
+      bulk.map((bf,i)=>`
+        <div class="bulk-row">
+          <div class="bulk-file">${escapeHtml(bf.file.name)}</div>
+          <input type="text" data-label-idx="${i}" value="${escapeHtml(bf.label)}" placeholder="Local (ex: Cozinha, opcional)">
+          <select data-fase-idx="${i}">
+            <option value="" ${!bf.fase?'selected':''}>— sem marcação —</option>
+            <option value="antes" ${bf.fase==='antes'?'selected':''}>Antes</option>
+            <option value="depois" ${bf.fase==='depois'?'selected':''}>Depois</option>
+          </select>
+          <button type="button" class="bulk-remove" data-remove-idx="${i}">✕ remover da lista</button>
+        </div>
+      `).join('');
+  }
+
+  function adicionar(fileList){
+    Array.from(fileList).forEach(file=> bulk.push({file, label:'', fase:null}));
+    render();
+  }
+  document.getElementById(cameraBtnId).addEventListener('click', ()=>cameraInput.click());
+  document.getElementById(galeriaBtnId).addEventListener('click', ()=>galeriaInput.click());
+  cameraInput.addEventListener('change', (e)=>{ if(e.target.files.length) adicionar(e.target.files); e.target.value=''; });
+  galeriaInput.addEventListener('change', (e)=>{ if(e.target.files.length) adicionar(e.target.files); e.target.value=''; });
+
+  bulkListEl.addEventListener('input', (e)=>{
+    const idx = e.target.getAttribute('data-label-idx');
+    if(idx !== null) bulk[idx].label = e.target.value;
+  });
+  bulkListEl.addEventListener('change', (e)=>{
+    const idx = e.target.getAttribute('data-fase-idx');
+    if(idx !== null) bulk[idx].fase = e.target.value || null;
+  });
+  bulkListEl.addEventListener('click', (e)=>{
+    const idx = e.target.getAttribute('data-remove-idx');
+    if(idx !== null){ bulk.splice(Number(idx),1); render(); }
+  });
+
+  saveBtn.addEventListener('click', async ()=>{
+    if(!db){ toast('Configure o Firebase primeiro'); return; }
+    const tooBig = bulk.find(bf=>bf.file.size > 10*1024*1024);
+    if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 10MB'); return; }
+    saveBtn.disabled = true;
+    try{
+      for(let i=0;i<bulk.length;i++){
+        const bf = bulk[i];
+        saveBtn.textContent = `Enviando ${i+1}/${bulk.length}...`;
+        const base64 = await fileToBase64(bf.file);
+        const thumb = await resizeImageBase64(base64, 320);
+        const id = uid();
+        await saveFileChunked('fotos', id, base64);
+        await col('fotos').doc(id).set({
+          label: bf.label || '', fase: bf.fase || null,
+          fileName: bf.file.name, thumb, ordem: Date.now(),
+          criado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+      statusEl.textContent = bulk.length + ' foto(s) salva(s)!';
+      toast(bulk.length + ' foto(s) salva(s)');
+      bulk = [];
+      render();
+    }catch(e){
+      console.error(e);
+      statusEl.textContent = 'Erro ao enviar: ' + e.message;
+    }
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Salvar';
+  });
+}
+wireUploadFotos({cameraBtnId:'admin-foto-camera-btn', galeriaBtnId:'admin-foto-galeria-btn', cameraInputId:'admin-foto-camera', galeriaInputId:'admin-foto-galeria', bulkListId:'admin-foto-bulk-list', saveId:'admin-foto-save', statusId:'admin-foto-status'});
+wireUploadFotos({cameraBtnId:'mfoto-camera-btn', galeriaBtnId:'mfoto-galeria-btn', cameraInputId:'mfoto-camera', galeriaInputId:'mfoto-galeria', bulkListId:'mfoto-bulk-list', saveId:'mfoto-save', statusId:'mfoto-status'});
 
 // -- Alternador de pastas: Projeto 3D / Imagens (admin e membro) --
-document.getElementById('admin-p3d-tab-3d').addEventListener('click', ()=>{
-  document.getElementById('admin-p3d-tab-3d').classList.add('active');
-  document.getElementById('admin-p3d-tab-fotos').classList.remove('active');
-  document.getElementById('admin-p3d-pane-3d').style.display = 'block';
-  document.getElementById('admin-p3d-pane-fotos').style.display = 'none';
-});
-document.getElementById('admin-p3d-tab-fotos').addEventListener('click', ()=>{
-  document.getElementById('admin-p3d-tab-fotos').classList.add('active');
-  document.getElementById('admin-p3d-tab-3d').classList.remove('active');
-  document.getElementById('admin-p3d-pane-fotos').style.display = 'block';
-  document.getElementById('admin-p3d-pane-3d').style.display = 'none';
-});
-document.getElementById('p3d-tab-3d').addEventListener('click', ()=>{
-  document.getElementById('p3d-tab-3d').classList.add('active');
-  document.getElementById('p3d-tab-fotos').classList.remove('active');
-  document.getElementById('p3d-pane-3d').style.display = 'block';
-  document.getElementById('p3d-pane-fotos').style.display = 'none';
-});
-document.getElementById('p3d-tab-fotos').addEventListener('click', ()=>{
-  document.getElementById('p3d-tab-fotos').classList.add('active');
-  document.getElementById('p3d-tab-3d').classList.remove('active');
-  document.getElementById('p3d-pane-fotos').style.display = 'block';
-  document.getElementById('p3d-pane-3d').style.display = 'none';
-});
+function wireFolderToggle(tabAId, tabBId, paneAId, paneBId){
+  document.getElementById(tabAId).addEventListener('click', ()=>{
+    document.getElementById(tabAId).classList.add('active');
+    document.getElementById(tabBId).classList.remove('active');
+    document.getElementById(paneAId).style.display = 'block';
+    document.getElementById(paneBId).style.display = 'none';
+  });
+  document.getElementById(tabBId).addEventListener('click', ()=>{
+    document.getElementById(tabBId).classList.add('active');
+    document.getElementById(tabAId).classList.remove('active');
+    document.getElementById(paneBId).style.display = 'block';
+    document.getElementById(paneAId).style.display = 'none';
+  });
+}
+wireFolderToggle('admin-p3d-tab-3d','admin-p3d-tab-fotos','admin-p3d-pane-3d','admin-p3d-pane-fotos');
+wireFolderToggle('p3d-tab-3d','p3d-tab-fotos','p3d-pane-3d','p3d-pane-fotos');
 
 // -- Lightbox único (Projeto 3D e Imagens) --
 document.addEventListener('click', async (e)=>{
