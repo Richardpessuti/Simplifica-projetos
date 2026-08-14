@@ -1367,8 +1367,10 @@
       <div id="cron-arquivo-atual" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
       <label>Data de início da obra (segunda-feira da Semana 01)</label>
       <input type="date" id="cron-data-inicio">
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Se o PDF tiver a grade de semanas com barras coloridas, o app tenta calcular a data de cada etapa automaticamente a partir daqui. Sempre dá pra corrigir depois.</div>
-      <label>Arquivo do cronograma (PDF)</label>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Se o PDF tiver a grade de semanas com barras coloridas, o app tenta calcular a data de cada etapa automaticamente a partir daqui.</div>
+      <button class="btn muted" id="cron-recalcular-datas" style="margin-top:10px;">Recalcular datas das etapas</button>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">Mudou a data de início? Toque aqui pra recalcular as datas de todas as etapas sem precisar subir o PDF de novo (o progresso já marcado não é mexido).</div>
+      <label style="margin-top:18px;">Arquivo do cronograma (PDF)</label>
       <div class="file-drop" id="cron-drop">Toque para escolher o PDF do cronograma</div>
       <input type="file" id="cron-file" accept=".pdf">
       <div id="cron-import-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
@@ -2541,6 +2543,9 @@ document.addEventListener('click', async (e)=>{
       const antigasSnap = await col('etapas').get();
       await Promise.all(antigasSnap.docs.map(d=>d.ref.delete()));
       const dataInicioObra = document.getElementById('cron-data-inicio').value || null;
+      if(dataInicioObra){
+        await db.collection('projetos').doc(currentProjetoId).update({dataInicioObra});
+      }
       for(let i=0;i<importPreview.length;i++){
         const et = importPreview[i];
         const grade = cronGradeDatas && cronGradeDatas[et.nome];
@@ -2549,6 +2554,13 @@ document.addEventListener('click', async (e)=>{
           status: 'Não iniciada', tiposCompletos: {},
           criado: firebase.firestore.FieldValue.serverTimestamp()
         };
+        if(grade){
+          // guarda a posição na grade do PDF (não a data em si), pra dar pra
+          // recalcular a data depois só mudando a "data de início da obra",
+          // sem precisar subir o PDF de novo
+          payload.gradeDiaInicio = grade.diaInicio;
+          payload.gradeDiaFim = grade.diaFim;
+        }
         if(dataInicioObra && grade){
           payload.dataInicio = dataDaGradeCronograma(dataInicioObra, grade.diaInicio);
           payload.dataFim = dataDaGradeCronograma(dataInicioObra, grade.diaFim);
@@ -2566,6 +2578,28 @@ document.addEventListener('click', async (e)=>{
       toast('Erro ao importar: ' + err.message);
     }
     e.target.disabled = false; e.target.textContent = 'Confirmar e importar';
+  }
+
+  if(e.target.id === 'cron-recalcular-datas'){
+    if(!db) return;
+    const novaData = document.getElementById('cron-data-inicio').value;
+    if(!novaData){ toast('Preencha a data de início da obra primeiro'); return; }
+    const btn = e.target;
+    btn.disabled = true; btn.textContent = 'Recalculando...';
+    try{
+      await db.collection('projetos').doc(currentProjetoId).update({dataInicioObra: novaData});
+      const comGrade = etapasCache.filter(et=>et.gradeDiaInicio!=null && et.gradeDiaFim!=null);
+      await Promise.all(comGrade.map(et=>col('etapas').doc(et.id).update({
+        dataInicio: dataDaGradeCronograma(novaData, et.gradeDiaInicio),
+        dataFim: dataDaGradeCronograma(novaData, et.gradeDiaFim)
+      })));
+      toast(comGrade.length > 0 ? `Datas recalculadas em ${comGrade.length} etapa(s)` : 'Nenhuma etapa tem posição salva da grade — importe o PDF de novo pra habilitar o recálculo automático.');
+    }catch(err){
+      console.error(err);
+      toast('Erro ao recalcular: ' + err.message);
+    }
+    btn.disabled = false; btn.textContent = 'Recalcular datas das etapas';
+    return;
   }
 
   if(e.target.id === 'cron-abrir-arquivo'){
@@ -4980,6 +5014,7 @@ if(firebaseOk){
 
       if(isAdmin){
         document.getElementById('admin-nome-projeto').value = nome;
+        document.getElementById('cron-data-inicio').value = data.dataInicioObra || '';
         renderMembros();
       }
     });
