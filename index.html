@@ -712,6 +712,27 @@
   .status-select.status-aprovado{ background:#E7EFE7; color:var(--ok); }
   .status-select.status-recusado{ background:#F6E4DF; color:var(--danger); }
 
+  #whats-modal-lista details{
+    border:1px solid var(--paper-line);
+    border-radius:10px;
+    margin-bottom:8px;
+    overflow:hidden;
+  }
+  #whats-modal-lista summary{
+    padding:12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  #whats-modal-lista details .list-item{
+    padding-left:12px;
+    padding-right:12px;
+  }
   .bulk-row{
     border:1px solid var(--paper-line);
     border-radius:10px;
@@ -1250,7 +1271,7 @@
 <nav>
   <button class="tab-btn active" data-tab="cronograma"><span class="tab-ic">🗓️</span>Cronograma</button>
   <button class="tab-btn" data-tab="cotacoes"><span class="tab-ic">💰</span>Cotações</button>
-  <button class="tab-btn" data-tab="projeto3d"><span class="tab-ic">🧊</span>Projeto 3D</button>
+  <button class="tab-btn" data-tab="projeto3d"><span class="tab-ic">📐</span>Projeto 3D</button>
   <button class="tab-btn" data-tab="prestadores"><span class="tab-ic">👷</span>Prestadores</button>
   <button class="tab-btn nav-more-btn" id="nav-more-btn" type="button"><span class="tab-ic">⋯</span>Mais</button>
   <div class="nav-more-sheet" id="nav-more-sheet">
@@ -1399,12 +1420,35 @@
     <div id="cron-preview"></div>
 
     <div class="card">
-      <h2>Projeto 3D <span class="tag">PDF único</span></h2>
-      <div id="admin-3d-atual" style="font-size:12px;color:var(--muted);margin-bottom:10px;"></div>
-      <label>Arquivo do projeto 3D (PDF)</label>
-      <div class="file-drop" id="admin-3d-drop">Toque para escolher o PDF do projeto 3D</div>
-      <input type="file" id="admin-3d-file" accept=".pdf">
-      <div id="admin-3d-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+      <h2>Projeto 3D <span class="tag">fotos e renders</span></h2>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button type="button" id="admin-p3d-tab-3d" class="pag-toggle-btn active" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Projeto 3D</button>
+        <button type="button" id="admin-p3d-tab-fotos" class="pag-toggle-btn" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Imagens</button>
+      </div>
+
+      <div id="admin-p3d-pane-3d">
+        <div id="admin-3d-migrar" style="display:none;"></div>
+        <label>Nome/local (opcional, ajuste por item na lista)</label>
+        <div class="file-drop" id="admin-3d-drop">Toque para escolher uma ou várias imagens/PDFs de uma vez (até 10MB cada)</div>
+        <input type="file" id="admin-3d-file" accept=".pdf,image/*" multiple>
+        <div id="admin-3d-bulk-list" style="display:none;margin-top:12px;"></div>
+        <button class="btn secondary" id="admin-3d-save" style="display:none;">Salvar</button>
+        <div id="admin-3d-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+        <div id="admin-3d-list"></div>
+      </div>
+
+      <div id="admin-p3d-pane-fotos" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button type="button" class="btn secondary" id="admin-foto-camera-btn" style="flex:1;margin-top:0;">📷 Tirar foto agora</button>
+          <button type="button" class="btn secondary" id="admin-foto-galeria-btn" style="flex:1;margin-top:0;">🖼️ Escolher da galeria</button>
+        </div>
+        <input type="file" id="admin-foto-camera" accept="image/*" capture="environment" style="display:none;">
+        <input type="file" id="admin-foto-galeria" accept="image/*" multiple style="display:none;">
+        <div id="admin-foto-bulk-list" style="display:none;margin-top:12px;"></div>
+        <button class="btn secondary" id="admin-foto-save" style="display:none;">Salvar</button>
+        <div id="admin-foto-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></div>
+        <div id="admin-foto-list"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -1426,10 +1470,14 @@
 
   <!-- PROJETO 3D -->
   <section id="tab-projeto3d">
-    <div class="card" style="text-align:center;">
+    <div class="card">
       <h2 style="justify-content:center;">Projeto 3D</h2>
-      <div id="projeto3d-status" style="font-size:13px;color:var(--muted);margin-bottom:14px;">Carregando...</div>
-      <button class="btn secondary" id="projeto3d-abrir" style="display:none;">Abrir projeto 3D</button>
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button type="button" id="p3d-tab-3d" class="pag-toggle-btn active" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Projeto 3D</button>
+        <button type="button" id="p3d-tab-fotos" class="pag-toggle-btn" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Imagens</button>
+      </div>
+      <div id="p3d-pane-3d"><div id="projeto3d-galeria"></div></div>
+      <div id="p3d-pane-fotos" style="display:none;"><div id="fotos-galeria"></div></div>
     </div>
   </section>
 
@@ -1672,6 +1720,17 @@
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Toque num ponto da imagem pra usar aquela cor.</div>
     <div id="eyedrop-modal-vazio" class="empty" style="display:none;"><div class="big">— · —</div>Nenhuma logo cadastrada ainda. Suba uma logo primeiro, no card acima.</div>
     <canvas id="eyedrop-canvas" style="width:100%;max-width:100%;border-radius:var(--radius-btn);cursor:crosshair;touch-action:none;"></canvas>
+  </div>
+</div>
+
+<div id="p3d-lightbox" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-sheet-head">
+      <h2 id="p3d-lightbox-titulo">Imagem</h2>
+      <button type="button" class="modal-close" id="p3d-lightbox-fechar" aria-label="Fechar">✕</button>
+    </div>
+    <div id="p3d-lightbox-carregando" style="font-size:13px;color:var(--muted);padding:30px 0;text-align:center;">Carregando...</div>
+    <img id="p3d-lightbox-img" style="width:100%;border-radius:var(--radius-btn);display:none;">
   </div>
 </div>
 
@@ -2275,7 +2334,8 @@ function initHero(){
 
 let etapasCache = [];
 let cronArquivoAtual = null; // {hasFile, fileName}
-let projeto3dAtual = null; // {hasFile, fileName}
+let projeto3dCache = []; // [{id, tipo:'imagem'|'pdf', label, fileName, thumb, ordem}]
+let fotosCache = []; // [{id, label, fase:'antes'|'depois'|null, fileName, thumb, ordem}]
 let importPreview = []; // [{nome, tipo, ordem}]
 let cronGradeDatas = null; // {nome: {diaInicio, diaFim}} — lido da grade colorida do PDF, se houver
 let etapaEditandoData = null; // id da etapa com o balãozinho de data aberto pra edição, se houver
@@ -2311,17 +2371,20 @@ function guessTipoEtapa(nome){
 function listarArquivosDisponiveis(){
   const itens = [];
   cotacoesCache.forEach(q=>{
-    if(q.hasFile) itens.push({label: q.item + ' (cotação)', colecao:'cotacoes', id:q.id, fileName:q.fileName});
+    if(q.hasFile) itens.push({label: q.item + ' (cotação)', colecao:'cotacoes', id:q.id, fileName:q.fileName, folder:'Cotações'});
   });
   arquitetaCache.forEach(f=>{
-    if(f.fileName) itens.push({label: f.nome + ' (arquiteta)', colecao:'arquiteta', id:f.id, fileName:f.fileName});
+    if(f.fileName) itens.push({label: f.nome + ' (arquiteta)', colecao:'arquiteta', id:f.id, fileName:f.fileName, folder:'Projeto'});
   });
   if(cronArquivoAtual && cronArquivoAtual.hasFile){
-    itens.push({label: 'Cronograma da obra', colecao:'cronograma_arquivo', id:'atual', fileName: cronArquivoAtual.fileName});
+    itens.push({label: 'Cronograma da obra', colecao:'cronograma_arquivo', id:'atual', fileName: cronArquivoAtual.fileName, folder:'Projeto'});
   }
-  if(projeto3dAtual && projeto3dAtual.hasFile){
-    itens.push({label: 'Projeto 3D', colecao:'projeto3d', id:'atual', fileName: projeto3dAtual.fileName});
-  }
+  projeto3dCache.forEach(f=>{
+    itens.push({label: (f.label || f.fileName) + ' (projeto 3D)', colecao:'projeto3d', id:f.id, fileName:f.fileName, folder:'Projeto'});
+  });
+  fotosCache.forEach(f=>{
+    itens.push({label: f.label || f.fileName, colecao:'fotos', id:f.id, fileName:f.fileName, folder:'Imagens'});
+  });
   return itens;
 }
 
@@ -2334,15 +2397,34 @@ function abrirModalWhatsApp(tel, nomeContato){
 
   whatsSelecionados = new Set();
   const arquivos = listarArquivosDisponiveis();
-  lista.innerHTML = arquivos.map((a,i)=>`
-    <label class="list-item" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
-      <input type="checkbox" data-whats-check="${i}" style="flex-shrink:0;width:18px;height:18px;">
-      <span>
-        <div class="item-title">${escapeHtml(a.label)}</div>
-        <div class="meta">${escapeHtml(a.fileName)}</div>
-      </span>
-    </label>
-  `).join('');
+
+  // agrupa em pastas (Cotações / Projeto / Imagens), guardando o índice original de cada item
+  const pastas = ['Cotações', 'Projeto', 'Imagens'];
+  const grupos = {};
+  arquivos.forEach((a,i)=>{
+    const p = a.folder || 'Projeto';
+    if(!grupos[p]) grupos[p] = [];
+    grupos[p].push(i);
+  });
+
+  if(arquivos.length===0){
+    lista.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhum arquivo disponível ainda.</div>';
+  }else{
+    lista.innerHTML = pastas.filter(p=>grupos[p] && grupos[p].length).map(p=>`
+      <details>
+        <summary>${escapeHtml(p)} <span style="background:var(--caution);color:#fff;font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:20px;font-weight:700;">${grupos[p].length}</span></summary>
+        ${grupos[p].map(i=>`
+          <label class="list-item" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
+            <input type="checkbox" data-whats-check="${i}" style="flex-shrink:0;width:18px;height:18px;">
+            <span>
+              <div class="item-title">${escapeHtml(arquivos[i].label)}</div>
+              <div class="meta">${escapeHtml(arquivos[i].fileName)}</div>
+            </span>
+          </label>
+        `).join('')}
+      </details>
+    `).join('');
+  }
   modal.dataset.tel = tel;
   modal.dataset.arquivos = JSON.stringify(arquivos);
   atualizarBotaoWhatsEnviar();
@@ -2763,13 +2845,6 @@ document.addEventListener('click', async (e)=>{
     else { if(newWin) newWin.close(); toast('Arquivo não encontrado'); }
   }
 
-  if(e.target.id === 'projeto3d-abrir' || e.target.id === 'admin-3d-abrir'){
-    const newWin = window.open('', '_blank');
-    const base64 = await loadFileChunked('projeto3d','atual');
-    if(base64) openBase64(base64, projeto3dAtual?.fileName, newWin);
-    else { if(newWin) newWin.close(); toast('Arquivo não encontrado'); }
-  }
-
   const marcarTipo = e.target.getAttribute('data-marcar-tipo');
   if(marcarTipo){
     const [etapaId, tipo] = marcarTipo.split('|');
@@ -2982,58 +3057,420 @@ function listenCronograma(){
   }, err=>{ console.error(err); toast('Erro ao carregar cronograma'); }));
 }
 
+// ---------- Projeto 3D (renders/plantas) + Imagens (fotos gerais, antes/depois) ----------
+
+function renderGaleriaMembro(containerId, items, textoVazio){
+  const el = document.getElementById(containerId);
+  if(items.length===0){
+    el.innerHTML = `<div class="empty"><div class="big">— · —</div>${escapeHtml(textoVazio)}</div>`;
+    return;
+  }
+  const imagens = items.filter(f=>!f.tipo || f.tipo==='imagem');
+  const pdfs = items.filter(f=>f.tipo==='pdf');
+  let html = '';
+  if(imagens.length){
+    html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;${pdfs.length?'margin-bottom:14px;':''}">` +
+      imagens.map(f=>`
+        <div style="text-align:center;">
+          <img src="${f.thumb}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer;" data-galeria-col="${f._col}" data-galeria-id="${f.id}" data-galeria-nome="${escapeHtml(f.label||f.fileName)}">
+          <div style="font-size:10px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(f.label||f.fileName)}</div>
+        </div>
+      `).join('') + `</div>`;
+  }
+  if(pdfs.length){
+    html += pdfs.map(f=>`
+      <div class="list-item">
+        <div class="row1">
+          <div>
+            <div class="item-title">${escapeHtml(f.label||f.fileName)}</div>
+            <div class="meta">${escapeHtml(f.fileName)}</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="view" data-view="${f._col}" data-id="${f.id}" data-name="${escapeHtml(f.fileName)}">Abrir PDF</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  el.innerHTML = html;
+}
+
+function renderProjeto3DGaleria(){
+  const items = projeto3dCache.map(f=>({...f, _col:'projeto3d'}));
+  renderGaleriaMembro('projeto3d-galeria', items, 'A arquiteta ainda não subiu o projeto 3D.');
+}
+
+function renderFotosGaleria(){
+  const el = document.getElementById('fotos-galeria');
+  if(fotosCache.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhuma foto salva ainda.</div>';
+    return;
+  }
+  const grupos = {};
+  fotosCache.forEach(f=>{
+    const chave = f.label || 'Sem local';
+    if(!grupos[chave]) grupos[chave] = [];
+    grupos[chave].push(f);
+  });
+  let compHtml = '';
+  Object.keys(grupos).forEach(chave=>{
+    const antes = grupos[chave].filter(f=>f.fase==='antes').slice(-1)[0];
+    const depois = grupos[chave].filter(f=>f.fase==='depois').slice(-1)[0];
+    if(antes && depois){
+      compHtml += `<div class="card" style="margin-bottom:12px;">
+        <h2 style="font-size:14px;">${escapeHtml(chave)} <span class="tag">antes e depois</span></h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="text-align:center;">
+            <img src="${antes.thumb}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer;" data-galeria-col="fotos" data-galeria-id="${antes.id}" data-galeria-nome="${escapeHtml(chave)} — antes">
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;">Antes</div>
+          </div>
+          <div style="text-align:center;">
+            <img src="${depois.thumb}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer;" data-galeria-col="fotos" data-galeria-id="${depois.id}" data-galeria-nome="${escapeHtml(chave)} — depois">
+            <div style="font-size:10px;color:var(--muted);margin-top:4px;">Depois</div>
+          </div>
+        </div>
+      </div>`;
+    }
+  });
+  const items = fotosCache.map(f=>({...f, _col:'fotos'}));
+  el.innerHTML = compHtml + `<div id="fotos-galeria-grade"></div>`;
+  renderGaleriaMembro('fotos-galeria-grade', items, 'Nenhuma foto salva ainda.');
+}
+
+function renderAdminP3dList(){
+  const el = document.getElementById('admin-3d-list');
+  if(projeto3dCache.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhum item do projeto 3D enviado ainda.</div>';
+    return;
+  }
+  el.innerHTML = projeto3dCache.map(f=>`
+    <div class="list-item">
+      <div class="row1">
+        <div>
+          <div class="item-title">${escapeHtml(f.label||f.fileName)}</div>
+          <div class="meta">${escapeHtml(f.fileName)}${f.tipo==='pdf' ? ' · PDF' : ''}</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="view" data-view="projeto3d" data-id="${f.id}" data-name="${escapeHtml(f.fileName)}">Abrir</button>
+        <button class="del" data-del="projeto3d" data-id="${f.id}">Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderAdminFotoList(){
+  const el = document.getElementById('admin-foto-list');
+  if(fotosCache.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhuma foto enviada ainda.</div>';
+    return;
+  }
+  el.innerHTML = fotosCache.map(f=>`
+    <div class="list-item">
+      <div class="row1">
+        <div>
+          <div class="item-title">${escapeHtml(f.label||f.fileName)} ${f.fase ? `<span class="tag">${f.fase==='antes'?'Antes':'Depois'}</span>` : ''}</div>
+          <div class="meta">${escapeHtml(f.fileName)}</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="view" data-view="fotos" data-id="${f.id}" data-name="${escapeHtml(f.fileName)}">Abrir</button>
+        <button class="del" data-del="fotos" data-id="${f.id}">Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+
 function listenProjeto3D(){
   if(!db) return;
-  trackUnsub(col('projeto3d').doc('atual').onSnapshot(doc=>{
-    projeto3dAtual = doc.exists ? doc.data() : null;
-    const temArquivo = projeto3dAtual && projeto3dAtual.hasFile;
+  document.getElementById('admin-3d-list').innerHTML = skeletonRows(2);
+  trackUnsub(col('projeto3d').orderBy('ordem','asc').onSnapshot(snap=>{
+    const docs = [];
+    snap.forEach(d=> docs.push({id:d.id, ...d.data()}));
+    projeto3dCache = docs;
+    renderProjeto3DGaleria();
+    renderAdminP3dList();
+  }, err=>{ console.error(err); toast('Erro ao carregar projeto 3D'); }));
 
-    const statusEl3d = document.getElementById('projeto3d-status');
-    const btnAbrir = document.getElementById('projeto3d-abrir');
-    if(temArquivo){
-      statusEl3d.textContent = projeto3dAtual.fileName;
-      btnAbrir.style.display = 'inline-block';
+  col('projeto3d').doc('atual').get().then(doc=>{
+    const banner = document.getElementById('admin-3d-migrar');
+    if(!banner) return;
+    if(doc.exists && doc.data().hasFile){
+      const nomeAntigo = doc.data().fileName;
+      banner.style.display = 'block';
+      banner.innerHTML = `<div class="card" style="background:var(--neutral-bg);margin-bottom:14px;">
+        <div style="font-size:12px;margin-bottom:8px;">Encontramos um projeto 3D antigo (arquivo único: <strong>${escapeHtml(nomeAntigo)}</strong>) — importar para a nova galeria?</div>
+        <button class="btn secondary" id="admin-3d-importar-antigo" style="margin-top:0;">Importar projeto 3D antigo</button>
+      </div>`;
     }else{
-      statusEl3d.textContent = 'A arquiteta ainda não subiu o projeto 3D.';
-      btnAbrir.style.display = 'none';
+      banner.style.display = 'none';
+      banner.innerHTML = '';
     }
+  }).catch(err=>console.error(err));
+}
 
-    const adminEl = document.getElementById('admin-3d-atual');
-    if(adminEl){
-      adminEl.innerHTML = temArquivo
-        ? `Arquivo atual: <strong>${escapeHtml(projeto3dAtual.fileName)}</strong> — <button id="admin-3d-abrir" style="border:none;background:none;color:var(--blueprint);text-decoration:underline;cursor:pointer;padding:0;">abrir</button>`
-        : 'Nenhum projeto 3D enviado ainda.';
+function listenFotos(){
+  if(!db) return;
+  document.getElementById('admin-foto-list').innerHTML = skeletonRows(2);
+  trackUnsub(col('fotos').orderBy('ordem','asc').onSnapshot(snap=>{
+    const docs = [];
+    snap.forEach(d=> docs.push({id:d.id, ...d.data()}));
+    fotosCache = docs;
+    renderFotosGaleria();
+    renderAdminFotoList();
+  }, err=>{ console.error(err); toast('Erro ao carregar imagens'); }));
+}
+
+document.addEventListener('click', async (e)=>{
+  if(e.target.id === 'admin-3d-importar-antigo'){
+    const btn = e.target;
+    btn.disabled = true;
+    btn.textContent = 'Importando...';
+    try{
+      const base64 = await loadFileChunked('projeto3d','atual');
+      const docAntigo = await col('projeto3d').doc('atual').get();
+      const fileName = docAntigo.exists ? docAntigo.data().fileName : 'projeto3d.pdf';
+      if(base64){
+        const id = uid();
+        await saveFileChunked('projeto3d', id, base64);
+        await col('projeto3d').doc(id).set({
+          tipo: 'pdf', label: 'Projeto 3D (importado)', fileName,
+          thumb: null, ordem: Date.now(),
+          criado: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        await deleteFileChunked('projeto3d','atual');
+        await col('projeto3d').doc('atual').delete();
+        toast('Projeto 3D antigo importado!');
+        document.getElementById('admin-3d-migrar').style.display = 'none';
+      }else{
+        toast('Arquivo antigo não encontrado');
+      }
+    }catch(err){
+      console.error(err);
+      toast('Erro ao importar');
+      btn.disabled = false;
+      btn.textContent = 'Importar projeto 3D antigo';
     }
-  }));
+  }
+});
+
+// -- Upload em lote: Projeto 3D (imagens/PDF) --
+let p3dBulkFiles = []; // {file, label}
+
+function renderP3dBulkPreview(){
+  const el = document.getElementById('admin-3d-bulk-list');
+  const btn = document.getElementById('admin-3d-save');
+  if(p3dBulkFiles.length===0){ el.style.display='none'; el.innerHTML=''; btn.style.display='none'; return; }
+  el.style.display='block';
+  btn.style.display='block';
+  el.innerHTML = `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px;">${p3dBulkFiles.length} item(ns) selecionado(s)</div>` +
+    p3dBulkFiles.map((bf,i)=>`
+      <div class="bulk-row">
+        <div class="bulk-file">${escapeHtml(bf.file.name)}</div>
+        <input type="text" data-p3d-bulk-label="${i}" value="${escapeHtml(bf.label)}" placeholder="Nome/local (opcional)">
+        <button type="button" class="bulk-remove" data-p3d-bulk-remove="${i}">✕ remover da lista</button>
+      </div>
+    `).join('');
 }
 
 const admin3dDrop = document.getElementById('admin-3d-drop');
 const admin3dFile = document.getElementById('admin-3d-file');
 admin3dDrop.addEventListener('click', ()=>admin3dFile.click());
-admin3dFile.addEventListener('change', async ()=>{
-  const file = admin3dFile.files[0];
-  if(!file) return;
-  const statusEl3dAdmin = document.getElementById('admin-3d-status');
-  if(file.size > 10*1024*1024){ statusEl3dAdmin.textContent = 'Arquivo muito grande (máx 10MB)'; admin3dFile.value=''; return; }
-  admin3dDrop.textContent = '✓ ' + file.name;
+admin3dFile.addEventListener('change', ()=>{
+  if(!admin3dFile.files.length) return;
+  Array.from(admin3dFile.files).forEach(file=>{
+    p3dBulkFiles.push({file, label: file.name.replace(/\.[^.]+$/,'')});
+  });
+  admin3dDrop.textContent = `✓ ${p3dBulkFiles.length} item(ns) selecionado(s)`;
   admin3dDrop.classList.add('has-file');
-  statusEl3dAdmin.textContent = 'Enviando...';
+  renderP3dBulkPreview();
+  admin3dFile.value = '';
+});
+
+document.getElementById('admin-3d-save').addEventListener('click', async ()=>{
+  if(!db){ toast('Configure o Firebase primeiro'); return; }
+  const btn = document.getElementById('admin-3d-save');
+  const tooBig = p3dBulkFiles.find(bf=>bf.file.size > 10*1024*1024);
+  if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 10MB'); return; }
+  btn.disabled = true;
+  const statusEl = document.getElementById('admin-3d-status');
   try{
-    if(projeto3dAtual && projeto3dAtual.hasFile) await deleteFileChunked('projeto3d','atual');
-    const base64 = await fileToBase64(file);
-    await saveFileChunked('projeto3d','atual', base64);
-    await col('projeto3d').doc('atual').set({
-      hasFile: true, fileName: file.name,
-      atualizado: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    statusEl3dAdmin.textContent = 'Projeto 3D salvo!';
-    admin3dFile.value = '';
-    admin3dDrop.textContent = 'Toque para escolher o PDF do projeto 3D';
+    for(let i=0;i<p3dBulkFiles.length;i++){
+      const bf = p3dBulkFiles[i];
+      btn.textContent = `Enviando ${i+1}/${p3dBulkFiles.length}...`;
+      const tipo = bf.file.type.startsWith('image/') ? 'imagem' : 'pdf';
+      const base64 = await fileToBase64(bf.file);
+      const thumb = tipo==='imagem' ? await resizeImageBase64(base64, 320) : null;
+      const id = uid();
+      await saveFileChunked('projeto3d', id, base64);
+      await col('projeto3d').doc(id).set({
+        tipo, label: bf.label || bf.file.name.replace(/\.[^.]+$/,''),
+        fileName: bf.file.name, thumb, ordem: Date.now(),
+        criado: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    statusEl.textContent = p3dBulkFiles.length + ' item(ns) salvo(s)!';
+    toast(p3dBulkFiles.length + ' item(ns) salvo(s)');
+    p3dBulkFiles = [];
+    renderP3dBulkPreview();
+    admin3dDrop.textContent = 'Toque para escolher uma ou várias imagens/PDFs de uma vez (até 10MB cada)';
     admin3dDrop.classList.remove('has-file');
   }catch(e){
     console.error(e);
-    statusEl3dAdmin.textContent = 'Erro ao enviar: ' + e.message;
+    statusEl.textContent = 'Erro ao enviar: ' + e.message;
   }
+  btn.disabled = false;
+  btn.textContent = 'Salvar';
+});
+
+// -- Upload: Imagens (câmera ou galeria, com antes/depois) --
+let fotoBulkFiles = []; // {file, label, fase}
+
+function renderFotoBulkPreview(){
+  const el = document.getElementById('admin-foto-bulk-list');
+  const btn = document.getElementById('admin-foto-save');
+  if(fotoBulkFiles.length===0){ el.style.display='none'; el.innerHTML=''; btn.style.display='none'; return; }
+  el.style.display='block';
+  btn.style.display='block';
+  el.innerHTML = `<div style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);margin-bottom:8px;">${fotoBulkFiles.length} foto(s) selecionada(s)</div>` +
+    fotoBulkFiles.map((bf,i)=>`
+      <div class="bulk-row">
+        <div class="bulk-file">${escapeHtml(bf.file.name)}</div>
+        <input type="text" data-foto-bulk-label="${i}" value="${escapeHtml(bf.label)}" placeholder="Local (ex: Cozinha, opcional)">
+        <select data-foto-bulk-fase="${i}">
+          <option value="" ${!bf.fase?'selected':''}>— sem marcação —</option>
+          <option value="antes" ${bf.fase==='antes'?'selected':''}>Antes</option>
+          <option value="depois" ${bf.fase==='depois'?'selected':''}>Depois</option>
+        </select>
+        <button type="button" class="bulk-remove" data-foto-bulk-remove="${i}">✕ remover da lista</button>
+      </div>
+    `).join('');
+}
+
+function adicionarFotosNoLote(fileList){
+  Array.from(fileList).forEach(file=>{
+    fotoBulkFiles.push({file, label:'', fase:null});
+  });
+  renderFotoBulkPreview();
+}
+document.getElementById('admin-foto-camera-btn').addEventListener('click', ()=>document.getElementById('admin-foto-camera').click());
+document.getElementById('admin-foto-galeria-btn').addEventListener('click', ()=>document.getElementById('admin-foto-galeria').click());
+document.getElementById('admin-foto-camera').addEventListener('change', (e)=>{
+  if(e.target.files.length) adicionarFotosNoLote(e.target.files);
+  e.target.value = '';
+});
+document.getElementById('admin-foto-galeria').addEventListener('change', (e)=>{
+  if(e.target.files.length) adicionarFotosNoLote(e.target.files);
+  e.target.value = '';
+});
+
+document.getElementById('admin-foto-save').addEventListener('click', async ()=>{
+  if(!db){ toast('Configure o Firebase primeiro'); return; }
+  const btn = document.getElementById('admin-foto-save');
+  const tooBig = fotoBulkFiles.find(bf=>bf.file.size > 10*1024*1024);
+  if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 10MB'); return; }
+  btn.disabled = true;
+  const statusEl = document.getElementById('admin-foto-status');
+  try{
+    for(let i=0;i<fotoBulkFiles.length;i++){
+      const bf = fotoBulkFiles[i];
+      btn.textContent = `Enviando ${i+1}/${fotoBulkFiles.length}...`;
+      const base64 = await fileToBase64(bf.file);
+      const thumb = await resizeImageBase64(base64, 320);
+      const id = uid();
+      await saveFileChunked('fotos', id, base64);
+      await col('fotos').doc(id).set({
+        label: bf.label || '', fase: bf.fase || null,
+        fileName: bf.file.name, thumb, ordem: Date.now(),
+        criado: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    statusEl.textContent = fotoBulkFiles.length + ' foto(s) salva(s)!';
+    toast(fotoBulkFiles.length + ' foto(s) salva(s)');
+    fotoBulkFiles = [];
+    renderFotoBulkPreview();
+  }catch(e){
+    console.error(e);
+    statusEl.textContent = 'Erro ao enviar: ' + e.message;
+  }
+  btn.disabled = false;
+  btn.textContent = 'Salvar';
+});
+
+document.addEventListener('input', (e)=>{
+  const idxP3d = e.target.getAttribute('data-p3d-bulk-label');
+  if(idxP3d !== null){ p3dBulkFiles[idxP3d].label = e.target.value; }
+  const idxFoto = e.target.getAttribute('data-foto-bulk-label');
+  if(idxFoto !== null){ fotoBulkFiles[idxFoto].label = e.target.value; }
+});
+document.addEventListener('change', (e)=>{
+  const idxFase = e.target.getAttribute('data-foto-bulk-fase');
+  if(idxFase !== null){ fotoBulkFiles[idxFase].fase = e.target.value || null; }
+});
+document.addEventListener('click', (e)=>{
+  const idxP3dR = e.target.getAttribute('data-p3d-bulk-remove');
+  if(idxP3dR !== null){ p3dBulkFiles.splice(Number(idxP3dR),1); renderP3dBulkPreview(); }
+  const idxFotoR = e.target.getAttribute('data-foto-bulk-remove');
+  if(idxFotoR !== null){ fotoBulkFiles.splice(Number(idxFotoR),1); renderFotoBulkPreview(); }
+});
+
+// -- Alternador de pastas: Projeto 3D / Imagens (admin e membro) --
+document.getElementById('admin-p3d-tab-3d').addEventListener('click', ()=>{
+  document.getElementById('admin-p3d-tab-3d').classList.add('active');
+  document.getElementById('admin-p3d-tab-fotos').classList.remove('active');
+  document.getElementById('admin-p3d-pane-3d').style.display = 'block';
+  document.getElementById('admin-p3d-pane-fotos').style.display = 'none';
+});
+document.getElementById('admin-p3d-tab-fotos').addEventListener('click', ()=>{
+  document.getElementById('admin-p3d-tab-fotos').classList.add('active');
+  document.getElementById('admin-p3d-tab-3d').classList.remove('active');
+  document.getElementById('admin-p3d-pane-fotos').style.display = 'block';
+  document.getElementById('admin-p3d-pane-3d').style.display = 'none';
+});
+document.getElementById('p3d-tab-3d').addEventListener('click', ()=>{
+  document.getElementById('p3d-tab-3d').classList.add('active');
+  document.getElementById('p3d-tab-fotos').classList.remove('active');
+  document.getElementById('p3d-pane-3d').style.display = 'block';
+  document.getElementById('p3d-pane-fotos').style.display = 'none';
+});
+document.getElementById('p3d-tab-fotos').addEventListener('click', ()=>{
+  document.getElementById('p3d-tab-fotos').classList.add('active');
+  document.getElementById('p3d-tab-3d').classList.remove('active');
+  document.getElementById('p3d-pane-fotos').style.display = 'block';
+  document.getElementById('p3d-pane-3d').style.display = 'none';
+});
+
+// -- Lightbox único (Projeto 3D e Imagens) --
+document.addEventListener('click', async (e)=>{
+  const galCol = e.target.getAttribute('data-galeria-col');
+  if(galCol){
+    const galId = e.target.getAttribute('data-galeria-id');
+    const galNome = e.target.getAttribute('data-galeria-nome');
+    const modal = document.getElementById('p3d-lightbox');
+    const carregando = document.getElementById('p3d-lightbox-carregando');
+    const img = document.getElementById('p3d-lightbox-img');
+    document.getElementById('p3d-lightbox-titulo').textContent = galNome || 'Imagem';
+    carregando.textContent = 'Carregando...';
+    carregando.style.display = 'block';
+    img.style.display = 'none';
+    modal.classList.add('show');
+    try{
+      const base64 = await loadFileChunked(galCol, galId);
+      if(base64){
+        img.src = base64;
+        carregando.style.display = 'none';
+        img.style.display = 'block';
+      }else{
+        carregando.textContent = 'Imagem não encontrada.';
+      }
+    }catch(err){
+      console.error(err);
+      carregando.textContent = 'Erro ao carregar a imagem.';
+    }
+  }
+});
+document.getElementById('p3d-lightbox-fechar').addEventListener('click', ()=>{
+  document.getElementById('p3d-lightbox').classList.remove('show');
 });
 
 // ==================== IMPORTAR PRESTADORES EM MASSA ====================
@@ -3274,6 +3711,23 @@ function base64ToFile(base64, filename){
   const array = new Uint8Array(binary.length);
   for(let i=0;i<binary.length;i++) array[i] = binary.charCodeAt(i);
   return new File([array], filename, {type: mime});
+}
+
+function resizeImageBase64(base64, maxLado){
+  return new Promise((resolve)=>{
+    const img = new Image();
+    img.onload = () => {
+      const escala = Math.min(1, maxLado / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(img.width * escala));
+      canvas.height = Math.max(1, Math.round(img.height * escala));
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.onerror = () => resolve(null);
+    img.src = base64;
+  });
 }
 
 function openBase64(base64, filename, targetWindow){
@@ -4800,6 +5254,8 @@ if(firebaseOk){
     await excluirColecaoComChunks(projetoId, 'cotacoes');
     await excluirColecaoComChunks(projetoId, 'arquiteta');
     await excluirColecaoComChunks(projetoId, 'cronograma_arquivo');
+    await excluirColecaoComChunks(projetoId, 'projeto3d');
+    await excluirColecaoComChunks(projetoId, 'fotos');
     const presSnap = await db.collection('projetos').doc(projetoId).collection('prestadores').get();
     for(const d of presSnap.docs) await d.ref.delete();
     const etpSnap = await db.collection('projetos').doc(projetoId).collection('etapas').get();
@@ -5257,6 +5713,7 @@ if(firebaseOk){
     listenPrestadores();
     listenCronograma();
     listenProjeto3D();
+    listenFotos();
   }
 
   // ---------- Painel Master ----------
