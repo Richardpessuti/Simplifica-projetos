@@ -1500,7 +1500,7 @@
       <input type="text" id="a-prof" placeholder="Ex: 03 (eletricista)">
 
       <label>Arquivo(s)</label>
-      <div class="file-drop" id="a-drop">Toque para escolher um ou vários arquivos de uma vez (até 3MB cada)</div>
+      <div class="file-drop" id="a-drop">Toque para escolher um ou vários arquivos de uma vez (até 10MB cada)</div>
       <input type="file" id="a-file" accept=".pdf,image/*" multiple>
 
       <div id="a-bulk-list" style="display:none;margin-top:12px;"></div>
@@ -1606,7 +1606,7 @@
     </div>
 
     <label>Documento da cotação</label>
-    <div class="file-drop" id="c-drop">Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)</div>
+    <div class="file-drop" id="c-drop">Toque para escolher um ou vários arquivos (PDF ou imagem, até 10MB cada)</div>
     <input type="file" id="c-file" accept=".pdf,image/*" multiple>
 
     <div id="c-bulk-list" style="display:none;margin-top:12px;"></div>
@@ -3014,7 +3014,7 @@ admin3dFile.addEventListener('change', async ()=>{
   const file = admin3dFile.files[0];
   if(!file) return;
   const statusEl3dAdmin = document.getElementById('admin-3d-status');
-  if(file.size > 3*1024*1024){ statusEl3dAdmin.textContent = 'Arquivo muito grande (máx 3MB)'; admin3dFile.value=''; return; }
+  if(file.size > 10*1024*1024){ statusEl3dAdmin.textContent = 'Arquivo muito grande (máx 10MB)'; admin3dFile.value=''; return; }
   admin3dDrop.textContent = '✓ ' + file.name;
   admin3dDrop.classList.add('has-file');
   statusEl3dAdmin.textContent = 'Enviando...';
@@ -3465,7 +3465,7 @@ document.addEventListener('click', (e)=>{
       document.getElementById('a-nome').disabled = false;
       document.getElementById('a-categoria').disabled = false;
       document.getElementById('a-file').value = '';
-      aDrop.textContent = 'Toque para escolher um ou vários arquivos de uma vez (até 3MB cada)';
+      aDrop.textContent = 'Toque para escolher um ou vários arquivos de uma vez (até 10MB cada)';
       aDrop.classList.remove('has-file');
     }
   }
@@ -3735,8 +3735,8 @@ document.getElementById('c-save').addEventListener('click', async ()=>{
   if(!isEditing && cotBulkFiles.length > 0){
     const semItemOuLocal = cotBulkFiles.find(cf=>!cf.item.trim() || !cf.local.trim());
     if(semItemOuLocal){ toast('Preencha item e local de todas as linhas'); return; }
-    const tooBig = cotBulkFiles.find(cf=>cf.file.size > 3*1024*1024);
-    if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 3MB'); return; }
+    const tooBig = cotBulkFiles.find(cf=>cf.file.size > 10*1024*1024);
+    if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 10MB'); return; }
     const nomesNoLote = cotBulkFiles.map(cf=>cf.file.name);
     const duplicadoNoLote = nomesNoLote.find((n,i)=> nomesNoLote.indexOf(n) !== i);
     if(duplicadoNoLote){ toast('Você selecionou "'+duplicadoNoLote+'" mais de uma vez'); return; }
@@ -3790,7 +3790,7 @@ document.getElementById('c-save').addEventListener('click', async ()=>{
 
     if(fileInput.files[0]){
       const file = fileInput.files[0];
-      if(file.size > 3*1024*1024){ toast('Arquivo muito grande (máx 3MB)'); btn.disabled=false; btn.textContent = isEditing ? 'Salvar edição' : 'Salvar cotação'; return; }
+      if(file.size > 10*1024*1024){ toast('Arquivo muito grande (máx 10MB)'); btn.disabled=false; btn.textContent = isEditing ? 'Salvar edição' : 'Salvar cotação'; return; }
       if(nomeJaExiste(cotacoesCache, file.name, isEditing ? id : null)){
         toast('Já existe um arquivo com esse nome: "'+file.name+'"');
         btn.disabled=false; btn.textContent = isEditing ? 'Salvar edição' : 'Salvar cotação';
@@ -3838,7 +3838,7 @@ document.getElementById('c-save').addEventListener('click', async ()=>{
     document.getElementById('c-prof').value='';
     document.getElementById('c-status').value='Pendente';
     fileInput.value='';
-    document.getElementById('c-drop').textContent = 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)';
+    document.getElementById('c-drop').textContent = 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 10MB cada)';
     document.getElementById('c-drop').classList.remove('has-file');
     toast(isEditing ? 'Cotação atualizada' : 'Cotação salva');
     cancelEditCotacao();
@@ -3867,7 +3867,7 @@ function cancelEditCotacao(){
   document.getElementById('c-prof').value='';
   document.getElementById('c-status').value='Pendente';
   document.getElementById('c-file').value='';
-  document.getElementById('c-drop').textContent = 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)';
+  document.getElementById('c-drop').textContent = 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 10MB cada)';
   document.getElementById('c-drop').classList.remove('has-file');
   document.getElementById('c-pagamento-wrap').style.display = 'none';
   document.getElementById('c-pag-vista').click();
@@ -3960,8 +3960,8 @@ document.getElementById('a-save').addEventListener('click', async ()=>{
   // ---- Modo lote: vários arquivos de uma vez ----
   if(!isEditing && bulkFiles.length > 0){
     const prof = document.getElementById('a-prof').value.trim();
-    const tooBig = bulkFiles.find(bf=>bf.file.size > 3*1024*1024);
-    if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 3MB'); return; }
+    const tooBig = bulkFiles.find(bf=>bf.file.size > 10*1024*1024);
+    if(tooBig){ toast('"'+tooBig.file.name+'" é maior que 10MB'); return; }
 
     // nomes repetidos dentro do próprio lote selecionado
     const nomesNoLote = bulkFiles.map(bf=>bf.file.name);
@@ -4015,7 +4015,7 @@ document.getElementById('a-save').addEventListener('click', async ()=>{
 
   if(!nome || (!isEditing && !fileInput.files[0])){ toast('Preencha a descrição e escolha um arquivo'); return; }
 
-  if(fileInput.files[0] && fileInput.files[0].size > 3*1024*1024){ toast('Arquivo muito grande (máx 3MB)'); return; }
+  if(fileInput.files[0] && fileInput.files[0].size > 10*1024*1024){ toast('Arquivo muito grande (máx 10MB)'); return; }
 
   if(fileInput.files[0] && nomeJaExiste(arquitetaCache, fileInput.files[0].name, isEditing ? editingArquitetaId : null)){
     toast('Já existe um arquivo com esse nome: "'+fileInput.files[0].name+'"');
@@ -4047,7 +4047,7 @@ document.getElementById('a-save').addEventListener('click', async ()=>{
     document.getElementById('a-categoria').selectedIndex = 0;
     document.getElementById('a-prof').value='';
     fileInput.value='';
-    document.getElementById('a-drop').textContent='Toque para escolher um ou vários arquivos de uma vez (até 3MB cada)';
+    document.getElementById('a-drop').textContent='Toque para escolher um ou vários arquivos de uma vez (até 10MB cada)';
     document.getElementById('a-drop').classList.remove('has-file');
     toast(isEditing ? 'Arquivo atualizado' : 'Arquivo salvo');
     cancelEditArquiteta();
@@ -4072,7 +4072,7 @@ function cancelEditArquiteta(){
   document.getElementById('a-categoria').selectedIndex = 0;
   document.getElementById('a-prof').value='';
   document.getElementById('a-file').value='';
-  document.getElementById('a-drop').textContent='Toque para escolher um ou vários arquivos de uma vez (até 3MB cada)';
+  document.getElementById('a-drop').textContent='Toque para escolher um ou vários arquivos de uma vez (até 10MB cada)';
   document.getElementById('a-drop').classList.remove('has-file');
 }
 document.getElementById('a-cancel').addEventListener('click', cancelEditArquiteta);
@@ -4374,7 +4374,7 @@ document.addEventListener('click', async (e)=>{
       document.getElementById('c-pag-vista').click();
     }
     document.getElementById('c-file').value = '';
-    document.getElementById('c-drop').textContent = q.hasFile ? ('Arquivo atual: '+q.fileName+' (toque para substituir)') : 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 3MB cada)';
+    document.getElementById('c-drop').textContent = q.hasFile ? ('Arquivo atual: '+q.fileName+' (toque para substituir)') : 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 10MB cada)';
     document.getElementById('c-form-title').innerHTML = 'Editando cotação <span class="tag">edição</span>';
     document.getElementById('c-save').textContent = 'Salvar edição';
     document.getElementById('c-cancel').style.display = 'block';
