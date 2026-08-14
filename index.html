@@ -311,6 +311,24 @@
     border-color:var(--accent);
     box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
   }
+  .color-field-actions{
+    display:flex;
+    gap:16px;
+    margin-top:6px;
+  }
+  .color-field-actions button{
+    font-family:'Inter', sans-serif;
+    font-size:11px;
+    font-weight:600;
+    background:none;
+    border:none;
+    text-decoration:underline;
+    text-underline-offset:2px;
+    cursor:pointer;
+    padding:0;
+    color:var(--accent);
+  }
+  .color-field-actions button.muted-link{ color:var(--muted); }
   .file-drop{
     border:1.5px dashed #C9C4B4;
     border-radius:var(--radius-btn);
@@ -1219,11 +1237,19 @@
         <input type="color" id="admin-cor-fundo" style="width:52px;height:42px;padding:2px;border-radius:8px;">
         <input type="text" id="admin-cor-fundo-hex" placeholder="#F4F5F3" style="flex:1;">
       </div>
+      <div class="color-field-actions">
+        <button type="button" data-aplicar-cor-campo="corFundo" data-aplicar-cor-hex="admin-cor-fundo-hex">Aplicar esta cor</button>
+        <button type="button" class="muted-link" data-padrao-cor-campo="corFundo" data-padrao-cor-hex="admin-cor-fundo-hex" data-padrao-cor-color="admin-cor-fundo" data-padrao-cor-valor="#F4F5F3">Usar padrão</button>
+      </div>
 
       <label>Banner / cabeçalho (sem foto)</label>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="color" id="admin-cor-cabecalho" style="width:52px;height:42px;padding:2px;border-radius:8px;">
         <input type="text" id="admin-cor-cabecalho-hex" placeholder="#14171C" style="flex:1;">
+      </div>
+      <div class="color-field-actions">
+        <button type="button" data-aplicar-cor-campo="corCabecalho" data-aplicar-cor-hex="admin-cor-cabecalho-hex">Aplicar esta cor</button>
+        <button type="button" class="muted-link" data-padrao-cor-campo="corCabecalho" data-padrao-cor-hex="admin-cor-cabecalho-hex" data-padrao-cor-color="admin-cor-cabecalho" data-padrao-cor-valor="#14171C">Usar padrão</button>
       </div>
 
       <label>Fundo dos cards</label>
@@ -1231,11 +1257,19 @@
         <input type="color" id="admin-cor-card" style="width:52px;height:42px;padding:2px;border-radius:8px;">
         <input type="text" id="admin-cor-card-hex" placeholder="#FFFFFF" style="flex:1;">
       </div>
+      <div class="color-field-actions">
+        <button type="button" data-aplicar-cor-campo="corCard" data-aplicar-cor-hex="admin-cor-card-hex">Aplicar esta cor</button>
+        <button type="button" class="muted-link" data-padrao-cor-campo="corCard" data-padrao-cor-hex="admin-cor-card-hex" data-padrao-cor-color="admin-cor-card" data-padrao-cor-valor="#FFFFFF">Usar padrão</button>
+      </div>
 
       <label>Fundo do menu (abas)</label>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="color" id="admin-cor-menu" style="width:52px;height:42px;padding:2px;border-radius:8px;">
         <input type="text" id="admin-cor-menu-hex" placeholder="#FFFFFF" style="flex:1;">
+      </div>
+      <div class="color-field-actions">
+        <button type="button" data-aplicar-cor-campo="corMenu" data-aplicar-cor-hex="admin-cor-menu-hex">Aplicar esta cor</button>
+        <button type="button" class="muted-link" data-padrao-cor-campo="corMenu" data-padrao-cor-hex="admin-cor-menu-hex" data-padrao-cor-color="admin-cor-menu" data-padrao-cor-valor="#FFFFFF">Usar padrão</button>
       </div>
 
       <label>Botões / destaque</label>
@@ -1243,11 +1277,23 @@
         <input type="color" id="admin-cor-botao" style="width:52px;height:42px;padding:2px;border-radius:8px;">
         <input type="text" id="admin-cor-botao-hex" placeholder="#2F6F5E" style="flex:1;">
       </div>
+      <div class="color-field-actions">
+        <button type="button" data-aplicar-cor-campo="corBotao" data-aplicar-cor-hex="admin-cor-botao-hex">Aplicar esta cor</button>
+        <button type="button" class="muted-link" data-padrao-cor-campo="corBotao" data-padrao-cor-hex="admin-cor-botao-hex" data-padrao-cor-color="admin-cor-botao" data-padrao-cor-valor="#2F6F5E">Usar padrão</button>
+      </div>
 
       <label>Texto</label>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="color" id="admin-cor-texto" style="width:52px;height:42px;padding:2px;border-radius:8px;">
         <input type="text" id="admin-cor-texto-hex" placeholder="#14171C" style="flex:1;">
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;">
+        <input type="checkbox" id="admin-texto-secundario-segue" style="margin-top:3px;">
+        <label style="margin:0;text-transform:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);letter-spacing:0;">Aplicar esta cor também nos textos secundários (datas, legendas, labels)</label>
+      </div>
+      <div class="color-field-actions">
+        <button type="button" data-aplicar-cor-campo="corTexto" data-aplicar-cor-hex="admin-cor-texto-hex">Aplicar esta cor</button>
+        <button type="button" class="muted-link" data-padrao-cor-campo="corTexto" data-padrao-cor-hex="admin-cor-texto-hex" data-padrao-cor-color="admin-cor-texto" data-padrao-cor-valor="#14171C">Usar padrão</button>
       </div>
 
       <label>Cor de "aprovado"</label>
@@ -1255,17 +1301,29 @@
         <input type="color" id="admin-cor-sucesso" style="width:52px;height:42px;padding:2px;border-radius:8px;">
         <input type="text" id="admin-cor-sucesso-hex" placeholder="#2F6F5E" style="flex:1;">
       </div>
+      <div class="color-field-actions">
+        <button type="button" data-aplicar-cor-campo="corSucesso" data-aplicar-cor-hex="admin-cor-sucesso-hex">Aplicar esta cor</button>
+        <button type="button" class="muted-link" data-padrao-cor-campo="corSucesso" data-padrao-cor-hex="admin-cor-sucesso-hex" data-padrao-cor-color="admin-cor-sucesso" data-padrao-cor-valor="#2F6F5E">Usar padrão</button>
+      </div>
 
       <label>Cor de "pendente"</label>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="color" id="admin-cor-destaque" style="width:52px;height:42px;padding:2px;border-radius:8px;">
         <input type="text" id="admin-cor-destaque-hex" placeholder="#C7862B" style="flex:1;">
       </div>
+      <div class="color-field-actions">
+        <button type="button" data-aplicar-cor-campo="corDestaque" data-aplicar-cor-hex="admin-cor-destaque-hex">Aplicar esta cor</button>
+        <button type="button" class="muted-link" data-padrao-cor-campo="corDestaque" data-padrao-cor-hex="admin-cor-destaque-hex" data-padrao-cor-color="admin-cor-destaque" data-padrao-cor-valor="#C7862B">Usar padrão</button>
+      </div>
 
       <label>Cor de "recusado"</label>
       <div style="display:flex;gap:8px;align-items:center;">
         <input type="color" id="admin-cor-recusado" style="width:52px;height:42px;padding:2px;border-radius:8px;">
         <input type="text" id="admin-cor-recusado-hex" placeholder="#C1443A" style="flex:1;">
+      </div>
+      <div class="color-field-actions">
+        <button type="button" data-aplicar-cor-campo="corRecusado" data-aplicar-cor-hex="admin-cor-recusado-hex">Aplicar esta cor</button>
+        <button type="button" class="muted-link" data-padrao-cor-campo="corRecusado" data-padrao-cor-hex="admin-cor-recusado-hex" data-padrao-cor-color="admin-cor-recusado" data-padrao-cor-valor="#C1443A">Usar padrão</button>
       </div>
 
       <label>Estilo dos cantos</label>
@@ -1275,8 +1333,9 @@
         <option value="suave">Bem suave</option>
       </select>
 
-      <button class="btn secondary" id="admin-salvar-tema" style="margin-top:14px;">Aplicar cores</button>
-      <button class="btn muted" id="admin-resetar-tema" style="margin-top:8px;">Usar cores padrão</button>
+      <div style="font-size:11px;color:var(--muted);margin-top:16px;margin-bottom:6px;">Ou, se preferir, aplique tudo de uma vez:</div>
+      <button class="btn secondary" id="admin-salvar-tema">Aplicar todas as cores</button>
+      <button class="btn muted" id="admin-resetar-tema" style="margin-top:8px;">Usar todas as cores padrão</button>
     </div>
 
     <div class="card">
@@ -1725,6 +1784,15 @@ function aplicarTema(tema){
     if(tema && tema[campo]) root.setProperty(cssVar, tema[campo]);
     else root.removeProperty(cssVar);
   });
+
+  // se marcado, os textos secundários (datas, legendas, labels) passam a
+  // usar uma versão mais clara da cor de texto escolhida, em vez do
+  // cinza padrão
+  if(tema && tema.corTexto && tema.textoSecundarioSegueCor){
+    root.setProperty('--muted', `color-mix(in srgb, ${tema.corTexto} 55%, white)`);
+  }else{
+    root.removeProperty('--muted');
+  }
 
   const cantos = (tema && tema.cantos) || 'arredondado';
   const preset = CANTOS_PRESETS[cantos] || CANTOS_PRESETS.arredondado;
@@ -4753,7 +4821,8 @@ if(firebaseOk){
       corMenu: normalizarHex(document.getElementById('admin-cor-menu-hex').value, '#FFFFFF'),
       corBotao: normalizarHex(document.getElementById('admin-cor-botao-hex').value, '#2F6F5E'),
       corRecusado: normalizarHex(document.getElementById('admin-cor-recusado-hex').value, '#C1443A'),
-      cantos: document.getElementById('admin-cantos').value
+      cantos: document.getElementById('admin-cantos').value,
+      textoSecundarioSegueCor: document.getElementById('admin-texto-secundario-segue').checked
     });
     btn.disabled = true; btn.textContent = 'Salvando...';
     try{
@@ -4764,7 +4833,7 @@ if(firebaseOk){
       console.error(e);
       toast('Erro: ' + e.message);
     }
-    btn.disabled = false; btn.textContent = 'Aplicar cores';
+    btn.disabled = false; btn.textContent = 'Aplicar todas as cores';
   });
 
   const CAMPOS_TEXTO_ADMIN = ['subtitulo','tituloProximaEtapa','tituloLinhaDoTempo','cronogramaVazioMembro','tituloBuscarEspecialidade','tituloBuscarNumero'];
@@ -4829,24 +4898,82 @@ if(firebaseOk){
     btn.disabled = false; btn.textContent = 'Salvar fundo';
   });
 
+  const CORES_PADRAO = {
+    fundo:'#F4F5F3', cabecalho:'#14171C', destaque:'#C7862B', texto:'#14171C',
+    sucesso:'#2F6F5E', card:'#FFFFFF', menu:'#FFFFFF', botao:'#2F6F5E',
+    recusado:'#C1443A', textura:'#E4483A'
+  };
   document.getElementById('admin-resetar-tema').addEventListener('click', async ()=>{
     const btn = document.getElementById('admin-resetar-tema');
     btn.disabled = true; btn.textContent = 'Restaurando...';
     try{
       temaAtual = { tipoCores: temaAtual.tipoCores || {}, decoracoes: temaAtual.decoracoes || [] };
       await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
-      ['fundo','cabecalho','destaque','texto','sucesso','card','menu','botao','recusado','textura'].forEach(campo=>{
+      Object.entries(CORES_PADRAO).forEach(([campo, padrao])=>{
         document.getElementById('admin-cor-'+campo+'-hex').value = '';
+        const colorInput = document.getElementById('admin-cor-'+campo);
+        if(colorInput) colorInput.value = padrao;
       });
       document.getElementById('admin-cantos').value = 'arredondado';
       document.getElementById('admin-mostrar-folhagem').checked = true;
+      document.getElementById('admin-texto-secundario-segue').checked = false;
       aplicarTema(temaAtual);
       toast('Cores padrão restauradas');
     }catch(e){
       console.error(e);
       toast('Erro: ' + e.message);
     }
-    btn.disabled = false; btn.textContent = 'Usar cores padrão';
+    btn.disabled = false; btn.textContent = 'Usar todas as cores padrão';
+  });
+
+  document.addEventListener('click', async (e)=>{
+    const campoAplicar = e.target.getAttribute('data-aplicar-cor-campo');
+    if(campoAplicar){
+      const hexId = e.target.getAttribute('data-aplicar-cor-hex');
+      temaAtual[campoAplicar] = normalizarHex(document.getElementById(hexId).value, temaAtual[campoAplicar] || '#FFFFFF');
+      if(campoAplicar === 'corTexto'){
+        temaAtual.textoSecundarioSegueCor = document.getElementById('admin-texto-secundario-segue').checked;
+      }
+      const btn = e.target;
+      btn.disabled = true; const textoOriginal = btn.textContent; btn.textContent = 'Aplicando...';
+      try{
+        await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
+        aplicarTema(temaAtual);
+        toast('Cor aplicada');
+      }catch(err){
+        console.error(err);
+        toast('Erro: ' + err.message);
+      }
+      btn.disabled = false; btn.textContent = textoOriginal;
+      return;
+    }
+
+    const campoPadrao = e.target.getAttribute('data-padrao-cor-campo');
+    if(campoPadrao){
+      const hexId = e.target.getAttribute('data-padrao-cor-hex');
+      const colorId = e.target.getAttribute('data-padrao-cor-color');
+      const valorPadrao = e.target.getAttribute('data-padrao-cor-valor');
+      delete temaAtual[campoPadrao];
+      if(campoPadrao === 'corTexto'){
+        delete temaAtual.textoSecundarioSegueCor;
+        document.getElementById('admin-texto-secundario-segue').checked = false;
+      }
+      document.getElementById(hexId).value = '';
+      const colorInput = document.getElementById(colorId);
+      if(colorInput) colorInput.value = valorPadrao;
+      const btn = e.target;
+      btn.disabled = true; const textoOriginal = btn.textContent; btn.textContent = 'Restaurando...';
+      try{
+        await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
+        aplicarTema(temaAtual);
+        toast('Cor padrão restaurada');
+      }catch(err){
+        console.error(err);
+        toast('Erro: ' + err.message);
+      }
+      btn.disabled = false; btn.textContent = textoOriginal;
+      return;
+    }
   });
 
   document.getElementById('add-membro-btn').addEventListener('click', async ()=>{
@@ -5000,6 +5127,8 @@ if(firebaseOk){
       if(cantosSel) cantosSel.value = temaAtual.cantos || 'arredondado';
       const folhagemChk = document.getElementById('admin-mostrar-folhagem');
       if(folhagemChk) folhagemChk.checked = temaAtual.mostrarFolhagem !== false;
+      const textoSecundarioChk = document.getElementById('admin-texto-secundario-segue');
+      if(textoSecundarioChk) textoSecundarioChk.checked = !!temaAtual.textoSecundarioSegueCor;
       renderTipoCoresLegenda();
       renderDecoGrid();
 
