@@ -36,6 +36,7 @@
     --blueprint:#14171C;
     --blueprint-dark:#0D0F12;
     --paper:#F4F5F3;
+    --neutral-bg:#F4F5F3;
     --paper-line:#E1E4E0;
     --caution:#C7862B;
     --caution-dark:#A6701F;
@@ -128,7 +129,7 @@
     background-image:var(--banner-img, none);
     background-size:cover;
     background-position:center;
-    color:var(--banner-text, var(--paper));
+    color:var(--banner-text, var(--neutral-bg));
     padding:40px 22px 26px;
     min-height:150px;
     position:relative;
@@ -319,7 +320,7 @@
     border-radius:var(--radius-btn);
     font-size:14px;
     font-family:'Inter', sans-serif;
-    background:var(--paper);
+    background:var(--neutral-bg);
     transition:box-shadow .2s var(--ease), border-color .2s var(--ease);
   }
   input:focus, select:focus{
@@ -389,7 +390,7 @@
     text-align:center;
     font-size:12.5px;
     color:var(--muted);
-    background:var(--paper);
+    background:var(--neutral-bg);
     cursor:pointer;
   }
   .file-drop.has-file{
@@ -423,7 +424,7 @@
     box-shadow:var(--shadow-sm);
   }
   .btn.muted{
-    background:var(--paper);
+    background:var(--neutral-bg);
     color:var(--ink);
     box-shadow:none;
     border:1.5px solid var(--paper-line);
@@ -445,7 +446,7 @@
     transition:background-color .2s var(--ease);
   }
   .list-item:last-child{ border-bottom:none; padding-bottom:4px; }
-  .list-item:active{ background:var(--paper); }
+  .list-item:active{ background:var(--neutral-bg); }
 
   .skel-row{
     padding:18px 2px;
@@ -516,7 +517,7 @@
     font-weight:600;
     cursor:pointer;
     border:none;
-    background:var(--paper);
+    background:var(--neutral-bg);
     color:var(--ink);
     transition:background-color .2s var(--ease);
   }
@@ -560,7 +561,7 @@
     font-weight:600;
     padding:3px 9px;
     border-radius:20px;
-    background:var(--paper);
+    background:var(--neutral-bg);
     color:var(--muted);
     border:none;
     cursor:pointer;
@@ -632,7 +633,7 @@
   .step-actions .step-reorder{
     display:flex;
     gap:2px;
-    background:var(--paper);
+    background:var(--neutral-bg);
     border-radius:8px;
     overflow:hidden;
   }
@@ -716,7 +717,7 @@
     border-radius:10px;
     padding:10px;
     margin-bottom:8px;
-    background:var(--paper);
+    background:var(--neutral-bg);
   }
   .bulk-row .bulk-file{
     font-size:11.5px;
@@ -856,7 +857,7 @@
     height:30px;
     border-radius:50%;
     border:none;
-    background:var(--paper);
+    background:var(--neutral-bg);
     color:var(--muted);
     font-size:13px;
     cursor:pointer;
@@ -1584,7 +1585,7 @@
       <option value="Recusado">Recusado</option>
     </select>
 
-    <div id="c-pagamento-wrap" style="display:none;margin-top:14px;padding:12px;background:var(--paper);border-radius:var(--radius-btn);">
+    <div id="c-pagamento-wrap" style="display:none;margin-top:14px;padding:12px;background:var(--neutral-bg);border-radius:var(--radius-btn);">
       <label style="margin-top:0;">Forma de pagamento</label>
       <div style="display:flex;gap:8px;">
         <button type="button" id="c-pag-vista" class="pag-toggle-btn active" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">À vista</button>
