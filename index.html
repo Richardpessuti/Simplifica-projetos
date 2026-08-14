@@ -60,6 +60,22 @@
     --textura-cor:#E4483A;
     --folhagem-opacidade:1;
   }
+  /* A aba Admin nunca deve mudar de cor — é o painel de controle de quem
+     administra o projeto, e precisa continuar legível mesmo que a
+     personalização escolhida pro cliente fique com pouco contraste. */
+  #tab-admin{
+    --blueprint:#14171C;
+    --paper:#F4F5F3;
+    --ink:#14171C;
+    --muted:#6B7280;
+    --ok:#2F6F5E;
+    --danger:#C1443A;
+    --accent:#2F6F5E;
+    --card-bg:#FFFFFF;
+    --nav-bg:#FFFFFF;
+    --caution:#C7862B;
+    --textura-cor:#E4483A;
+  }
   *{box-sizing:border-box;}
   @keyframes fadeInUp{
     from{opacity:0; transform:translateY(10px);}
@@ -329,6 +345,43 @@
     color:var(--accent);
   }
   .color-field-actions button.muted-link{ color:var(--muted); }
+  .color-eyedrop-btn{
+    flex-shrink:0;
+    width:42px;
+    height:42px;
+    border:1.5px solid var(--paper-line);
+    border-radius:8px;
+    background:#fff;
+    font-size:17px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .color-opacity-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:8px;
+  }
+  .color-opacity-label{
+    font-size:11px;
+    color:var(--muted);
+    font-family:'Inter', sans-serif;
+    flex-shrink:0;
+  }
+  .color-opacity-input{
+    flex:1;
+    accent-color:var(--accent);
+  }
+  .color-opacity-value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--muted);
+    width:38px;
+    text-align:right;
+    flex-shrink:0;
+  }
   .file-drop{
     border:1.5px dashed #C9C4B4;
     border-radius:var(--radius-btn);
@@ -1232,99 +1285,7 @@
       <h2>Aparência deste cliente <span class="tag">tudo editável</span></h2>
       <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Só muda pra este projeto — a logo continua a mesma. Se você subir uma foto de logo, ela cobre o banner inteiro e essas cores de banner ficam em segundo plano.</div>
 
-      <label>Fundo da página</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="admin-cor-fundo" style="width:52px;height:42px;padding:2px;border-radius:8px;">
-        <input type="text" id="admin-cor-fundo-hex" placeholder="#F4F5F3" style="flex:1;">
-      </div>
-      <div class="color-field-actions">
-        <button type="button" data-aplicar-cor-campo="corFundo" data-aplicar-cor-hex="admin-cor-fundo-hex">Aplicar esta cor</button>
-        <button type="button" class="muted-link" data-padrao-cor-campo="corFundo" data-padrao-cor-hex="admin-cor-fundo-hex" data-padrao-cor-color="admin-cor-fundo" data-padrao-cor-valor="#F4F5F3">Usar padrão</button>
-      </div>
-
-      <label>Banner / cabeçalho (sem foto)</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="admin-cor-cabecalho" style="width:52px;height:42px;padding:2px;border-radius:8px;">
-        <input type="text" id="admin-cor-cabecalho-hex" placeholder="#14171C" style="flex:1;">
-      </div>
-      <div class="color-field-actions">
-        <button type="button" data-aplicar-cor-campo="corCabecalho" data-aplicar-cor-hex="admin-cor-cabecalho-hex">Aplicar esta cor</button>
-        <button type="button" class="muted-link" data-padrao-cor-campo="corCabecalho" data-padrao-cor-hex="admin-cor-cabecalho-hex" data-padrao-cor-color="admin-cor-cabecalho" data-padrao-cor-valor="#14171C">Usar padrão</button>
-      </div>
-
-      <label>Fundo dos cards</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="admin-cor-card" style="width:52px;height:42px;padding:2px;border-radius:8px;">
-        <input type="text" id="admin-cor-card-hex" placeholder="#FFFFFF" style="flex:1;">
-      </div>
-      <div class="color-field-actions">
-        <button type="button" data-aplicar-cor-campo="corCard" data-aplicar-cor-hex="admin-cor-card-hex">Aplicar esta cor</button>
-        <button type="button" class="muted-link" data-padrao-cor-campo="corCard" data-padrao-cor-hex="admin-cor-card-hex" data-padrao-cor-color="admin-cor-card" data-padrao-cor-valor="#FFFFFF">Usar padrão</button>
-      </div>
-
-      <label>Fundo do menu (abas)</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="admin-cor-menu" style="width:52px;height:42px;padding:2px;border-radius:8px;">
-        <input type="text" id="admin-cor-menu-hex" placeholder="#FFFFFF" style="flex:1;">
-      </div>
-      <div class="color-field-actions">
-        <button type="button" data-aplicar-cor-campo="corMenu" data-aplicar-cor-hex="admin-cor-menu-hex">Aplicar esta cor</button>
-        <button type="button" class="muted-link" data-padrao-cor-campo="corMenu" data-padrao-cor-hex="admin-cor-menu-hex" data-padrao-cor-color="admin-cor-menu" data-padrao-cor-valor="#FFFFFF">Usar padrão</button>
-      </div>
-
-      <label>Botões / destaque</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="admin-cor-botao" style="width:52px;height:42px;padding:2px;border-radius:8px;">
-        <input type="text" id="admin-cor-botao-hex" placeholder="#2F6F5E" style="flex:1;">
-      </div>
-      <div class="color-field-actions">
-        <button type="button" data-aplicar-cor-campo="corBotao" data-aplicar-cor-hex="admin-cor-botao-hex">Aplicar esta cor</button>
-        <button type="button" class="muted-link" data-padrao-cor-campo="corBotao" data-padrao-cor-hex="admin-cor-botao-hex" data-padrao-cor-color="admin-cor-botao" data-padrao-cor-valor="#2F6F5E">Usar padrão</button>
-      </div>
-
-      <label>Texto</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="admin-cor-texto" style="width:52px;height:42px;padding:2px;border-radius:8px;">
-        <input type="text" id="admin-cor-texto-hex" placeholder="#14171C" style="flex:1;">
-      </div>
-      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;">
-        <input type="checkbox" id="admin-texto-secundario-segue" style="margin-top:3px;">
-        <label style="margin:0;text-transform:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);letter-spacing:0;">Aplicar esta cor também nos textos secundários (datas, legendas, labels)</label>
-      </div>
-      <div class="color-field-actions">
-        <button type="button" data-aplicar-cor-campo="corTexto" data-aplicar-cor-hex="admin-cor-texto-hex">Aplicar esta cor</button>
-        <button type="button" class="muted-link" data-padrao-cor-campo="corTexto" data-padrao-cor-hex="admin-cor-texto-hex" data-padrao-cor-color="admin-cor-texto" data-padrao-cor-valor="#14171C">Usar padrão</button>
-      </div>
-
-      <label>Cor de "aprovado"</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="admin-cor-sucesso" style="width:52px;height:42px;padding:2px;border-radius:8px;">
-        <input type="text" id="admin-cor-sucesso-hex" placeholder="#2F6F5E" style="flex:1;">
-      </div>
-      <div class="color-field-actions">
-        <button type="button" data-aplicar-cor-campo="corSucesso" data-aplicar-cor-hex="admin-cor-sucesso-hex">Aplicar esta cor</button>
-        <button type="button" class="muted-link" data-padrao-cor-campo="corSucesso" data-padrao-cor-hex="admin-cor-sucesso-hex" data-padrao-cor-color="admin-cor-sucesso" data-padrao-cor-valor="#2F6F5E">Usar padrão</button>
-      </div>
-
-      <label>Cor de "pendente"</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="admin-cor-destaque" style="width:52px;height:42px;padding:2px;border-radius:8px;">
-        <input type="text" id="admin-cor-destaque-hex" placeholder="#C7862B" style="flex:1;">
-      </div>
-      <div class="color-field-actions">
-        <button type="button" data-aplicar-cor-campo="corDestaque" data-aplicar-cor-hex="admin-cor-destaque-hex">Aplicar esta cor</button>
-        <button type="button" class="muted-link" data-padrao-cor-campo="corDestaque" data-padrao-cor-hex="admin-cor-destaque-hex" data-padrao-cor-color="admin-cor-destaque" data-padrao-cor-valor="#C7862B">Usar padrão</button>
-      </div>
-
-      <label>Cor de "recusado"</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="color" id="admin-cor-recusado" style="width:52px;height:42px;padding:2px;border-radius:8px;">
-        <input type="text" id="admin-cor-recusado-hex" placeholder="#C1443A" style="flex:1;">
-      </div>
-      <div class="color-field-actions">
-        <button type="button" data-aplicar-cor-campo="corRecusado" data-aplicar-cor-hex="admin-cor-recusado-hex">Aplicar esta cor</button>
-        <button type="button" class="muted-link" data-padrao-cor-campo="corRecusado" data-padrao-cor-hex="admin-cor-recusado-hex" data-padrao-cor-color="admin-cor-recusado" data-padrao-cor-valor="#C1443A">Usar padrão</button>
-      </div>
+      <div id="admin-cores-lista"></div>
 
       <label>Estilo dos cantos</label>
       <select id="admin-cantos">
@@ -1701,6 +1662,18 @@
   </div>
 </div>
 
+<div id="eyedrop-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-sheet-head">
+      <h2>Pegar cor da logo</h2>
+      <button type="button" class="modal-close" id="eyedrop-modal-fechar" aria-label="Fechar">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Toque num ponto da imagem pra usar aquela cor.</div>
+    <div id="eyedrop-modal-vazio" class="empty" style="display:none;"><div class="big">— · —</div>Nenhuma logo cadastrada ainda. Suba uma logo primeiro, no card acima.</div>
+    <canvas id="eyedrop-canvas" style="width:100%;max-width:100%;border-radius:var(--radius-btn);cursor:crosshair;touch-action:none;"></canvas>
+  </div>
+</div>
+
 <script>
 /* ======================================================================
    1) COLE AQUI AS CHAVES DO SEU PROJETO FIREBASE
@@ -1741,6 +1714,55 @@ const TEMA_CAMPOS = {
   corTextura: '--textura-cor'
 };
 
+const CAMPOS_COR = [
+  {campo:'corFundo', sufixo:'fundo', label:'Fundo da página', padrao:'#F4F5F3'},
+  {campo:'corCabecalho', sufixo:'cabecalho', label:'Banner / cabeçalho (sem foto)', padrao:'#14171C'},
+  {campo:'corCard', sufixo:'card', label:'Fundo dos cards', padrao:'#FFFFFF'},
+  {campo:'corMenu', sufixo:'menu', label:'Fundo do menu (abas)', padrao:'#FFFFFF'},
+  {campo:'corBotao', sufixo:'botao', label:'Botões / destaque', padrao:'#2F6F5E'},
+  {campo:'corTexto', sufixo:'texto', label:'Texto', padrao:'#14171C', extraSecundario:true},
+  {campo:'corSucesso', sufixo:'sucesso', label:'Cor de "aprovado"', padrao:'#2F6F5E'},
+  {campo:'corDestaque', sufixo:'destaque', label:'Cor de "pendente"', padrao:'#C7862B'},
+  {campo:'corRecusado', sufixo:'recusado', label:'Cor de "recusado"', padrao:'#C1443A'}
+];
+
+function renderCamposCor(){
+  const el = document.getElementById('admin-cores-lista');
+  if(!el) return;
+  el.innerHTML = CAMPOS_COR.map(({campo, sufixo, label, padrao, extraSecundario})=>`
+    <label>${label}</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="color" id="admin-cor-${sufixo}" style="width:52px;height:42px;padding:2px;border-radius:8px;">
+      <input type="text" id="admin-cor-${sufixo}-hex" placeholder="${padrao}" style="flex:1;">
+      <button type="button" class="color-eyedrop-btn" data-eyedrop-hex="admin-cor-${sufixo}-hex" data-eyedrop-color="admin-cor-${sufixo}" title="Pegar cor da logo">🎨</button>
+    </div>
+    <div class="color-opacity-row">
+      <span class="color-opacity-label">Transparência</span>
+      <input type="range" class="color-opacity-input" id="admin-cor-${sufixo}-opacidade" min="0" max="100" value="100">
+      <span class="color-opacity-value" id="admin-cor-${sufixo}-opacidade-val">100%</span>
+    </div>
+    ${extraSecundario ? `<div style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;">
+      <input type="checkbox" id="admin-texto-secundario-segue" style="margin-top:3px;">
+      <label style="margin:0;text-transform:none;font-family:'Inter',sans-serif;font-size:12px;color:var(--muted);letter-spacing:0;">Aplicar esta cor também nos textos secundários (datas, legendas, labels)</label>
+    </div>` : ''}
+    <div class="color-field-actions">
+      <button type="button" data-aplicar-cor-campo="${campo}" data-aplicar-cor-hex="admin-cor-${sufixo}-hex" data-aplicar-cor-opacidade="admin-cor-${sufixo}-opacidade">Aplicar esta cor</button>
+      <button type="button" class="muted-link" data-padrao-cor-campo="${campo}" data-padrao-cor-hex="admin-cor-${sufixo}-hex" data-padrao-cor-color="admin-cor-${sufixo}" data-padrao-cor-valor="${padrao}" data-padrao-cor-opacidade="admin-cor-${sufixo}-opacidade">Usar padrão</button>
+    </div>
+  `).join('');
+  CAMPOS_COR.forEach(({sufixo})=>{
+    wireColorPair('admin-cor-'+sufixo, 'admin-cor-'+sufixo+'-hex');
+  });
+}
+renderCamposCor();
+
+document.addEventListener('input', (e)=>{
+  if(e.target.classList.contains('color-opacity-input')){
+    const valEl = document.getElementById(e.target.id + '-val');
+    if(valEl) valEl.textContent = e.target.value + '%';
+  }
+});
+
 const TEXTOS_PADRAO = {
   subtitulo: 'Suba cotações e arquivos da arquiteta. Cada item pode levar o número de um profissional — quem tiver esse número encontra só o que é dele na aba Buscar.',
   tituloProximaEtapa: 'Próxima etapa',
@@ -1778,10 +1800,15 @@ function contrastText(hex){
   return lum > 0.6 ? '#14171C' : '#F4F5F3';
 }
 
+function valorComOpacidade(hex, opacidade){
+  if(opacidade == null || opacidade >= 100) return hex;
+  return `color-mix(in srgb, ${hex} ${Math.max(0, opacidade)}%, transparent)`;
+}
+
 function aplicarTema(tema){
   const root = document.documentElement.style;
   Object.entries(TEMA_CAMPOS).forEach(([campo, cssVar])=>{
-    if(tema && tema[campo]) root.setProperty(cssVar, tema[campo]);
+    if(tema && tema[campo]) root.setProperty(cssVar, valorComOpacidade(tema[campo], tema[campo+'Opacidade']));
     else root.removeProperty(cssVar);
   });
 
@@ -1789,7 +1816,8 @@ function aplicarTema(tema){
   // usar uma versão mais clara da cor de texto escolhida, em vez do
   // cinza padrão
   if(tema && tema.corTexto && tema.textoSecundarioSegueCor){
-    root.setProperty('--muted', `color-mix(in srgb, ${tema.corTexto} 55%, white)`);
+    const corTextoEfetiva = valorComOpacidade(tema.corTexto, tema.corTextoOpacidade);
+    root.setProperty('--muted', `color-mix(in srgb, ${corTextoEfetiva} 55%, white)`);
   }else{
     root.removeProperty('--muted');
   }
@@ -1806,7 +1834,9 @@ function aplicarTema(tema){
   window._tipoCores = (tema && tema.tipoCores) || {};
 }
 
+let logoBase64Atual = null;
 function aplicarLogoBanner(logoBase64){
+  logoBase64Atual = logoBase64 || null;
   const root = document.documentElement.style;
   if(logoBase64){
     root.setProperty('--banner-img', `url('${logoBase64}')`);
@@ -1819,6 +1849,69 @@ function aplicarLogoBanner(logoBase64){
     root.setProperty('--banner-text', contrastText(corCabecalho));
   }
 }
+
+// ---------- Conta-gotas: pegar cor da logo ----------
+let eyedropAlvoHex = null, eyedropAlvoColor = null;
+
+function rgbParaHex(r,g,b){
+  return '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+
+function abrirEyedropModal(hexId, colorId){
+  eyedropAlvoHex = hexId;
+  eyedropAlvoColor = colorId;
+  const modal = document.getElementById('eyedrop-modal');
+  const canvas = document.getElementById('eyedrop-canvas');
+  const vazio = document.getElementById('eyedrop-modal-vazio');
+  if(!logoBase64Atual){
+    vazio.style.display = 'block';
+    canvas.style.display = 'none';
+  }else{
+    vazio.style.display = 'none';
+    canvas.style.display = 'block';
+    const img = new Image();
+    img.onload = () => {
+      const maxLado = 480;
+      const escala = Math.min(1, maxLado / Math.max(img.width, img.height));
+      canvas.width = Math.max(1, Math.round(img.width * escala));
+      canvas.height = Math.max(1, Math.round(img.height * escala));
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
+    img.src = logoBase64Atual;
+  }
+  modal.classList.add('show');
+}
+
+document.getElementById('eyedrop-modal-fechar').addEventListener('click', ()=>{
+  document.getElementById('eyedrop-modal').classList.remove('show');
+});
+
+document.addEventListener('click', (e)=>{
+  const gatilho = e.target.closest('[data-eyedrop-hex]');
+  if(gatilho){
+    abrirEyedropModal(gatilho.getAttribute('data-eyedrop-hex'), gatilho.getAttribute('data-eyedrop-color'));
+  }
+});
+
+document.getElementById('eyedrop-canvas').addEventListener('click', (e)=>{
+  const canvas = document.getElementById('eyedrop-canvas');
+  if(canvas.style.display === 'none' || !eyedropAlvoHex) return;
+  const rect = canvas.getBoundingClientRect();
+  const escalaX = canvas.width / rect.width;
+  const escalaY = canvas.height / rect.height;
+  const x = Math.min(canvas.width-1, Math.max(0, Math.round((e.clientX - rect.left) * escalaX)));
+  const y = Math.min(canvas.height-1, Math.max(0, Math.round((e.clientY - rect.top) * escalaY)));
+  const ctx = canvas.getContext('2d');
+  const [r,g,b] = ctx.getImageData(x, y, 1, 1).data;
+  const hex = rgbParaHex(r,g,b);
+  const hexInput = document.getElementById(eyedropAlvoHex);
+  const colorInput = document.getElementById(eyedropAlvoColor);
+  if(hexInput){ hexInput.value = hex; hexInput.dispatchEvent(new Event('input', {bubbles:true})); }
+  if(colorInput) colorInput.value = hex;
+  document.getElementById('eyedrop-modal').classList.remove('show');
+  toast('Cor ' + hex + ' selecionada — toque em "Aplicar esta cor" pra confirmar');
+});
 
 function renderDecoracoes(lista){
   const el = document.getElementById('header-deco');
@@ -1842,15 +1935,7 @@ function wireColorPair(colorId, hexId){
     if(v && /^#[0-9A-Fa-f]{6}$/.test(v)) colorInput.value = v;
   });
 }
-wireColorPair('admin-cor-fundo','admin-cor-fundo-hex');
-wireColorPair('admin-cor-cabecalho','admin-cor-cabecalho-hex');
-wireColorPair('admin-cor-destaque','admin-cor-destaque-hex');
-wireColorPair('admin-cor-texto','admin-cor-texto-hex');
-wireColorPair('admin-cor-sucesso','admin-cor-sucesso-hex');
-wireColorPair('admin-cor-card','admin-cor-card-hex');
-wireColorPair('admin-cor-menu','admin-cor-menu-hex');
-wireColorPair('admin-cor-botao','admin-cor-botao-hex');
-wireColorPair('admin-cor-recusado','admin-cor-recusado-hex');
+// os 9 campos de admin-cores-lista já são conectados dentro de renderCamposCor()
 wireColorPair('admin-cor-textura','admin-cor-textura-hex');
 wireColorPair('admin-tipo-cor','admin-tipo-cor-hex');
 let currentProjetoNome = null;
@@ -4811,19 +4896,13 @@ if(firebaseOk){
 
   document.getElementById('admin-salvar-tema').addEventListener('click', async ()=>{
     const btn = document.getElementById('admin-salvar-tema');
-    Object.assign(temaAtual, {
-      corFundo: normalizarHex(document.getElementById('admin-cor-fundo-hex').value, '#F4F5F3'),
-      corCabecalho: normalizarHex(document.getElementById('admin-cor-cabecalho-hex').value, '#14171C'),
-      corDestaque: normalizarHex(document.getElementById('admin-cor-destaque-hex').value, '#C7862B'),
-      corTexto: normalizarHex(document.getElementById('admin-cor-texto-hex').value, '#14171C'),
-      corSucesso: normalizarHex(document.getElementById('admin-cor-sucesso-hex').value, '#2F6F5E'),
-      corCard: normalizarHex(document.getElementById('admin-cor-card-hex').value, '#FFFFFF'),
-      corMenu: normalizarHex(document.getElementById('admin-cor-menu-hex').value, '#FFFFFF'),
-      corBotao: normalizarHex(document.getElementById('admin-cor-botao-hex').value, '#2F6F5E'),
-      corRecusado: normalizarHex(document.getElementById('admin-cor-recusado-hex').value, '#C1443A'),
-      cantos: document.getElementById('admin-cantos').value,
-      textoSecundarioSegueCor: document.getElementById('admin-texto-secundario-segue').checked
+    CAMPOS_COR.forEach(({campo, sufixo, padrao})=>{
+      temaAtual[campo] = normalizarHex(document.getElementById('admin-cor-'+sufixo+'-hex').value, padrao);
+      const opacidadeInput = document.getElementById('admin-cor-'+sufixo+'-opacidade');
+      if(opacidadeInput) temaAtual[campo+'Opacidade'] = Number(opacidadeInput.value);
     });
+    temaAtual.cantos = document.getElementById('admin-cantos').value;
+    temaAtual.textoSecundarioSegueCor = document.getElementById('admin-texto-secundario-segue').checked;
     btn.disabled = true; btn.textContent = 'Salvando...';
     try{
       await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
@@ -4913,6 +4992,12 @@ if(firebaseOk){
         document.getElementById('admin-cor-'+campo+'-hex').value = '';
         const colorInput = document.getElementById('admin-cor-'+campo);
         if(colorInput) colorInput.value = padrao;
+        const opacidadeInput = document.getElementById('admin-cor-'+campo+'-opacidade');
+        if(opacidadeInput){
+          opacidadeInput.value = 100;
+          const valEl = document.getElementById('admin-cor-'+campo+'-opacidade-val');
+          if(valEl) valEl.textContent = '100%';
+        }
       });
       document.getElementById('admin-cantos').value = 'arredondado';
       document.getElementById('admin-mostrar-folhagem').checked = true;
@@ -4930,7 +5015,11 @@ if(firebaseOk){
     const campoAplicar = e.target.getAttribute('data-aplicar-cor-campo');
     if(campoAplicar){
       const hexId = e.target.getAttribute('data-aplicar-cor-hex');
+      const opacidadeId = e.target.getAttribute('data-aplicar-cor-opacidade');
       temaAtual[campoAplicar] = normalizarHex(document.getElementById(hexId).value, temaAtual[campoAplicar] || '#FFFFFF');
+      if(opacidadeId){
+        temaAtual[campoAplicar+'Opacidade'] = Number(document.getElementById(opacidadeId).value);
+      }
       if(campoAplicar === 'corTexto'){
         temaAtual.textoSecundarioSegueCor = document.getElementById('admin-texto-secundario-segue').checked;
       }
@@ -4953,7 +5042,9 @@ if(firebaseOk){
       const hexId = e.target.getAttribute('data-padrao-cor-hex');
       const colorId = e.target.getAttribute('data-padrao-cor-color');
       const valorPadrao = e.target.getAttribute('data-padrao-cor-valor');
+      const opacidadeId = e.target.getAttribute('data-padrao-cor-opacidade');
       delete temaAtual[campoPadrao];
+      delete temaAtual[campoPadrao+'Opacidade'];
       if(campoPadrao === 'corTexto'){
         delete temaAtual.textoSecundarioSegueCor;
         document.getElementById('admin-texto-secundario-segue').checked = false;
@@ -4961,6 +5052,11 @@ if(firebaseOk){
       document.getElementById(hexId).value = '';
       const colorInput = document.getElementById(colorId);
       if(colorInput) colorInput.value = valorPadrao;
+      if(opacidadeId){
+        document.getElementById(opacidadeId).value = 100;
+        const valEl = document.getElementById(opacidadeId+'-val');
+        if(valEl) valEl.textContent = '100%';
+      }
       const btn = e.target;
       btn.disabled = true; const textoOriginal = btn.textContent; btn.textContent = 'Restaurando...';
       try{
@@ -5122,6 +5218,13 @@ if(firebaseOk){
         const colorInput = document.getElementById('admin-cor-'+sufixo);
         if(hexInput) hexInput.value = valor;
         if(colorInput && /^#[0-9A-Fa-f]{6}$/.test(valor)) colorInput.value = valor;
+        const opacidadeInput = document.getElementById('admin-cor-'+sufixo+'-opacidade');
+        if(opacidadeInput){
+          const opacidade = (temaAtual[campo+'Opacidade'] != null) ? temaAtual[campo+'Opacidade'] : 100;
+          opacidadeInput.value = opacidade;
+          const valEl = document.getElementById('admin-cor-'+sufixo+'-opacidade-val');
+          if(valEl) valEl.textContent = opacidade + '%';
+        }
       });
       const cantosSel = document.getElementById('admin-cantos');
       if(cantosSel) cantosSel.value = temaAtual.cantos || 'arredondado';
