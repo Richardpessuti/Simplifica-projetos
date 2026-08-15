@@ -2404,13 +2404,13 @@ function listarArquivosDisponiveis(){
     if(q.hasFile) itens.push({label: q.item + ' (cotação)', colecao:'cotacoes', id:q.id, fileName:q.fileName, folder:'Cotações'});
   });
   arquitetaCache.forEach(f=>{
-    if(f.fileName) itens.push({label: f.nome + ' (arquiteta)', colecao:'arquiteta', id:f.id, fileName:f.fileName, folder:'Projeto'});
+    if(f.fileName) itens.push({label: f.nome + ' (arquiteta)', colecao:'arquiteta', id:f.id, fileName:f.fileName, folder:'Projeto', categoria: f.categoria || 'Geral'});
   });
   if(cronArquivoAtual && cronArquivoAtual.hasFile){
-    itens.push({label: 'Cronograma da obra', colecao:'cronograma_arquivo', id:'atual', fileName: cronArquivoAtual.fileName, folder:'Projeto'});
+    itens.push({label: 'Cronograma da obra', colecao:'cronograma_arquivo', id:'atual', fileName: cronArquivoAtual.fileName, folder:'Projeto', categoria:'Geral'});
   }
   projeto3dCache.forEach(f=>{
-    itens.push({label: (f.label || f.fileName) + ' (projeto 3D)', colecao:'projeto3d', id:f.id, fileName:f.fileName, folder:'Projeto'});
+    itens.push({label: (f.label || f.fileName) + ' (projeto 3D)', colecao:'projeto3d', id:f.id, fileName:f.fileName, folder:'Projeto', categoria:'Geral'});
   });
   fotosCache.forEach(f=>{
     itens.push({label: f.label || f.fileName, colecao:'fotos', id:f.id, fileName:f.fileName, folder:'Imagens'});
@@ -2437,23 +2437,49 @@ function abrirModalWhatsApp(tel, nomeContato){
     grupos[p].push(i);
   });
 
+  const tagHtml = (n) => `<span style="background:var(--caution);color:#fff;font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:20px;font-weight:700;">${n}</span>`;
+  const itensHtml = (indices) => indices.map(i=>`
+    <label class="list-item" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
+      <input type="checkbox" data-whats-check="${i}" style="flex-shrink:0;width:18px;height:18px;">
+      <span>
+        <div class="item-title">${escapeHtml(arquivos[i].label)}</div>
+        <div class="meta">${escapeHtml(arquivos[i].fileName)}</div>
+      </span>
+    </label>
+  `).join('');
+
   if(arquivos.length===0){
     lista.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhum arquivo disponível ainda.</div>';
   }else{
-    lista.innerHTML = pastas.filter(p=>grupos[p] && grupos[p].length).map(p=>`
-      <details>
-        <summary>${escapeHtml(p)} <span style="background:var(--caution);color:#fff;font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:20px;font-weight:700;">${grupos[p].length}</span></summary>
-        ${grupos[p].map(i=>`
-          <label class="list-item" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
-            <input type="checkbox" data-whats-check="${i}" style="flex-shrink:0;width:18px;height:18px;">
-            <span>
-              <div class="item-title">${escapeHtml(arquivos[i].label)}</div>
-              <div class="meta">${escapeHtml(arquivos[i].fileName)}</div>
-            </span>
-          </label>
-        `).join('')}
-      </details>
-    `).join('');
+    lista.innerHTML = pastas.filter(p=>grupos[p] && grupos[p].length).map(p=>{
+      // dentro de "Projeto", sub-agrupa por tipo de documento (categoria)
+      if(p === 'Projeto'){
+        const subgrupos = {};
+        grupos[p].forEach(i=>{
+          const cat = arquivos[i].categoria || 'Geral';
+          if(!subgrupos[cat]) subgrupos[cat] = [];
+          subgrupos[cat].push(i);
+        });
+        const categoriasOrdenadas = Object.keys(subgrupos).sort((a,b)=> a==='Geral' ? 1 : b==='Geral' ? -1 : a.localeCompare(b));
+        return `
+          <details>
+            <summary>${escapeHtml(p)} ${tagHtml(grupos[p].length)}</summary>
+            ${categoriasOrdenadas.map(cat=>`
+              <details style="margin:6px 0 6px 14px;">
+                <summary>${escapeHtml(cat)} ${tagHtml(subgrupos[cat].length)}</summary>
+                ${itensHtml(subgrupos[cat])}
+              </details>
+            `).join('')}
+          </details>
+        `;
+      }
+      return `
+        <details>
+          <summary>${escapeHtml(p)} ${tagHtml(grupos[p].length)}</summary>
+          ${itensHtml(grupos[p])}
+        </details>
+      `;
+    }).join('');
   }
   modal.dataset.tel = tel;
   modal.dataset.arquivos = JSON.stringify(arquivos);
@@ -2490,10 +2516,15 @@ document.getElementById('whats-modal-direto').addEventListener('click', ()=>{
 
 document.getElementById('whats-modal-enviar').addEventListener('click', async ()=>{
   const modal = document.getElementById('whats-modal');
+  const tel = modal.dataset.tel;
+  const link = waLink(tel);
   const arquivos = JSON.parse(modal.dataset.arquivos || '[]');
   const escolhidos = [...whatsSelecionados].sort((a,b)=>a-b).map(i=>arquivos[i]).filter(Boolean);
   if(escolhidos.length===0) return;
   modal.classList.remove('show');
+
+  // abre a aba já no clique — depois de um "await" o navegador bloqueia window.open como pop-up
+  const newWin = link ? window.open('', '_blank') : null;
 
   toast(escolhidos.length===1 ? 'Preparando arquivo...' : `Preparando ${escolhidos.length} arquivos...`);
   try{
@@ -2502,21 +2533,13 @@ document.getElementById('whats-modal-enviar').addEventListener('click', async ()
       const base64 = await loadFileChunked(item.colecao, item.id);
       if(base64) arquivosCarregados.push({file: base64ToFile(base64, item.fileName), base64, nome: item.fileName});
     }
-    if(arquivosCarregados.length===0){ toast('Arquivo(s) não encontrado(s)'); return; }
-
-    const listaFiles = arquivosCarregados.map(a=>a.file);
-    // Celular moderno: abre a tela nativa de compartilhar, com o WhatsApp como opção direta
-    if(navigator.canShare && navigator.canShare({files: listaFiles})){
-      try{
-        await navigator.share({files: listaFiles, title: 'Arquivos', text: 'Segue ' + (listaFiles.length===1 ? 'o arquivo' : 'os arquivos') + ': ' + arquivosCarregados.map(a=>a.nome).join(', ')});
-        return;
-      }catch(shareErr){
-        if(shareErr && shareErr.name === 'AbortError') return; // usuário cancelou, tudo bem
-        console.error(shareErr);
-      }
+    if(arquivosCarregados.length===0){
+      toast('Arquivo(s) não encontrado(s)');
+      if(newWin && !newWin.closed) newWin.close();
+      return;
     }
 
-    // Fallback: baixa cada arquivo (o usuário anexa manualmente no WhatsApp depois)
+    // baixa cada arquivo direto no celular, sem sair do app
     arquivosCarregados.forEach((a, i)=>{
       setTimeout(()=>{
         const commaIdx = a.base64.indexOf(',');
@@ -2538,10 +2561,15 @@ document.getElementById('whats-modal-enviar').addEventListener('click', async ()
         setTimeout(()=>URL.revokeObjectURL(url), 60000);
       }, i * 400);
     });
-    toast(arquivosCarregados.length===1 ? 'Arquivo baixado — anexe no WhatsApp' : `${arquivosCarregados.length} arquivos baixados — anexe no WhatsApp`);
+
+    // já abre a conversa da pessoa no WhatsApp, numa aba separada
+    if(newWin && !newWin.closed) newWin.location.href = link;
+
+    toast(arquivosCarregados.length===1 ? 'Arquivo baixado — abrindo o WhatsApp, é só anexar' : `${arquivosCarregados.length} arquivos baixados — abrindo o WhatsApp, é só anexar`);
   }catch(err){
     console.error(err);
     toast('Erro ao preparar arquivos');
+    if(newWin && !newWin.closed) newWin.close();
   }
 });
 
