@@ -1629,8 +1629,9 @@
     <h2 style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;margin:0 0 4px;">Enviar arquivo</h2>
     <div style="font-size:12px;color:var(--muted);margin-bottom:14px;" id="whats-modal-sub"></div>
     <div id="whats-modal-lista"></div>
-    <button class="btn secondary" id="whats-modal-direto" style="margin-top:14px;">Ir direto pro WhatsApp, sem anexos</button>
-    <button class="btn" id="whats-modal-enviar" disabled>Enviar 0 selecionado(s)</button>
+    <button class="btn" id="whats-modal-enviar" style="margin-top:14px;" disabled>Baixar 0 selecionado(s)</button>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;">Depois de baixar, toque abaixo pra abrir a conversa e anexar</div>
+    <button class="btn secondary" id="whats-modal-direto">Abrir WhatsApp da pessoa</button>
     <button class="btn muted" id="whats-modal-fechar" style="margin-top:10px;">Cancelar</button>
   </div>
 </div>
@@ -2490,7 +2491,7 @@ function abrirModalWhatsApp(tel, nomeContato){
 function atualizarBotaoWhatsEnviar(){
   const btn = document.getElementById('whats-modal-enviar');
   const n = whatsSelecionados.size;
-  btn.textContent = n===0 ? 'Enviar 0 selecionado(s)' : `Enviar ${n} arquivo(s) selecionado(s)`;
+  btn.textContent = n===0 ? 'Baixar 0 selecionado(s)' : `Baixar ${n} arquivo(s) selecionado(s)`;
   btn.disabled = n===0;
 }
 
@@ -2516,16 +2517,13 @@ document.getElementById('whats-modal-direto').addEventListener('click', ()=>{
 
 document.getElementById('whats-modal-enviar').addEventListener('click', async ()=>{
   const modal = document.getElementById('whats-modal');
-  const tel = modal.dataset.tel;
-  const link = waLink(tel);
   const arquivos = JSON.parse(modal.dataset.arquivos || '[]');
   const escolhidos = [...whatsSelecionados].sort((a,b)=>a-b).map(i=>arquivos[i]).filter(Boolean);
   if(escolhidos.length===0) return;
-  modal.classList.remove('show');
 
-  // abre a aba já no clique — depois de um "await" o navegador bloqueia window.open como pop-up
-  const newWin = link ? window.open('', '_blank') : null;
-
+  // só baixa — fica na mesma tela, pra depois tocar em "Abrir WhatsApp da pessoa"
+  const btn = document.getElementById('whats-modal-enviar');
+  btn.disabled = true;
   toast(escolhidos.length===1 ? 'Preparando arquivo...' : `Preparando ${escolhidos.length} arquivos...`);
   try{
     const arquivosCarregados = [];
@@ -2533,13 +2531,8 @@ document.getElementById('whats-modal-enviar').addEventListener('click', async ()
       const base64 = await loadFileChunked(item.colecao, item.id);
       if(base64) arquivosCarregados.push({file: base64ToFile(base64, item.fileName), base64, nome: item.fileName});
     }
-    if(arquivosCarregados.length===0){
-      toast('Arquivo(s) não encontrado(s)');
-      if(newWin && !newWin.closed) newWin.close();
-      return;
-    }
+    if(arquivosCarregados.length===0){ toast('Arquivo(s) não encontrado(s)'); return; }
 
-    // baixa cada arquivo direto no celular, sem sair do app
     arquivosCarregados.forEach((a, i)=>{
       setTimeout(()=>{
         const commaIdx = a.base64.indexOf(',');
@@ -2562,15 +2555,12 @@ document.getElementById('whats-modal-enviar').addEventListener('click', async ()
       }, i * 400);
     });
 
-    // já abre a conversa da pessoa no WhatsApp, numa aba separada
-    if(newWin && !newWin.closed) newWin.location.href = link;
-
-    toast(arquivosCarregados.length===1 ? 'Arquivo baixado — abrindo o WhatsApp, é só anexar' : `${arquivosCarregados.length} arquivos baixados — abrindo o WhatsApp, é só anexar`);
+    toast(arquivosCarregados.length===1 ? 'Arquivo baixado — toque em "Abrir WhatsApp da pessoa" pra anexar' : `${arquivosCarregados.length} arquivos baixados — toque em "Abrir WhatsApp da pessoa" pra anexar`);
   }catch(err){
     console.error(err);
     toast('Erro ao preparar arquivos');
-    if(newWin && !newWin.closed) newWin.close();
   }
+  btn.disabled = false;
 });
 
 document.addEventListener('click', async (e)=>{
