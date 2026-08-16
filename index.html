@@ -289,7 +289,7 @@
     box-shadow:0 1px 3px rgba(20,23,28,0.045);
     transition:box-shadow .3s var(--ease), transform .3s var(--ease);
   }
-  .card h2, .modal-sheet-head h2{
+  .card h2, .card summary, .modal-sheet-head h2{
     font-family:'Space Grotesk', sans-serif;
     font-weight:600;
     font-size:19px;
@@ -299,7 +299,9 @@
     gap:8px;
     color:var(--ink);
   }
-  .card h2 .tag, .modal-sheet-head h2 .tag{
+  .card summary{ cursor:pointer; }
+  details.card:not([open]) summary{ margin-bottom:0; }
+  .card h2 .tag, .card summary .tag, .modal-sheet-head h2 .tag{
     background:var(--caution);
     color:#fff;
     font-size:10px;
@@ -4005,8 +4007,8 @@ function renderCotacoesList(docs){
   const tiposOrdenados = Object.keys(grupos).sort((a,b)=>a.localeCompare(b));
 
   el.innerHTML = tiposOrdenados.map(tipo=>`
-    <div class="card">
-      <h2>${escapeHtml(tipo)} <span class="tag">${grupos[tipo].length}</span></h2>
+    <details class="card">
+      <summary>${escapeHtml(tipo)} <span class="tag">${grupos[tipo].length}</span></summary>
       ${grupos[tipo].map(q=>`
         <div class="list-item" style="border-left:4px solid ${(window._tipoCores && window._tipoCores[q.tipo]) || 'var(--paper-line)'};">
           <div class="row1">
@@ -4030,7 +4032,7 @@ function renderCotacoesList(docs){
           </div>
         </div>
       `).join('')}
-    </div>
+    </details>
   `).join('');
 }
 
@@ -4419,8 +4421,8 @@ function renderArquitetaList(docs){
   const categoriasOrdenadas = Object.keys(grupos).sort((a,b)=> a==='Geral' ? 1 : b==='Geral' ? -1 : a.localeCompare(b));
 
   el.innerHTML = categoriasOrdenadas.map(cat=>`
-    <div class="card">
-      <h2>${escapeHtml(cat)} <span class="tag">${grupos[cat].length}</span></h2>
+    <details class="card">
+      <summary>${escapeHtml(cat)} <span class="tag">${grupos[cat].length}</span></summary>
       ${grupos[cat].map(f=>`
         <div class="list-item">
           <div class="row1">
@@ -4437,7 +4439,7 @@ function renderArquitetaList(docs){
           </div>
         </div>
       `).join('')}
-    </div>
+    </details>
   `).join('');
 }
 
@@ -4601,8 +4603,8 @@ function renderPrestadoresList(docs){
   Object.values(grupos).forEach(lista=> lista.sort((a,b)=> (b.favorito?1:0) - (a.favorito?1:0)));
 
   el.innerHTML = especialidadesOrdenadas.map(esp=>`
-    <div class="card">
-      <h2>${escapeHtml(esp)} <span class="tag">${grupos[esp].length}</span></h2>
+    <details class="card">
+      <summary>${escapeHtml(esp)} <span class="tag">${grupos[esp].length}</span></summary>
       ${grupos[esp].map(p=>`
         <div class="list-item">
           <div class="row1">
@@ -4625,7 +4627,7 @@ function renderPrestadoresList(docs){
           </div>
         </div>
       `).join('')}
-    </div>
+    </details>
   `).join('');
 }
 
