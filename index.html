@@ -4631,17 +4631,22 @@ function renderPrestadorItem(p){
       </div>
       <div class="meta" style="margin-top:8px;font-size:14px;color:var(--ink);font-weight:600;">${escapeHtml(p.tel||'sem telefone')}</div>
       <div class="actions">
-        <button data-fav-prest="${p.id}" style="${p.favorito?'border-color:var(--caution);color:var(--caution);':''}">${p.favorito?'⭐ Favorito':'☆ Favoritar'}</button>
-        <button data-destaque-prest="${p.id}" style="${p.destaque?'border-color:var(--accent);color:var(--accent);':''}">${p.destaque?'📌 Destacado':'📌 Destacar'}</button>
-        ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="tel:${escapeHtml(p.tel.replace(/[^0-9+]/g,''))}">Ligar</a>` : `<button disabled style="opacity:.4">Sem telefone</button>`}
         ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ok);border-color:var(--ok);" href="${waLink(p.tel)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
         ${p.tel ? `<button class="view" style="color:var(--blueprint);border-color:var(--blueprint);" data-whats-arquivo-tel="${escapeHtml(p.tel)}" data-whats-arquivo-nome="${escapeHtml(p.nome)}">📎 Enviar arquivo</button>` : ''}
-        ${p.tel ? `<button class="view" style="color:var(--caution);border-color:var(--caution);" data-pedir-acesso="${p.id}">🔑 Pedir liberação de acesso</button>` : ''}
-        <button data-acesso-recebido-prest="${p.id}" style="${p.acessoRecebido?'border-color:var(--ok);color:var(--ok);':''}">${p.acessoRecebido?'✓ Acesso recebido':'✓ Marcar acesso recebido'}</button>
-        ${p.endereco ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.endereco)}" target="_blank" rel="noopener">📍 Ver no mapa</a>` : ''}
         <button class="edit" data-editp="${p.id}" style="border-color:var(--blueprint);color:var(--blueprint);">Editar</button>
-        <button class="del" data-delp="${p.id}">Excluir</button>
       </div>
+      <details style="margin-top:8px;">
+        <summary style="font-size:12px;color:var(--muted);cursor:pointer;list-style:none;">⋯ Mais opções</summary>
+        <div class="actions" style="margin-top:8px;">
+          <button data-fav-prest="${p.id}" style="${p.favorito?'border-color:var(--caution);color:var(--caution);':''}">${p.favorito?'⭐ Favorito':'☆ Favoritar'}</button>
+          <button data-destaque-prest="${p.id}" style="${p.destaque?'border-color:var(--accent);color:var(--accent);':''}">${p.destaque?'📌 Destacado':'📌 Destacar'}</button>
+          ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="tel:${escapeHtml(p.tel.replace(/[^0-9+]/g,''))}">Ligar</a>` : `<button disabled style="opacity:.4">Sem telefone</button>`}
+          ${p.tel ? `<button class="view" style="color:var(--caution);border-color:var(--caution);" data-pedir-acesso="${p.id}">🔑 Pedir liberação de acesso</button>` : ''}
+          <button data-acesso-recebido-prest="${p.id}" style="${p.acessoRecebido?'border-color:var(--ok);color:var(--ok);':''}">${p.acessoRecebido?'✓ Acesso recebido':'✓ Marcar acesso recebido'}</button>
+          ${p.endereco ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.endereco)}" target="_blank" rel="noopener">📍 Ver no mapa</a>` : ''}
+          <button class="del" data-delp="${p.id}">Excluir</button>
+        </div>
+      </details>
     </div>
   `;
 }
