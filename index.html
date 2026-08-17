@@ -322,7 +322,7 @@
     letter-spacing:0;
   }
   label:first-of-type{margin-top:0;}
-  input[type=text], input[type=number], input[type=date], select{
+  input[type=text], input[type=number], input[type=date], select, textarea{
     width:100%;
     padding:11px 13px;
     border:1.5px solid var(--paper-line);
@@ -332,7 +332,8 @@
     background:var(--neutral-bg);
     transition:box-shadow .2s var(--ease), border-color .2s var(--ease);
   }
-  input:focus, select:focus{
+  textarea{ resize:vertical; }
+  input:focus, select:focus, textarea:focus{
     outline:none;
     border-color:var(--accent);
     box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
@@ -1598,6 +1599,13 @@
       <button class="btn secondary" id="p-add-btn">+ Novo prestador</button>
     </div>
 
+    <details class="card">
+      <summary>✏️ Mensagem de pedido de acesso <span class="tag">editar</span></summary>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Esse texto é usado quando você toca em "Pedir liberação de acesso" na ficha de um prestador — ele abre o WhatsApp da pessoa já com essa mensagem pronta. Qualquer pessoa do projeto pode editar.</div>
+      <textarea id="p-modelo-acesso-texto" rows="6"></textarea>
+      <button class="btn secondary" id="p-modelo-acesso-salvar" style="margin-top:10px;">Salvar mensagem</button>
+    </details>
+
     <div id="p-list"></div>
   </section>
 
@@ -1793,6 +1801,9 @@ let masterEmailAtual = null;
 const MASTER_EMAIL_FALLBACK = 'richardpessuti@hotmail.com';
 let modoMasterVendoArquitetoId = null; // quando master está "entrando como" um arquiteto
 let temaAtual = {};
+
+const MODELO_ACESSO_PORTARIA_PADRAO = 'Oi! Pra liberar seu acesso na portaria, me manda essas informações:\n- Nome completo:\n- CPF:\n- Placa do veículo (se tiver):\n- RG:';
+let modeloAcessoPortariaAtual = MODELO_ACESSO_PORTARIA_PADRAO;
 
 const TEMA_CAMPOS = {
   corFundo: '--paper',
@@ -3978,7 +3989,7 @@ function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-function waLink(tel){
+function waLink(tel, texto){
   if(!tel) return null;
   let digits = tel.replace(/\D/g,'');
   if(digits.length===0) return null;
@@ -3986,7 +3997,7 @@ function waLink(tel){
   if(!(digits.startsWith('55') && digits.length>=12)){
     digits = '55' + digits;
   }
-  return 'https://wa.me/' + digits;
+  return 'https://wa.me/' + digits + (texto ? '?text=' + encodeURIComponent(texto) : '');
 }
 
 // ---------- Cotações ----------
@@ -4586,6 +4597,35 @@ function statusPrestadorCor(status){
   return 'var(--caution)';
 }
 
+function renderPrestadorItem(p){
+  return `
+    <div class="list-item">
+      <div class="row1">
+        <div>
+          <div class="item-title">${p.favorito?'⭐ ':''}${p.destaque?'📌 ':''}${escapeHtml(p.nome)}</div>
+          <div class="meta">${escapeHtml(p.empresa||'')}</div>
+          ${p.status ? `<span class="badge-prof" style="background:${statusPrestadorCor(p.status)};">${escapeHtml(p.status)}</span>` : ''}
+          ${p.acessoRecebido ? `<span class="badge-prof" style="background:var(--ok);">✓ Acesso recebido</span>` : ''}
+        </div>
+        <span class="badge-prof">Nº ${escapeHtml(p.num)}</span>
+      </div>
+      <div class="meta" style="margin-top:8px;font-size:14px;color:var(--ink);font-weight:600;">${escapeHtml(p.tel||'sem telefone')}</div>
+      <div class="actions">
+        <button data-fav-prest="${p.id}" style="${p.favorito?'border-color:var(--caution);color:var(--caution);':''}">${p.favorito?'⭐ Favorito':'☆ Favoritar'}</button>
+        <button data-destaque-prest="${p.id}" style="${p.destaque?'border-color:var(--accent);color:var(--accent);':''}">${p.destaque?'📌 Destacado':'📌 Destacar'}</button>
+        ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="tel:${escapeHtml(p.tel.replace(/[^0-9+]/g,''))}">Ligar</a>` : `<button disabled style="opacity:.4">Sem telefone</button>`}
+        ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ok);border-color:var(--ok);" href="${waLink(p.tel)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+        ${p.tel ? `<button class="view" style="color:var(--blueprint);border-color:var(--blueprint);" data-whats-arquivo-tel="${escapeHtml(p.tel)}" data-whats-arquivo-nome="${escapeHtml(p.nome)}">📎 Enviar arquivo</button>` : ''}
+        ${p.tel ? `<button class="view" style="color:var(--caution);border-color:var(--caution);" data-pedir-acesso="${p.id}">🔑 Pedir liberação de acesso</button>` : ''}
+        <button data-acesso-recebido-prest="${p.id}" style="${p.acessoRecebido?'border-color:var(--ok);color:var(--ok);':''}">${p.acessoRecebido?'✓ Acesso recebido':'✓ Marcar acesso recebido'}</button>
+        ${p.endereco ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.endereco)}" target="_blank" rel="noopener">📍 Ver no mapa</a>` : ''}
+        <button class="edit" data-editp="${p.id}" style="border-color:var(--blueprint);color:var(--blueprint);">Editar</button>
+        <button class="del" data-delp="${p.id}">Excluir</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderPrestadoresList(docs){
   const el = document.getElementById('p-list');
   if(docs.length===0){
@@ -4593,8 +4633,11 @@ function renderPrestadoresList(docs){
     return;
   }
 
+  const destacados = docs.filter(p=>p.destaque);
+  const resto = docs.filter(p=>!p.destaque);
+
   const grupos = {};
-  docs.forEach(p=>{
+  resto.forEach(p=>{
     const esp = p.esp || 'Outro';
     if(!grupos[esp]) grupos[esp] = [];
     grupos[esp].push(p);
@@ -4602,31 +4645,17 @@ function renderPrestadoresList(docs){
   const especialidadesOrdenadas = Object.keys(grupos).sort((a,b)=>a.localeCompare(b));
   Object.values(grupos).forEach(lista=> lista.sort((a,b)=> (b.favorito?1:0) - (a.favorito?1:0)));
 
-  el.innerHTML = especialidadesOrdenadas.map(esp=>`
+  const destacadosHtml = destacados.length ? `
+    <div class="card" style="border:2px solid var(--accent);">
+      <h2>📌 Contatos fixos</h2>
+      ${destacados.map(p=>renderPrestadorItem(p)).join('')}
+    </div>
+  ` : '';
+
+  el.innerHTML = destacadosHtml + especialidadesOrdenadas.map(esp=>`
     <details class="card">
       <summary>${escapeHtml(esp)} <span class="tag">${grupos[esp].length}</span></summary>
-      ${grupos[esp].map(p=>`
-        <div class="list-item">
-          <div class="row1">
-            <div>
-              <div class="item-title">${p.favorito?'⭐ ':''}${escapeHtml(p.nome)}</div>
-              <div class="meta">${escapeHtml(p.empresa||'')}</div>
-              ${p.status ? `<span class="badge-prof" style="background:${statusPrestadorCor(p.status)};">${escapeHtml(p.status)}</span>` : ''}
-            </div>
-            <span class="badge-prof">Nº ${escapeHtml(p.num)}</span>
-          </div>
-          <div class="meta" style="margin-top:8px;font-size:14px;color:var(--ink);font-weight:600;">${escapeHtml(p.tel||'sem telefone')}</div>
-          <div class="actions">
-            <button data-fav-prest="${p.id}" style="${p.favorito?'border-color:var(--caution);color:var(--caution);':''}">${p.favorito?'⭐ Favorito':'☆ Favoritar'}</button>
-            ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="tel:${escapeHtml(p.tel.replace(/[^0-9+]/g,''))}">Ligar</a>` : `<button disabled style="opacity:.4">Sem telefone</button>`}
-            ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ok);border-color:var(--ok);" href="${waLink(p.tel)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
-            ${p.tel ? `<button class="view" style="color:var(--blueprint);border-color:var(--blueprint);" data-whats-arquivo-tel="${escapeHtml(p.tel)}" data-whats-arquivo-nome="${escapeHtml(p.nome)}">📎 Enviar arquivo</button>` : ''}
-            ${p.endereco ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.endereco)}" target="_blank" rel="noopener">📍 Ver no mapa</a>` : ''}
-            <button class="edit" data-editp="${p.id}" style="border-color:var(--blueprint);color:var(--blueprint);">Editar</button>
-            <button class="del" data-delp="${p.id}">Excluir</button>
-          </div>
-        </div>
-      `).join('')}
+      ${grupos[esp].map(p=>renderPrestadorItem(p)).join('')}
     </details>
   `).join('');
 }
@@ -4644,6 +4673,22 @@ function listenPrestadores(){
     }
   }, err=>{ console.error(err); toast('Erro ao carregar prestadores'); }));
 }
+
+document.getElementById('p-modelo-acesso-salvar').addEventListener('click', async ()=>{
+  if(!db){ toast('Configure o Firebase primeiro'); return; }
+  const btn = document.getElementById('p-modelo-acesso-salvar');
+  const texto = document.getElementById('p-modelo-acesso-texto').value.trim() || MODELO_ACESSO_PORTARIA_PADRAO;
+  btn.disabled = true;
+  try{
+    await db.collection('projetos').doc(currentProjetoId).update({modeloAcessoPortaria: texto});
+    modeloAcessoPortariaAtual = texto;
+    toast('Mensagem salva!');
+  }catch(err){
+    console.error(err);
+    toast('Erro ao salvar mensagem');
+  }
+  btn.disabled = false;
+});
 
 document.getElementById('p-save').addEventListener('click', async ()=>{
   if(!db){ toast('Configure o Firebase primeiro'); return; }
@@ -4971,6 +5016,37 @@ document.addEventListener('click', async (e)=>{
       console.error(err);
       toast('Erro ao favoritar');
     }
+    return;
+  }
+  const destaqueP = e.target.getAttribute('data-destaque-prest');
+  if(destaqueP){
+    const p = prestadoresCache.find(x=>x.id===destaqueP);
+    if(!p) return;
+    try{
+      await col('prestadores').doc(destaqueP).update({destaque: !p.destaque});
+    }catch(err){
+      console.error(err);
+      toast('Erro ao destacar');
+    }
+    return;
+  }
+  const acessoRecebidoP = e.target.getAttribute('data-acesso-recebido-prest');
+  if(acessoRecebidoP){
+    const p = prestadoresCache.find(x=>x.id===acessoRecebidoP);
+    if(!p) return;
+    try{
+      await col('prestadores').doc(acessoRecebidoP).update({acessoRecebido: !p.acessoRecebido});
+    }catch(err){
+      console.error(err);
+      toast('Erro ao marcar acesso');
+    }
+    return;
+  }
+  const pedirAcessoP = e.target.getAttribute('data-pedir-acesso');
+  if(pedirAcessoP){
+    const p = prestadoresCache.find(x=>x.id===pedirAcessoP);
+    if(!p || !p.tel) return;
+    window.open(waLink(p.tel, modeloAcessoPortariaAtual), '_blank');
     return;
   }
   const delP = e.target.getAttribute('data-delp');
@@ -5748,6 +5824,10 @@ if(firebaseOk){
       aplicarLogoBanner(logoBase64);
 
       renderDecoracoes(data.decoracoes || []);
+
+      modeloAcessoPortariaAtual = data.modeloAcessoPortaria || MODELO_ACESSO_PORTARIA_PADRAO;
+      const modeloAcessoInput = document.getElementById('p-modelo-acesso-texto');
+      if(modeloAcessoInput) modeloAcessoInput.value = modeloAcessoPortariaAtual;
 
       if(isAdmin){
         document.getElementById('admin-nome-projeto').value = nome;
