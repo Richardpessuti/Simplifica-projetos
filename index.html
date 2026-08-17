@@ -2434,6 +2434,10 @@ function listarArquivosDisponiveis(){
 
 let whatsSelecionados = new Set();
 
+function pareceImagem(fileName){
+  return /\.(jpe?g|png|gif|webp|heic|heif|bmp)$/i.test(fileName || '');
+}
+
 function abrirModalWhatsApp(tel, nomeContato){
   const modal = document.getElementById('whats-modal');
   const lista = document.getElementById('whats-modal-lista');
@@ -2452,15 +2456,24 @@ function abrirModalWhatsApp(tel, nomeContato){
   });
 
   const tagHtml = (n) => `<span style="background:var(--caution);color:#fff;font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:20px;font-weight:700;">${n}</span>`;
-  const itensHtml = (indices) => indices.map(i=>`
-    <label class="list-item" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
-      <input type="checkbox" data-whats-check="${i}" style="flex-shrink:0;width:18px;height:18px;">
-      <span>
-        <div class="item-title">${escapeHtml(arquivos[i].label)}</div>
-        <div class="meta">${escapeHtml(arquivos[i].fileName)}</div>
-      </span>
-    </label>
-  `).join('');
+  const itensHtml = (indices) => indices.map(i=>{
+    const item = arquivos[i];
+    const previewAttrs = pareceImagem(item.fileName)
+      ? `data-galeria-col="${item.colecao}" data-galeria-id="${item.id}" data-galeria-nome="${escapeHtml(item.label)}"`
+      : `data-view="${item.colecao}" data-id="${item.id}" data-name="${escapeHtml(item.fileName)}"`;
+    return `
+      <div class="list-item" style="display:flex;align-items:center;gap:12px;">
+        <label style="cursor:pointer;display:flex;align-items:center;gap:12px;flex:1;min-width:0;">
+          <input type="checkbox" data-whats-check="${i}" style="flex-shrink:0;width:18px;height:18px;">
+          <span style="min-width:0;">
+            <div class="item-title">${escapeHtml(item.label)}</div>
+            <div class="meta">${escapeHtml(item.fileName)}</div>
+          </span>
+        </label>
+        <button type="button" class="view" style="flex-shrink:0;padding:8px 10px;" ${previewAttrs} title="Ver">🔍</button>
+      </div>
+    `;
+  }).join('');
 
   if(arquivos.length===0){
     lista.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhum arquivo disponível ainda.</div>';
@@ -2542,29 +2555,20 @@ document.getElementById('whats-modal-enviar').addEventListener('click', async ()
     const arquivosCarregados = [];
     for(const item of escolhidos){
       const base64 = await loadFileChunked(item.colecao, item.id);
-      if(base64) arquivosCarregados.push({file: base64ToFile(base64, item.fileName), base64, nome: item.fileName});
+      if(base64) arquivosCarregados.push({base64, nome: item.fileName});
     }
     if(arquivosCarregados.length===0){ toast('Arquivo(s) não encontrado(s)'); return; }
 
+    // usa a própria data: URI como href — no Safari/iOS, um link "download" apontando
+    // pra um blob: às vezes abre o arquivo em vez de baixar; com data: é mais confiável
     arquivosCarregados.forEach((a, i)=>{
       setTimeout(()=>{
-        const commaIdx = a.base64.indexOf(',');
-        const meta = a.base64.slice(0, commaIdx);
-        const data = a.base64.slice(commaIdx + 1);
-        const mimeMatch = meta.match(/data:(.*);base64/);
-        const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
-        const binary = atob(data);
-        const array = new Uint8Array(binary.length);
-        for(let j=0;j<binary.length;j++) array[j] = binary.charCodeAt(j);
-        const blob = new Blob([array], {type: mime});
-        const url = URL.createObjectURL(blob);
         const el = document.createElement('a');
-        el.href = url;
+        el.href = a.base64;
         el.download = a.nome;
         document.body.appendChild(el);
         el.click();
         el.remove();
-        setTimeout(()=>URL.revokeObjectURL(url), 60000);
       }, i * 400);
     });
 
@@ -3758,18 +3762,6 @@ function fileToBase64(file){
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
-}
-
-function base64ToFile(base64, filename){
-  const commaIdx = base64.indexOf(',');
-  const meta = base64.slice(0, commaIdx);
-  const data = base64.slice(commaIdx + 1);
-  const mimeMatch = meta.match(/data:(.*);base64/);
-  const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
-  const binary = atob(data);
-  const array = new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++) array[i] = binary.charCodeAt(i);
-  return new File([array], filename, {type: mime});
 }
 
 function resizeImageBase64(base64, maxLado){
