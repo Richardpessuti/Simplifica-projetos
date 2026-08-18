@@ -899,6 +899,7 @@
   }
   .tab-toolbar{
     display:flex;
+    gap:10px;
     margin-bottom:20px;
   }
   .tab-toolbar .btn{ margin-top:0; }
@@ -1518,6 +1519,7 @@
   <section id="tab-cotacoes">
     <div class="tab-toolbar">
       <button class="btn" id="c-add-btn">+ Nova cotação</button>
+      <button class="btn muted" id="c-export-btn">⬇ Exportar</button>
     </div>
 
     <div id="c-list"></div>
@@ -1569,6 +1571,9 @@
 
   <!-- ARQUITETA -->
   <section id="tab-arquiteta">
+    <div class="tab-toolbar">
+      <button class="btn muted" id="a-export-btn">⬇ Exportar lista</button>
+    </div>
     <div class="card">
       <h2 id="a-form-title">Arquivo da arquiteta <span class="tag">upload</span></h2>
       <label>Descrição do arquivo</label>
@@ -1597,6 +1602,7 @@
   <section id="tab-prestadores">
     <div class="tab-toolbar">
       <button class="btn secondary" id="p-add-btn">+ Novo prestador</button>
+      <button class="btn muted" id="p-export-btn">⬇ Exportar</button>
     </div>
 
     <details class="card">
@@ -3791,6 +3797,58 @@ function base64ParaArquivo(base64, filename){
   for(let i=0;i<binary.length;i++) array[i] = binary.charCodeAt(i);
   return new File([array], filename, {type: mime});
 }
+
+function csvEscape(v){
+  const s = (v==null ? '' : String(v));
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+
+async function exportarCSV(nomeArquivo, cabecalhos, linhas){
+  const csv = [cabecalhos, ...linhas].map(row => row.map(csvEscape).join(',')).join('\r\n');
+  const blob = new Blob(['﻿' + csv], {type: 'text/csv;charset=utf-8;'}); // BOM: acentos abrem certo no Excel
+  const file = new File([blob], nomeArquivo, {type: 'text/csv'});
+  if(navigator.canShare && navigator.canShare({files: [file]})){
+    try{ await navigator.share({files: [file]}); return; }
+    catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const el = document.createElement('a');
+  el.href = url; el.download = nomeArquivo;
+  document.body.appendChild(el); el.click(); el.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+
+function nomeArquivoExport(prefixo){
+  const hoje = new Date().toISOString().slice(0,10);
+  const nomeProjeto = (currentProjetoNome || 'projeto').replace(/[\\/:*?"<>|]/g, '-');
+  return `${prefixo} - ${nomeProjeto} - ${hoje}.csv`;
+}
+
+document.getElementById('p-export-btn').addEventListener('click', ()=>{
+  const cabecalhos = ['Nº','Nome','Empresa','Especialidade','Telefone','Endereço','Status','Favorito','Destacado','Acesso recebido'];
+  const linhas = prestadoresCache.map(p=>[
+    p.num||'', p.nome||'', p.empresa||'', p.esp||'', p.tel||'', p.endereco||'',
+    p.status||'', p.favorito?'Sim':'Não', p.destaque?'Sim':'Não', p.acessoRecebido?'Sim':'Não'
+  ]);
+  exportarCSV(nomeArquivoExport('Prestadores'), cabecalhos, linhas);
+});
+
+document.getElementById('c-export-btn').addEventListener('click', ()=>{
+  const cabecalhos = ['Item','Tipo','Local','Preço','Status','Profissional nº','Tem arquivo anexado'];
+  const linhas = cotacoesCache.map(q=>[
+    q.item||'', q.tipo||'', q.local||'', q.preco!=null?String(q.preco).replace('.',','):'',
+    q.status||'', q.prof||'', q.hasFile?'Sim':'Não'
+  ]);
+  exportarCSV(nomeArquivoExport('Cotações'), cabecalhos, linhas);
+});
+
+document.getElementById('a-export-btn').addEventListener('click', ()=>{
+  const cabecalhos = ['Descrição','Categoria','Nome do arquivo','Profissional nº'];
+  const linhas = arquitetaCache.map(f=>[
+    f.nome||'', f.categoria||'', f.fileName||'', f.prof||''
+  ]);
+  exportarCSV(nomeArquivoExport('Documentos'), cabecalhos, linhas);
+});
 
 function resizeImageBase64(base64, maxLado){
   return new Promise((resolve)=>{
