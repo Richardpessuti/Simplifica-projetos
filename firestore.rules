@@ -12,10 +12,11 @@ rules_version = '2';
 // - Tudo dentro de um projeto (cotações, prestadores, cronograma, arquivos
 //   em pedaços etc.) herda essa mesma checagem, através de uma única regra
 //   recursiva — não precisa listar cada subcoleção uma por uma.
-// - `arquitetos` é legível por qualquer usuário autenticado (necessário pro
-//   banner de logo aparecer pra qualquer membro do projeto), mas só o
-//   master cria/edita/exclui — exceto um arquiteto pode atualizar o
-//   próprio cadastro (usado pra trocar a própria logo).
+// - `arquitetos` só é legível pelo próprio arquiteto (dono do cadastro) ou
+//   pelo master — não é mais lido por clientes/membros de projeto, já que a
+//   logo agora é gravada direto em `projetos/{id}.logoBase64` (propagada
+//   sempre que o arquiteto atualiza a própria logo). Só o master cria/exclui
+//   — um arquiteto pode atualizar o próprio cadastro (ex: trocar a logo).
 // - `config/master` define quem é o master; só o master atual pode trocar.
 
 service cloud.firestore {
@@ -60,7 +61,8 @@ service cloud.firestore {
 
     // ---------- arquitetos ----------
     match /arquitetos/{arqId} {
-      allow read: if isSignedIn();
+      allow read: if isMaster() ||
+        (isSignedIn() && resource.data.email is string && resource.data.email.lower() == userEmail());
       allow create, delete: if isMaster();
       allow update: if isMaster() ||
         (isSignedIn() && resource.data.email is string && resource.data.email.lower() == userEmail());
@@ -85,11 +87,12 @@ service cloud.firestore {
     match /projetos/{projetoId} {
       allow read: if isProjectMember(resource.data);
 
+      // criadoPor precisa ser exatamente o e-mail de quem está criando (já em minúsculo,
+      // por definição de userEmail()), e membrosEmails só pode conter esse mesmo e-mail
+      // no momento da criação — evita depender só do app já mandar tudo em minúsculo
       allow create: if isSignedIn() &&
-        request.resource.data.criadoPor is string &&
-        request.resource.data.criadoPor.lower() == userEmail() &&
-        request.resource.data.membrosEmails is list &&
-        userEmail() in request.resource.data.membrosEmails;
+        request.resource.data.criadoPor == userEmail() &&
+        request.resource.data.membrosEmails == [userEmail()];
 
       allow update: if isProjectMember(resource.data) &&
         // impede que um membro comum se auto-promova a criador ou mude quem tem acesso;

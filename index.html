@@ -5386,7 +5386,13 @@ if(firebaseOk){
         criadoPor: currentUserEmail,
         criado: firebase.firestore.FieldValue.serverTimestamp()
       };
-      if(efetivoArquitetoId) payload.arquitetoId = efetivoArquitetoId;
+      if(efetivoArquitetoId){
+        payload.arquitetoId = efetivoArquitetoId;
+        // guarda uma cópia da logo atual do arquiteto direto no projeto — evita que
+        // o cliente precise ler a coleção "arquitetos" (mais restrita) só pra exibir a logo
+        const arqDoc = await db.collection('arquitetos').doc(efetivoArquitetoId).get();
+        if(arqDoc.exists && arqDoc.data().logoBase64) payload.logoBase64 = arqDoc.data().logoBase64;
+      }
       const ref = await db.collection('projetos').add(payload);
       abrirProjeto(ref.id, nome, payload);
     }catch(e){
@@ -5516,6 +5522,10 @@ if(firebaseOk){
     try{
       if(projetoArquitetoId){
         await db.collection('arquitetos').doc(projetoArquitetoId).update({logoBase64: logoBase64Pendente});
+        // propaga a logo nova pra todos os projetos desse arquiteto — o cliente lê a
+        // logo direto do próprio projeto, sem precisar de acesso à coleção "arquitetos"
+        const projetosDoArquiteto = await db.collection('projetos').where('arquitetoId','==',projetoArquitetoId).get();
+        await Promise.all(projetosDoArquiteto.docs.map(d => d.ref.update({logoBase64: logoBase64Pendente})));
       }else{
         await db.collection('projetos').doc(currentProjetoId).update({logoBase64: logoBase64Pendente});
       }
@@ -5899,12 +5909,10 @@ if(firebaseOk){
       renderTipoCoresLegenda();
       renderDecoGrid();
 
-      let logoBase64 = data.logoBase64 || null;
-      if(projetoArquitetoId){
-        const arqDoc = await db.collection('arquitetos').doc(projetoArquitetoId).get();
-        logoBase64 = (arqDoc.data() && arqDoc.data().logoBase64) || null;
-      }
-      aplicarLogoBanner(logoBase64);
+      // a logo já vem salva direto no projeto (propagada quando o arquiteto atualiza a
+      // dele) — evita depender de leitura da coleção "arquitetos", que agora é restrita
+      // ao próprio arquiteto/master
+      aplicarLogoBanner(data.logoBase64 || null);
 
       renderDecoracoes(data.decoracoes || []);
 
