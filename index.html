@@ -1670,6 +1670,12 @@
     <label>Preço (R$)</label>
     <input type="number" id="c-preco" placeholder="0,00">
 
+    <details id="c-itens-details" style="margin-top:14px;">
+      <summary>Itens detalhados (opcional) <span id="c-itens-resumo" class="tag"></span></summary>
+      <div id="c-itens-lista" style="margin-top:10px;"></div>
+      <button type="button" class="btn muted" id="c-item-add" style="margin-top:8px;">+ Adicionar item</button>
+    </details>
+
     <label>Número do profissional (opcional)</label>
     <input type="text" id="c-prof" placeholder="Ex: 01, 02...">
 
@@ -3834,11 +3840,33 @@ document.getElementById('p-export-btn').addEventListener('click', ()=>{
 });
 
 document.getElementById('c-export-btn').addEventListener('click', ()=>{
-  const cabecalhos = ['Item','Tipo','Local','Preço','Status','Profissional nº','Tem arquivo anexado'];
-  const linhas = cotacoesCache.map(q=>[
-    q.item||'', q.tipo||'', q.local||'', q.preco!=null?String(q.preco).replace('.',','):'',
-    q.status||'', q.prof||'', q.hasFile?'Sim':'Não'
-  ]);
+  const cabecalhos = ['Tipo','Cotação','Local','Status','Preço total da cotação','Descrição do item','Qtd','Valor unit. do item','Valor total do item'];
+
+  // agrupa por tipo (mesma ordem alfabética da lista) e, dentro do tipo, Aprovado primeiro
+  const grupos = {};
+  cotacoesCache.forEach(q=>{
+    const t = q.tipo || 'Outro';
+    if(!grupos[t]) grupos[t] = [];
+    grupos[t].push(q);
+  });
+  const tiposOrdenados = Object.keys(grupos).sort((a,b)=>a.localeCompare(b));
+  const ordemStatus = {Aprovado:0, Pendente:1, Recusado:2};
+
+  const linhas = [];
+  tiposOrdenados.forEach(tipo=>{
+    const cots = grupos[tipo].slice().sort((a,b)=> (ordemStatus[a.status]??1) - (ordemStatus[b.status]??1));
+    cots.forEach(q=>{
+      const precoTotal = q.preco!=null ? String(q.preco).replace('.',',') : '';
+      if(q.itens && q.itens.length){
+        q.itens.forEach(it=>{
+          linhas.push([tipo, q.item||'', q.local||'', q.status||'', precoTotal, it.descricao||'', it.qtd||'', it.valorUnit||'', it.valorTotal||'']);
+        });
+      }else{
+        linhas.push([tipo, q.item||'', q.local||'', q.status||'', precoTotal, '', '', '', '']);
+      }
+    });
+  });
+
   exportarCSV(nomeArquivoExport('Cotações'), cabecalhos, linhas);
 });
 
@@ -4108,6 +4136,7 @@ function renderCotacoesList(docs){
             <div class="price">${q.preco ? 'R$ '+Number(q.preco).toLocaleString('pt-BR',{minimumFractionDigits:2}) : ''}</div>
           </div>
           ${q.prof ? `<span class="badge-prof">Profissional nº ${escapeHtml(q.prof)}</span>` : ''}
+          ${(q.itens && q.itens.length) ? `<span class="tag" style="margin-top:6px;display:inline-block;">${q.itens.length} ${q.itens.length===1?'item':'itens'} detalhado${q.itens.length===1?'':'s'}</span>` : ''}
           <label style="margin-top:10px;">Status</label>
           <select data-status-id="${q.id}" class="status-select ${statusClass(q.status)}">
             <option value="Pendente" ${q.status==='Pendente'?'selected':''}>Pendente</option>
@@ -4315,6 +4344,55 @@ function renderCartoes(docs){
 document.getElementById('cart-mes-prev').addEventListener('click', ()=>{ cartMesOffset--; renderCartoes(cotacoesCache); });
 document.getElementById('cart-mes-next').addEventListener('click', ()=>{ cartMesOffset++; renderCartoes(cotacoesCache); });
 
+function itemLinhaHTML(dados){
+  const d = dados || {};
+  return `<div class="c-item-row" style="display:grid;grid-template-columns:1fr 56px 78px 78px 26px;gap:6px;align-items:center;margin-bottom:6px;">
+    <input type="text" class="c-item-descricao" placeholder="Descrição" value="${escapeHtml(d.descricao||'')}" style="font-size:12px;padding:8px;">
+    <input type="text" class="c-item-qtd" placeholder="Qtd" value="${escapeHtml(d.qtd||'')}" style="font-size:12px;padding:8px;">
+    <input type="text" class="c-item-valorunit" placeholder="Vl. unit" value="${escapeHtml(d.valorUnit||'')}" style="font-size:12px;padding:8px;">
+    <input type="text" class="c-item-valortotal" placeholder="Vl. total" value="${escapeHtml(d.valorTotal||'')}" style="font-size:12px;padding:8px;">
+    <button type="button" class="c-item-remove" aria-label="Remover item" style="border:none;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px;">✕</button>
+  </div>`;
+}
+function adicionarLinhaItem(dados){
+  document.getElementById('c-itens-lista').insertAdjacentHTML('beforeend', itemLinhaHTML(dados));
+  atualizarResumoItens();
+}
+function limparItensCotacao(){
+  document.getElementById('c-itens-lista').innerHTML = '';
+  atualizarResumoItens();
+}
+function popularItensCotacao(itens){
+  limparItensCotacao();
+  (itens||[]).forEach(it=>adicionarLinhaItem(it));
+}
+function lerItensCotacao(){
+  const itens = [];
+  document.querySelectorAll('#c-itens-lista .c-item-row').forEach(row=>{
+    const descricao = row.querySelector('.c-item-descricao').value.trim();
+    const qtd = row.querySelector('.c-item-qtd').value.trim();
+    const valorUnit = row.querySelector('.c-item-valorunit').value.trim();
+    const valorTotal = row.querySelector('.c-item-valortotal').value.trim();
+    if(descricao) itens.push({descricao, qtd, valorUnit, valorTotal});
+  });
+  return itens;
+}
+function atualizarResumoItens(){
+  const itens = lerItensCotacao();
+  const el = document.getElementById('c-itens-resumo');
+  if(itens.length === 0){ el.textContent = ''; return; }
+  const soma = itens.reduce((s,it)=> s + (parseFloat(String(it.valorTotal).replace(',','.'))||0), 0);
+  el.textContent = itens.length + (itens.length===1?' item':' itens') + ' · R$ ' + soma.toLocaleString('pt-BR',{minimumFractionDigits:2});
+}
+document.getElementById('c-item-add').addEventListener('click', ()=>adicionarLinhaItem());
+document.getElementById('c-itens-lista').addEventListener('click', (e)=>{
+  if(e.target.classList.contains('c-item-remove')){
+    e.target.closest('.c-item-row').remove();
+    atualizarResumoItens();
+  }
+});
+document.getElementById('c-itens-lista').addEventListener('input', atualizarResumoItens);
+
 document.getElementById('c-save').addEventListener('click', async ()=>{
   if(!db){ toast('Configure o Firebase primeiro'); return; }
   const btn = document.getElementById('c-save');
@@ -4394,6 +4472,13 @@ document.getElementById('c-save').addEventListener('click', async ()=>{
     }
 
     const payload = { item, tipo, local, preco, prof, status, hasFile, fileName };
+    const itens = lerItensCotacao();
+    if(itens.length){
+      payload.itens = itens;
+    }else if(isEditing){
+      // .set() sem merge não aceita FieldValue.delete() — só remove o campo em edição (update)
+      payload.itens = firebase.firestore.FieldValue.delete();
+    }
 
     if(status === 'Aprovado'){
       const modo = document.getElementById('c-pag-parcelado').classList.contains('active') ? 'parcelado' : 'vista';
@@ -4431,6 +4516,7 @@ document.getElementById('c-save').addEventListener('click', async ()=>{
     fileInput.value='';
     document.getElementById('c-drop').textContent = 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 10MB cada)';
     document.getElementById('c-drop').classList.remove('has-file');
+    limparItensCotacao();
     toast(isEditing ? 'Cotação atualizada' : 'Cotação salva');
     cancelEditCotacao();
   }catch(e){
@@ -4444,6 +4530,7 @@ function cancelEditCotacao(){
   editingCotacaoId = null;
   cotBulkFiles = [];
   renderCotBulkPreview();
+  limparItensCotacao();
   document.getElementById('c-form-title').innerHTML = 'Nova cotação <span class="tag">upload</span>';
   document.getElementById('c-save').textContent = 'Salvar cotação';
   document.getElementById('c-cancel').style.display = 'none';
@@ -5005,6 +5092,8 @@ document.addEventListener('click', async (e)=>{
     }
     document.getElementById('c-file').value = '';
     document.getElementById('c-drop').textContent = q.hasFile ? ('Arquivo atual: '+q.fileName+' (toque para substituir)') : 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 10MB cada)';
+    popularItensCotacao(q.itens);
+    document.getElementById('c-itens-details').open = !!(q.itens && q.itens.length);
     document.getElementById('c-form-title').innerHTML = 'Editando cotação <span class="tag">edição</span>';
     document.getElementById('c-save').textContent = 'Salvar edição';
     document.getElementById('c-cancel').style.display = 'block';
