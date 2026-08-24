@@ -1,0 +1,140 @@
+{
+  "atualizado_em": "2026-08-24T13:37:40.188318+00:00",
+  "linhas": [
+    {
+      "data": "2026-08-24",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Mercado Livre",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 Client Error: Forbidden for url: https://api.mercadolibre.com/sites/MLB/search?q=geladeira+brastemp+frost+free+375l&limit=3"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Casas Bahia",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 Client Error: Forbidden for url: https://www.casasbahia.com.br/api/catalog_system/pub/products/search/geladeira%20brastemp%20frost%20free%20375l"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Fast Shop",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "503 Server Error: Service Unavailable for url: https://www.fastshop.com.br/api/catalog_system/pub/products/search/geladeira%20brastemp%20frost%20free%20375l"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Magazine Luiza",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "nenhum resultado"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Amazon",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "nenhum resultado (pode ser bloqueio anti-robô)"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Mercado Livre",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 Client Error: Forbidden for url: https://api.mercadolibre.com/sites/MLB/search?q=micro-ondas+electrolux+20l&limit=3"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Casas Bahia",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 Client Error: Forbidden for url: https://www.casasbahia.com.br/api/catalog_system/pub/products/search/micro-ondas%20electrolux%2020l"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Fast Shop",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "503 Server Error: Service Unavailable for url: https://www.fastshop.com.br/api/catalog_system/pub/products/search/micro-ondas%20electrolux%2020l"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Magazine Luiza",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "nenhum resultado"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Amazon",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "nenhum resultado (pode ser bloqueio anti-robô)"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Mercado Livre",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 Client Error: Forbidden for url: https://api.mercadolibre.com/sites/MLB/search?q=fog%C3%A3o+4+bocas+consul&limit=3"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Casas Bahia",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 Client Error: Forbidden for url: https://www.casasbahia.com.br/api/catalog_system/pub/products/search/fog%C3%A3o%204%20bocas%20consul"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Fast Shop",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "503 Server Error: Service Unavailable for url: https://www.fastshop.com.br/api/catalog_system/pub/products/search/fog%C3%A3o%204%20bocas%20consul"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Magazine Luiza",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "nenhum resultado"
+    },
+    {
+      "data": "2026-08-24",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Amazon",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "nenhum resultado (pode ser bloqueio anti-robô)"
+    }
+  ]
+}
