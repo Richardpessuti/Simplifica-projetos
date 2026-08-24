@@ -11,11 +11,12 @@ from playwright.sync_api import sync_playwright
 from scraper.buscar import buscar_casasbahia, buscar_fastshop, buscar_mercadolivre
 from scraper.extrair import buscar_amazon, buscar_magalu
 from scraper.notificar import notificar
-from scraper.planilha import preco_anterior, salvar_resultados
+from scraper.planilha import preco_anterior, salvar_json, salvar_resultados
 
 RAIZ = Path(__file__).resolve().parent.parent
 CONFIG = RAIZ / "config" / "produtos.json"
 PLANILHA = RAIZ / "data" / "historico.xlsx"
+JSON_HISTORICO = RAIZ / "data" / "historico.json"
 TOPICO_NTFY = os.environ.get("NTFY_TOPICO")  # None -> usa o padrão de notificar.py
 
 
@@ -55,6 +56,7 @@ def main():
             navegador.close()
 
     salvar_resultados(PLANILHA, todos_resultados)
+    salvar_json(JSON_HISTORICO, todos_resultados)
 
     for nome, site, antes, agora, url in quedas:
         notificar(

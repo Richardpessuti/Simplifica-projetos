@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preços de Eletrodomésticos</title>
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  img-src 'self' data:;
+  connect-src 'self';
+">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F5F3;
+    --paper-line:#E1E4E0;
+    --ink:#14171C;
+    --accent:#2F6F5E;
+    --accent-dark:#24594B;
+    --accent-soft:#E4EFEB;
+    --card-bg:#FFFFFF;
+    --nav-bg:#FFFFFF;
+    --radius-card:16px;
+    --radius-btn:10px;
+    --caution:#C7862B;
+    --caution-soft:#FBF1E1;
+    --danger:#C1443A;
+    --danger-soft:#FBEAE8;
+    --muted:#6B7178;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background-color:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+  }
+  header{
+    background:var(--nav-bg);
+    border-bottom:1px solid var(--paper-line);
+    padding:28px 20px 22px;
+  }
+  header .conteudo{
+    max-width:960px;
+    margin:0 auto;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:26px;
+    font-weight:700;
+    margin:0 0 4px;
+  }
+  .subtitulo{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--muted);
+  }
+  main{
+    max-width:960px;
+    margin:0 auto;
+    padding:24px 20px 60px;
+  }
+  .aviso{
+    background:var(--caution-soft);
+    border:1px solid color-mix(in srgb, var(--caution) 35%, transparent);
+    color:#7A551C;
+    border-radius:var(--radius-card);
+    padding:16px 18px;
+    font-size:14px;
+    line-height:1.5;
+    margin-bottom:24px;
+  }
+  .erro-carregamento{
+    background:var(--danger-soft);
+    border:1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    color:#7A2C25;
+    border-radius:var(--radius-card);
+    padding:18px;
+    font-size:14px;
+  }
+  .produto-card{
+    background:var(--card-bg);
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius-card);
+    padding:20px 22px;
+    margin-bottom:18px;
+  }
+  .produto-titulo{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:18px;
+    font-weight:600;
+    margin:0 0 14px;
+  }
+  .melhor-preco{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    background:var(--accent-soft);
+    border-radius:var(--radius-btn);
+    padding:12px 16px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+  }
+  .melhor-preco .valor{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:22px;
+    font-weight:700;
+    color:var(--accent-dark);
+  }
+  .melhor-preco .site{
+    font-size:13px;
+    color:var(--muted);
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+  }
+  th{
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    color:var(--muted);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    padding:6px 8px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  td{
+    padding:9px 8px;
+    border-bottom:1px solid var(--paper-line);
+    vertical-align:top;
+  }
+  tr:last-child td{ border-bottom:none; }
+  .preco{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .badge{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:600;
+    padding:2px 7px;
+    border-radius:999px;
+    margin-left:6px;
+  }
+  .badge.queda{ background:var(--accent-soft); color:var(--accent-dark); }
+  .badge.alta{ background:var(--danger-soft); color:var(--danger); }
+  .site-link{
+    color:var(--accent-dark);
+    text-decoration:none;
+    font-weight:600;
+  }
+  .site-link:hover{ text-decoration:underline; }
+  .sem-preco{ color:var(--muted); font-style:italic; }
+  .rodape-nome{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  .carregando{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--muted);
+    padding:40px 0;
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="conteudo">
+    <h1>Preços de Eletrodomésticos</h1>
+    <div class="subtitulo" id="atualizado-em">carregando...</div>
+  </div>
+</header>
+
+<main>
+  <div id="conteudo-principal">
+    <div class="carregando">Carregando preços…</div>
+  </div>
+</main>
+
+<script>
+const CAMINHO_JSON = 'precos-eletrodomesticos/data/historico.json';
+
+function formatarPreco(valor) {
+  if (valor === null || valor === undefined || valor === '') return null;
+  return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function formatarData(iso) {
+  if (!iso) return '';
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+function agruparPorProduto(linhas) {
+  const produtos = new Map();
+  for (const linha of linhas) {
+    if (!produtos.has(linha.produto)) produtos.set(linha.produto, new Map());
+    const porSite = produtos.get(linha.produto);
+    if (!porSite.has(linha.site)) porSite.set(linha.site, []);
+    porSite.get(linha.site).push(linha);
+  }
+  // ordena o histórico de cada site por data
+  for (const porSite of produtos.values()) {
+    for (const historico of porSite.values()) {
+      historico.sort((a, b) => (a.data > b.data ? 1 : -1));
+    }
+  }
+  return produtos;
+}
+
+function renderizarProduto(nomeProduto, porSite) {
+  const linhasSite = [];
+  let melhor = null;
+
+  for (const [site, historico] of porSite.entries()) {
+    const atual = historico[historico.length - 1];
+    const anterior = historico.length > 1 ? historico[historico.length - 2] : null;
+
+    const precoAtual = atual.preco;
+    const precoFormatado = formatarPreco(precoAtual);
+
+    let badge = '';
+    if (precoFormatado && anterior && anterior.preco) {
+      if (precoAtual < anterior.preco) badge = '<span class="badge queda">↓ caiu</span>';
+      else if (precoAtual > anterior.preco) badge = '<span class="badge alta">↑ subiu</span>';
+    }
+
+    if (precoFormatado && (melhor === null || precoAtual < melhor.preco)) {
+      melhor = { site, preco: precoAtual, url: atual.url };
+    }
+
+    const celulaPreco = precoFormatado
+      ? `<span class="preco">${precoFormatado}</span>${badge}`
+      : `<span class="sem-preco">${atual.erro ? 'não encontrado' : '—'}</span>`;
+
+    const celulaSite = atual.url
+      ? `<a class="site-link" href="${atual.url}" target="_blank" rel="noopener noreferrer">${site}</a>`
+      : site;
+
+    const nomeEncontrado = atual.nome_encontrado
+      ? `<div class="rodape-nome">${atual.nome_encontrado}</div>`
+      : '';
+
+    linhasSite.push(`
+      <tr>
+        <td>${celulaSite}${nomeEncontrado}</td>
+        <td class="preco-cel">${celulaPreco}</td>
+        <td>${formatarData(atual.data)}</td>
+      </tr>
+    `);
+  }
+
+  const blocoMelhor = melhor
+    ? `<div class="melhor-preco">
+         <span class="valor">${formatarPreco(melhor.preco)}</span>
+         <span class="site">melhor preço hoje — ${melhor.site}</span>
+       </div>`
+    : '';
+
+  return `
+    <div class="produto-card">
+      <h2 class="produto-titulo">${nomeProduto}</h2>
+      ${blocoMelhor}
+      <table>
+        <thead>
+          <tr><th>Site</th><th>Preço</th><th>Data</th></tr>
+        </thead>
+        <tbody>${linhasSite.join('')}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+async function carregar() {
+  const areaPrincipal = document.getElementById('conteudo-principal');
+  const areaAtualizado = document.getElementById('atualizado-em');
+  try {
+    const resposta = await fetch(CAMINHO_JSON, { cache: 'no-store' });
+    if (!resposta.ok) throw new Error(`arquivo de dados não encontrado (HTTP ${resposta.status})`);
+    const dados = await resposta.json();
+    const linhas = dados.linhas || [];
+
+    if (linhas.length === 0) {
+      areaAtualizado.textContent = 'ainda sem dados';
+      areaPrincipal.innerHTML = `
+        <div class="aviso">
+          Ainda não há preços coletados. A coleta roda automaticamente todo dia —
+          volte mais tarde, ou rode o workflow manualmente na aba Actions do
+          repositório.
+        </div>`;
+      return;
+    }
+
+    const dataAtualizacao = new Date(dados.atualizado_em);
+    areaAtualizado.textContent = `atualizado em ${dataAtualizacao.toLocaleString('pt-BR')}`;
+
+    const produtos = agruparPorProduto(linhas);
+    let html = '';
+    for (const [nomeProduto, porSite] of produtos.entries()) {
+      html += renderizarProduto(nomeProduto, porSite);
+    }
+    areaPrincipal.innerHTML = html;
+  } catch (erro) {
+    areaAtualizado.textContent = '';
+    areaPrincipal.innerHTML = `
+      <div class="erro-carregamento">
+        Não consegui carregar os preços (${erro.message}). Se o site acabou de
+        ser publicado, a primeira coleta pode ainda não ter rodado.
+      </div>`;
+  }
+}
+
+carregar();
+</script>
+
+</body>
+</html>

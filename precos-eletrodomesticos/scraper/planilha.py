@@ -1,4 +1,7 @@
-"""Lê e grava o histórico de preços em uma planilha .xlsx."""
+"""Lê e grava o histórico de preços em uma planilha .xlsx (pra abrir no Excel)
+e em um .json (pra alimentar a página de preços do site)."""
+import datetime
+import json
 from pathlib import Path
 
 import openpyxl
@@ -24,6 +27,23 @@ def salvar_resultados(caminho: Path, resultados):
     for r in resultados:
         ws.append([r.get(c, "") for c in COLUNAS])
     wb.save(caminho)
+
+
+def salvar_json(caminho: Path, resultados):
+    """Acrescenta os resultados de hoje em data/historico.json (lista simples de
+    linhas), usado pela página precos.html — mais fácil de ler via fetch()
+    no navegador do que abrir o .xlsx."""
+    caminho.parent.mkdir(parents=True, exist_ok=True)
+    linhas = []
+    if caminho.exists():
+        linhas = json.loads(caminho.read_text(encoding="utf-8")).get("linhas", [])
+    for r in resultados:
+        linhas.append({c: r.get(c) for c in COLUNAS})
+    dados = {
+        "atualizado_em": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "linhas": linhas,
+    }
+    caminho.write_text(json.dumps(dados, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def preco_anterior(caminho: Path, produto, site):
