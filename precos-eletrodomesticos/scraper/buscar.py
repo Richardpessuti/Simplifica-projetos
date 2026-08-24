@@ -23,7 +23,7 @@ def buscar_mercadolivre(termo, limite=3):
         qs = urlencode({"q": termo, "limit": limite})
         r = get_via_proxy(
             f"https://api.mercadolibre.com/sites/MLB/search?{qs}",
-            premium=True,
+            ultra_premium=True,
             headers=HEADERS,
             timeout=60,
         )
@@ -53,7 +53,7 @@ def _buscar_vtex(base_url, site_nome, termo, limite=3):
     try:
         r = get_via_proxy(
             f"{base_url}/api/catalog_system/pub/products/search/{termo}",
-            premium=True,
+            ultra_premium=True,
             headers=HEADERS,
             timeout=60,
         )

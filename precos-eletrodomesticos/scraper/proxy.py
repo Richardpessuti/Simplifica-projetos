@@ -16,7 +16,7 @@ SCRAPERAPI_KEY = os.environ.get("SCRAPERAPI_KEY")
 SCRAPERAPI_ENDPOINT = "https://api.scraperapi.com/"
 
 
-def get_via_proxy(url_alvo, renderizar=False, premium=False, headers=None, timeout=60, tentativas=2):
+def get_via_proxy(url_alvo, renderizar=False, premium=False, ultra_premium=False, headers=None, timeout=60, tentativas=2):
     """GET em `url_alvo`, via ScraperAPI se houver chave configurada.
 
     `renderizar=True` pede pro ScraperAPI executar o JavaScript da página
@@ -41,6 +41,8 @@ def get_via_proxy(url_alvo, renderizar=False, premium=False, headers=None, timeo
                     params["render"] = "true"
                 if premium:
                     params["premium"] = "true"
+                if ultra_premium:
+                    params["ultra_premium"] = "true"
                 r = requests.get(SCRAPERAPI_ENDPOINT, params=params, timeout=timeout)
             else:
                 r = requests.get(url_alvo, headers=headers, timeout=timeout)
