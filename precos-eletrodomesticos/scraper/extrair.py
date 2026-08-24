@@ -100,12 +100,12 @@ def buscar_magalu(termo, limite=3):
             "https://www.magazineluiza.com.br",
             "/p/",
             limite,
-            ultra_premium=True,
+            premium=True,
         )
         if not urls:
             resultados.append({"site": "Magazine Luiza", "erro": "nenhum resultado"})
         for url in urls:
-            preco = extrair_preco(url, ultra_premium=True)
+            preco = extrair_preco(url, premium=True)
             resultados.append(
                 {"site": "Magazine Luiza", "nome_encontrado": None, "url": url, "preco": preco}
             )
