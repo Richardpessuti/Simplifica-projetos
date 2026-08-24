@@ -70,26 +70,48 @@ export SCRAPERAPI_KEY=sua_chave_aqui   # opcional localmente, obrigatório no Gi
 python -m scraper.main
 ```
 
+## ⚠️ Status real hoje: só a Amazon funciona no plano gratuito
+
+Testado em produção (24/08/2026): **Mercado Livre, Casas Bahia, Fast Shop e
+Magazine Luiza recusam a requisição mesmo com o proxy**, com esta mensagem
+explícita do ScraperAPI:
+
+> Your current plan does not allow you to use our premium proxies. Please
+> upgrade your plan to gain access to our Premium and Ultra Premium pools.
+
+Ou seja: esses 4 sites são "domínios protegidos" pro ScraperAPI, e só
+respondem através do pool de proxy residencial (`premium`/`ultra_premium`),
+que **não está incluído no plano gratuito** — não é bug de código, é limite
+de plano. Só a **Amazon** funciona sem precisar de proxy premium, e está
+coletando preço normalmente.
+
+Opções pra resolver isso:
+1. **Fazer upgrade do plano do ScraperAPI** (veja preços/planos em
+   https://docs.scraperapi.com/control-and-optimization/premium-residential-mobile-proxy-pools)
+   pra liberar o pool premium — nesse caso não precisa mexer em nada aqui, o
+   código (`premium=True` já configurado em `scraper/buscar.py` e
+   `scraper/extrair.py`) passa a funcionar automaticamente.
+2. **Deixar como está** — a coleta roda todo dia, só que só a Amazon traz
+   preço; os outros 4 sites ficam registrados com erro na planilha (sem
+   custo nenhum, o ScraperAPI não cobra crédito quando recusa por causa do
+   plano).
+3. Trocar de serviço de proxy por um cujo free tier inclua proxy residencial
+   pros sites que faltam (não testado ainda).
+
 ## Limitações conhecidas (importante ler)
 
-- **Mercado Livre, Casas Bahia e Fast Shop** usam APIs públicas de busca
-  (a da própria Mercado Livre, e a busca padrão da plataforma VTEX, que as
-  outras duas usam) — tendem a ser estáveis, agora passando pelo ScraperAPI.
-- **Magazine Luiza e Amazon** não têm API pública, então o robô pede pro
-  ScraperAPI renderizar a página de busca como um navegador faria, e lê o
-  preço dos dados estruturados da própria página (schema.org/JSON-LD). Isso
-  é mais robusto que depender de classes CSS, mas **sites grandes como a
-  Amazon têm forte proteção anti-robô** (captcha) — é esperado que essas
-  buscas falhem de vez em quando mesmo com proxy. Quando isso acontece, o
-  robô registra o erro na planilha (coluna `erro`) e segue pros outros
-  sites/produtos, sem travar a coleta inteira.
 - Como a busca é por **nome**, e não por link exato, o item encontrado em
   cada site pode ser um modelo ligeiramente diferente (cor, vendedor,
   variação). Confira a coluna `nome_encontrado` e `url` na planilha nos
   primeiros dias — se algum site estiver pegando o produto errado, ajuste o
-  `termo_busca` em `config/produtos.json` pra ficar mais específico.
+  `termo_busca` em `produtos.html` (ou `config/produtos.json`) pra ficar mais
+  específico.
 - Renderizar JavaScript (Magazine Luiza e Amazon) consome mais créditos do
-  plano do ScraperAPI do que uma busca simples (Mercado Livre/Casas
-  Bahia/Fast Shop). Com poucos produtos e uma coleta por dia, o plano
-  gratuito cobre com folga; se a lista de produtos crescer muito, vale de
-  olho no consumo de créditos no painel do ScraperAPI.
+  plano do ScraperAPI do que uma busca simples. Com poucos produtos e uma
+  coleta por dia, o plano gratuito cobre com folga o que a Amazon já usa; se
+  a lista de produtos crescer muito, vale ficar de olho no consumo de
+  créditos no painel do ScraperAPI.
+- Mesmo com proxy, sites grandes têm proteção anti-robô forte — é esperado
+  que buscas falhem de vez em quando mesmo depois de resolvido o ponto
+  acima. Quando isso acontece, o robô registra o erro na planilha (coluna
+  `erro`) e segue pros outros sites/produtos, sem travar a coleta inteira.
