@@ -70,14 +70,14 @@ def _preco_de_padrao_amazon(html):
     return None
 
 
-def extrair_preco(url):
-    r = get_via_proxy(url, renderizar=True, headers=HEADERS, timeout=90)
+def extrair_preco(url, premium=False):
+    r = get_via_proxy(url, renderizar=True, premium=premium, headers=HEADERS, timeout=90)
     html = r.text
     return _preco_de_jsonld(html) or _preco_de_meta(html) or _preco_de_padrao_amazon(html)
 
 
-def _urls_candidatas(url_busca, base_url, filtro_href, limite):
-    r = get_via_proxy(url_busca, renderizar=True, headers=HEADERS, timeout=90)
+def _urls_candidatas(url_busca, base_url, filtro_href, limite, premium=False):
+    r = get_via_proxy(url_busca, renderizar=True, premium=premium, headers=HEADERS, timeout=90)
     hrefs = re.findall(r'href="([^"]+)"', r.text)
     vistas = []
     for href in hrefs:
@@ -100,11 +100,12 @@ def buscar_magalu(termo, limite=3):
             "https://www.magazineluiza.com.br",
             "/p/",
             limite,
+            premium=True,
         )
         if not urls:
             resultados.append({"site": "Magazine Luiza", "erro": "nenhum resultado"})
         for url in urls:
-            preco = extrair_preco(url)
+            preco = extrair_preco(url, premium=True)
             resultados.append(
                 {"site": "Magazine Luiza", "nome_encontrado": None, "url": url, "preco": preco}
             )

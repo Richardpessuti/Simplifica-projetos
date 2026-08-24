@@ -16,12 +16,17 @@ SCRAPERAPI_KEY = os.environ.get("SCRAPERAPI_KEY")
 SCRAPERAPI_ENDPOINT = "https://api.scraperapi.com/"
 
 
-def get_via_proxy(url_alvo, renderizar=False, headers=None, timeout=60, tentativas=2):
+def get_via_proxy(url_alvo, renderizar=False, premium=False, headers=None, timeout=60, tentativas=2):
     """GET em `url_alvo`, via ScraperAPI se houver chave configurada.
 
     `renderizar=True` pede pro ScraperAPI executar o JavaScript da página
     antes de devolver o HTML (necessário pra sites que montam a busca via
     JS) — consome mais créditos da conta e demora mais.
+
+    `premium=True` usa o pool de proxy residencial do ScraperAPI — alguns
+    domínios ("protected domains", na terminologia deles) recusam a
+    requisição sem isso. Consome bem mais créditos que uma requisição
+    simples, então só ativar nos sites que realmente precisam.
 
     Serviços de proxy de scraping falham/expiram de vez em quando por
     natureza (o pedido passa por uma camada extra de rede) — por isso tenta
@@ -34,6 +39,8 @@ def get_via_proxy(url_alvo, renderizar=False, headers=None, timeout=60, tentativ
                 params = {"api_key": SCRAPERAPI_KEY, "url": url_alvo}
                 if renderizar:
                     params["render"] = "true"
+                if premium:
+                    params["premium"] = "true"
                 r = requests.get(SCRAPERAPI_ENDPOINT, params=params, timeout=timeout)
             else:
                 r = requests.get(url_alvo, headers=headers, timeout=timeout)
