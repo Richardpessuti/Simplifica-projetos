@@ -1,9 +1,13 @@
 """Busca produtos por nome em sites que oferecem API pública de busca
 (Mercado Livre, e as lojas em VTEX: Casas Bahia e Fast Shop).
 
-Essas três não precisam de navegador: a busca já devolve JSON com preço.
+Essas três não precisam de renderização de JavaScript: a busca já devolve
+JSON com preço — só precisam passar pelo proxy (scraper/proxy.py) pra não
+levar bloqueio de IP.
 """
-import requests
+from urllib.parse import urlencode
+
+from scraper.proxy import get_via_proxy
 
 HEADERS = {
     "User-Agent": (
@@ -16,11 +20,11 @@ HEADERS = {
 def buscar_mercadolivre(termo, limite=3):
     resultados = []
     try:
-        r = requests.get(
-            "https://api.mercadolibre.com/sites/MLB/search",
-            params={"q": termo, "limit": limite},
+        qs = urlencode({"q": termo, "limit": limite})
+        r = get_via_proxy(
+            f"https://api.mercadolibre.com/sites/MLB/search?{qs}",
             headers=HEADERS,
-            timeout=20,
+            timeout=30,
         )
         r.raise_for_status()
         for item in r.json().get("results", [])[:limite]:
@@ -42,10 +46,10 @@ def buscar_mercadolivre(termo, limite=3):
 def _buscar_vtex(base_url, site_nome, termo, limite=3):
     resultados = []
     try:
-        r = requests.get(
+        r = get_via_proxy(
             f"{base_url}/api/catalog_system/pub/products/search/{termo}",
             headers=HEADERS,
-            timeout=20,
+            timeout=30,
         )
         r.raise_for_status()
         itens = r.json()
