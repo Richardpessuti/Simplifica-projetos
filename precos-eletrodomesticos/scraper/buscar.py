@@ -24,10 +24,14 @@ def buscar_mercadolivre(termo, limite=3):
         r = get_via_proxy(
             f"https://api.mercadolibre.com/sites/MLB/search?{qs}",
             headers=HEADERS,
-            timeout=30,
+            timeout=60,
         )
-        r.raise_for_status()
-        for item in r.json().get("results", [])[:limite]:
+        try:
+            dados = r.json()
+        except ValueError:
+            resultados.append({"site": "Mercado Livre", "erro": "resposta inválida do proxy (corpo vazio ou não-JSON)"})
+            return resultados
+        for item in dados.get("results", [])[:limite]:
             resultados.append(
                 {
                     "site": "Mercado Livre",
@@ -49,10 +53,13 @@ def _buscar_vtex(base_url, site_nome, termo, limite=3):
         r = get_via_proxy(
             f"{base_url}/api/catalog_system/pub/products/search/{termo}",
             headers=HEADERS,
-            timeout=30,
+            timeout=60,
         )
-        r.raise_for_status()
-        itens = r.json()
+        try:
+            itens = r.json()
+        except ValueError:
+            resultados.append({"site": site_nome, "erro": "resposta inválida do proxy (corpo vazio ou não-JSON)"})
+            return resultados
         for item in itens[:limite]:
             preco = None
             try:

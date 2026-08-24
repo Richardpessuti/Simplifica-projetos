@@ -58,16 +58,26 @@ def _preco_de_meta(html):
     return None
 
 
+def _preco_de_padrao_amazon(html):
+    """A Amazon nem sempre expõe JSON-LD/meta com preço — o valor "pra leitor
+    de tela" (a-offscreen) é o jeito mais estável de pegar o preço exibido."""
+    m = re.search(r'class="a-offscreen">\s*R\$\s*([\d.,]+)', html)
+    if m:
+        try:
+            return float(m.group(1).replace(".", "").replace(",", "."))
+        except ValueError:
+            return None
+    return None
+
+
 def extrair_preco(url):
-    r = get_via_proxy(url, renderizar=True, headers=HEADERS, timeout=60)
-    r.raise_for_status()
+    r = get_via_proxy(url, renderizar=True, headers=HEADERS, timeout=90)
     html = r.text
-    return _preco_de_jsonld(html) or _preco_de_meta(html)
+    return _preco_de_jsonld(html) or _preco_de_meta(html) or _preco_de_padrao_amazon(html)
 
 
 def _urls_candidatas(url_busca, base_url, filtro_href, limite):
-    r = get_via_proxy(url_busca, renderizar=True, headers=HEADERS, timeout=60)
-    r.raise_for_status()
+    r = get_via_proxy(url_busca, renderizar=True, headers=HEADERS, timeout=90)
     hrefs = re.findall(r'href="([^"]+)"', r.text)
     vistas = []
     for href in hrefs:
