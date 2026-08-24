@@ -7,10 +7,33 @@ Todo dia (via GitHub Actions), esse projeto:
 2. Busca cada um em 5 sites: **Mercado Livre, Casas Bahia, Fast Shop,
    Magazine Luiza e Amazon**.
 3. Salva o resultado (produto, site, nome encontrado, preço, link) em
-   `data/historico.xlsx`, que fica versionado no repositório — é a "planilha"
-   com o histórico de preços, dia após dia.
+   `data/historico.xlsx` (e em `data/historico.json`, que alimenta a página
+   `precos.html`) — ambos versionados no repositório, com o histórico dia
+   após dia.
 4. Se o preço de algum item caiu em relação ao último registro, manda uma
    notificação push via [ntfy.sh](https://ntfy.sh) (sem cadastro).
+
+A página com os preços fica em **precos.html**, publicada junto do resto do
+site.
+
+## ⚠️ Passo obrigatório: cadastrar a chave do ScraperAPI
+
+Sites grandes de varejo bloqueiam requisições vindas de IPs de nuvem (é assim
+que o GitHub Actions acessa a internet) — na primeira execução real, os 5
+sites recusaram a conexão. Pra funcionar de verdade, é preciso usar um
+serviço de proxy de scraping que contorna esse bloqueio: o
+[ScraperAPI](https://www.scraperapi.com/).
+
+1. Crie uma conta gratuita em https://www.scraperapi.com/ (o plano free dá
+   ~5.000 créditos/mês — bem mais do que o suficiente pra 3-10 produtos
+   acompanhados uma vez por dia).
+2. Copie a **API Key** do painel deles.
+3. No repositório do GitHub: **Settings → Secrets and variables → Actions →
+   New repository secret**, nome `SCRAPERAPI_KEY`, valor a chave copiada.
+
+Sem esse segredo cadastrado, o robô ainda roda, mas tenta acessar os sites
+direto — o que tende a falhar nos 5 sites vindo do GitHub Actions, exatamente
+como no primeiro teste.
 
 ## Como adicionar/mudar os eletrodomésticos que quero acompanhar
 
@@ -30,9 +53,8 @@ Não precisa de link — o robô procura pelo nome em cada site.
 
 Quer um tópico só seu (mais privado, já que qualquer um que souber o nome
 do tópico padrão consegue assinar)? Crie um nome único, assine ele no app, e
-cadastre como segredo do repositório: **Settings → Secrets and variables →
-Actions → New repository secret**, nome `NTFY_TOPICO`, valor com o nome do
-seu tópico.
+cadastre como segredo do repositório (mesmo lugar do `SCRAPERAPI_KEY` acima),
+nome `NTFY_TOPICO`, valor com o nome do seu tópico.
 
 ## Rodar manualmente (sem esperar o agendamento)
 
@@ -44,7 +66,7 @@ Na aba **Actions** do repositório → workflow **"Preços de eletrodomésticos
 ```bash
 cd precos-eletrodomesticos
 pip install -r requirements.txt
-playwright install chromium
+export SCRAPERAPI_KEY=sua_chave_aqui   # opcional localmente, obrigatório no GitHub Actions
 python -m scraper.main
 ```
 
@@ -52,24 +74,22 @@ python -m scraper.main
 
 - **Mercado Livre, Casas Bahia e Fast Shop** usam APIs públicas de busca
   (a da própria Mercado Livre, e a busca padrão da plataforma VTEX, que as
-  outras duas usam) — tendem a ser estáveis.
-- **Magazine Luiza e Amazon** não têm API pública, então o robô abre a
-  página de busca com um navegador (Playwright) e lê o preço dos dados
-  estruturados da própria página (schema.org/JSON-LD). Isso é mais robusto
-  que depender de classes CSS, mas **sites grandes como a Amazon têm forte
-  proteção anti-robô** (captcha, bloqueio por IP) — é esperado que essas
-  buscas falhem de vez em quando. Quando isso acontece, o robô registra o
-  erro na planilha (coluna `erro`) e segue pros outros sites/produtos, sem
-  travar a coleta inteira.
+  outras duas usam) — tendem a ser estáveis, agora passando pelo ScraperAPI.
+- **Magazine Luiza e Amazon** não têm API pública, então o robô pede pro
+  ScraperAPI renderizar a página de busca como um navegador faria, e lê o
+  preço dos dados estruturados da própria página (schema.org/JSON-LD). Isso
+  é mais robusto que depender de classes CSS, mas **sites grandes como a
+  Amazon têm forte proteção anti-robô** (captcha) — é esperado que essas
+  buscas falhem de vez em quando mesmo com proxy. Quando isso acontece, o
+  robô registra o erro na planilha (coluna `erro`) e segue pros outros
+  sites/produtos, sem travar a coleta inteira.
 - Como a busca é por **nome**, e não por link exato, o item encontrado em
   cada site pode ser um modelo ligeiramente diferente (cor, vendedor,
   variação). Confira a coluna `nome_encontrado` e `url` na planilha nos
   primeiros dias — se algum site estiver pegando o produto errado, ajuste o
   `termo_busca` em `config/produtos.json` pra ficar mais específico.
-- Este ambiente de desenvolvimento (onde o código foi escrito) bloqueia
-  acesso direto a esses sites de varejo — por isso o código não pôde ser
-  testado ao vivo antes do primeiro push. O primeiro teste real acontece
-  quando o workflow roda no GitHub Actions (que tem acesso normal à
-  internet). Rode manualmente (seção acima) depois do primeiro push e
-  confira a aba **Actions** → logs, e o arquivo `data/historico.xlsx`
-  gerado, pra validar se os sites estão respondendo como esperado.
+- Renderizar JavaScript (Magazine Luiza e Amazon) consome mais créditos do
+  plano do ScraperAPI do que uma busca simples (Mercado Livre/Casas
+  Bahia/Fast Shop). Com poucos produtos e uma coleta por dia, o plano
+  gratuito cobre com folga; se a lista de produtos crescer muito, vale de
+  olho no consumo de créditos no painel do ScraperAPI.

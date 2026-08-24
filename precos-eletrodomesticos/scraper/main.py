@@ -6,8 +6,6 @@ import json
 import os
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
-
 from scraper.buscar import buscar_casasbahia, buscar_fastshop, buscar_mercadolivre
 from scraper.extrair import buscar_amazon, buscar_magalu
 from scraper.notificar import notificar
@@ -20,14 +18,14 @@ JSON_HISTORICO = RAIZ / "data" / "historico.json"
 TOPICO_NTFY = os.environ.get("NTFY_TOPICO")  # None -> usa o padrão de notificar.py
 
 
-def coletar_produto(produto, navegador):
+def coletar_produto(produto):
     termo = produto["termo_busca"]
     achados = []
     achados += buscar_mercadolivre(termo)
     achados += buscar_casasbahia(termo)
     achados += buscar_fastshop(termo)
-    achados += buscar_magalu(termo, navegador)
-    achados += buscar_amazon(termo, navegador)
+    achados += buscar_magalu(termo)
+    achados += buscar_amazon(termo)
     return achados
 
 
@@ -37,23 +35,18 @@ def main():
     todos_resultados = []
     quedas = []
 
-    with sync_playwright() as p:
-        navegador = p.chromium.launch(headless=True)
-        try:
-            for produto in produtos:
-                nome = produto["nome"]
-                achados = coletar_produto(produto, navegador)
-                for achado in achados:
-                    achado["produto"] = nome
-                    achado["data"] = hoje
-                    preco = achado.get("preco")
-                    if preco:
-                        anterior = preco_anterior(PLANILHA, nome, achado["site"])
-                        if anterior and preco < anterior:
-                            quedas.append((nome, achado["site"], anterior, preco, achado.get("url")))
-                todos_resultados.extend(achados)
-        finally:
-            navegador.close()
+    for produto in produtos:
+        nome = produto["nome"]
+        achados = coletar_produto(produto)
+        for achado in achados:
+            achado["produto"] = nome
+            achado["data"] = hoje
+            preco = achado.get("preco")
+            if preco:
+                anterior = preco_anterior(PLANILHA, nome, achado["site"])
+                if anterior and preco < anterior:
+                    quedas.append((nome, achado["site"], anterior, preco, achado.get("url")))
+        todos_resultados.extend(achados)
 
     salvar_resultados(PLANILHA, todos_resultados)
     salvar_json(JSON_HISTORICO, todos_resultados)

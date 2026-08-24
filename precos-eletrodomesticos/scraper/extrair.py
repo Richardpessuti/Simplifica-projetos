@@ -1,12 +1,22 @@
 """Busca e extração de preço para sites sem API pública (Magazine Luiza, Amazon).
 
-Usa navegador (Playwright) pra renderizar a página e lê o preço dos dados
-estruturados que a própria página expõe pra SEO (JSON-LD ou meta tags de
-schema.org) — mais estável do que depender de classes CSS, que mudam com
-frequência nesses sites.
+Pede pro proxy (scraper/proxy.py, via ScraperAPI) renderizar a página como um
+navegador de verdade renderizaria, e lê o preço dos dados estruturados que a
+própria página expõe pra SEO (JSON-LD ou meta tags de schema.org) — mais
+estável do que depender de classes CSS, que mudam com frequência nesses sites.
 """
 import json
 import re
+from urllib.parse import urljoin
+
+from scraper.proxy import get_via_proxy
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+    )
+}
 
 
 def _preco_de_jsonld(html):
@@ -48,68 +58,68 @@ def _preco_de_meta(html):
     return None
 
 
-def extrair_preco(url, page):
-    page.goto(url, timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2000)
-    html = page.content()
+def extrair_preco(url):
+    r = get_via_proxy(url, renderizar=True, headers=HEADERS, timeout=60)
+    r.raise_for_status()
+    html = r.text
     return _preco_de_jsonld(html) or _preco_de_meta(html)
 
 
-def _urls_candidatas(page, url_busca, filtro_href, limite):
-    page.goto(url_busca, timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(2500)
-    hrefs = page.eval_on_selector_all(
-        f"a[href*='{filtro_href}']", "els => els.map(e => e.href)"
-    )
+def _urls_candidatas(url_busca, base_url, filtro_href, limite):
+    r = get_via_proxy(url_busca, renderizar=True, headers=HEADERS, timeout=60)
+    r.raise_for_status()
+    hrefs = re.findall(r'href="([^"]+)"', r.text)
     vistas = []
     for href in hrefs:
-        base = href.split("?")[0]
-        if base not in vistas:
-            vistas.append(base)
+        if filtro_href not in href:
+            continue
+        url_absoluta = urljoin(base_url, href).split("?")[0]
+        if url_absoluta not in vistas:
+            vistas.append(url_absoluta)
         if len(vistas) >= limite:
             break
     return vistas
 
 
-def buscar_magalu(termo, browser, limite=3):
+def buscar_magalu(termo, limite=3):
     resultados = []
-    page = browser.new_page()
     try:
         termo_url = termo.replace(" ", "+")
         urls = _urls_candidatas(
-            page, f"https://www.magazineluiza.com.br/busca/{termo_url}/", "/p/", limite
+            f"https://www.magazineluiza.com.br/busca/{termo_url}/",
+            "https://www.magazineluiza.com.br",
+            "/p/",
+            limite,
         )
         if not urls:
             resultados.append({"site": "Magazine Luiza", "erro": "nenhum resultado"})
         for url in urls:
-            preco = extrair_preco(url, page)
+            preco = extrair_preco(url)
             resultados.append(
                 {"site": "Magazine Luiza", "nome_encontrado": None, "url": url, "preco": preco}
             )
     except Exception as e:
         resultados.append({"site": "Magazine Luiza", "erro": str(e)})
-    finally:
-        page.close()
     return resultados
 
 
-def buscar_amazon(termo, browser, limite=3):
+def buscar_amazon(termo, limite=3):
     resultados = []
-    page = browser.new_page()
     try:
         termo_url = termo.replace(" ", "+")
         urls = _urls_candidatas(
-            page, f"https://www.amazon.com.br/s?k={termo_url}", "/dp/", limite
+            f"https://www.amazon.com.br/s?k={termo_url}",
+            "https://www.amazon.com.br",
+            "/dp/",
+            limite,
         )
         if not urls:
             resultados.append({"site": "Amazon", "erro": "nenhum resultado (pode ser bloqueio anti-robô)"})
         for url in urls:
-            preco = extrair_preco(url, page)
+            preco = extrair_preco(url)
             resultados.append(
                 {"site": "Amazon", "nome_encontrado": None, "url": url, "preco": preco}
             )
     except Exception as e:
         resultados.append({"site": "Amazon", "erro": str(e)})
-    finally:
-        page.close()
     return resultados
