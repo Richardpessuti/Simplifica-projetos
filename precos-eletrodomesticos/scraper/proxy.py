@@ -37,7 +37,11 @@ def get_via_proxy(url_alvo, renderizar=False, headers=None, timeout=60, tentativ
                 r = requests.get(SCRAPERAPI_ENDPOINT, params=params, timeout=timeout)
             else:
                 r = requests.get(url_alvo, headers=headers, timeout=timeout)
-            r.raise_for_status()
+            if not r.ok:
+                # inclui o corpo da resposta de erro (ScraperAPI costuma explicar
+                # o motivo real — créditos esgotados, domínio fora do plano etc.)
+                # em vez de só o código HTTP, que sozinho não diz muita coisa.
+                raise RuntimeError(f"{r.status_code} do proxy: {r.text[:300]!r}")
             return r
         except Exception as e:
             ultimo_erro = e
