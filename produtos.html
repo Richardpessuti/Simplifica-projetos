@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Produtos Acompanhados</title>
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  img-src 'self' data:;
+  connect-src 'self' https://api.github.com;
+">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F4F5F3;
+    --paper-line:#E1E4E0;
+    --ink:#14171C;
+    --accent:#2F6F5E;
+    --accent-dark:#24594B;
+    --accent-soft:#E4EFEB;
+    --card-bg:#FFFFFF;
+    --nav-bg:#FFFFFF;
+    --radius-card:16px;
+    --radius-btn:10px;
+    --caution:#C7862B;
+    --caution-soft:#FBF1E1;
+    --danger:#C1443A;
+    --danger-soft:#FBEAE8;
+    --muted:#6B7178;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background-color:var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    min-height:100vh;
+  }
+  header{
+    background:var(--nav-bg);
+    border-bottom:1px solid var(--paper-line);
+    padding:28px 20px 22px;
+  }
+  header .conteudo{
+    max-width:720px;
+    margin:0 auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:24px;
+    font-weight:700;
+    margin:0 0 4px;
+  }
+  .subtitulo{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .link-precos{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--accent-dark);
+    text-decoration:none;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .link-precos:hover{ text-decoration:underline; }
+  main{
+    max-width:720px;
+    margin:0 auto;
+    padding:24px 20px 100px;
+  }
+  .card{
+    background:var(--card-bg);
+    border:1px solid var(--paper-line);
+    border-radius:var(--radius-card);
+    padding:20px 22px;
+    margin-bottom:16px;
+  }
+  .aviso{
+    background:var(--caution-soft);
+    border:1px solid color-mix(in srgb, var(--caution) 35%, transparent);
+    color:#7A551C;
+    border-radius:var(--radius-card);
+    padding:16px 18px;
+    font-size:13.5px;
+    line-height:1.55;
+    margin-bottom:20px;
+  }
+  .aviso a{ color:#7A551C; font-weight:600; }
+  .erro{
+    background:var(--danger-soft);
+    border:1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    color:#7A2C25;
+    border-radius:var(--radius-card);
+    padding:14px 16px;
+    font-size:13.5px;
+    margin-bottom:16px;
+  }
+  .sucesso{
+    background:var(--accent-soft);
+    border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+    color:var(--accent-dark);
+    border-radius:var(--radius-card);
+    padding:14px 16px;
+    font-size:13.5px;
+    margin-bottom:16px;
+    font-weight:600;
+  }
+  label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--muted);
+    margin-bottom:5px;
+  }
+  input[type="text"], input[type="password"]{
+    width:100%;
+    padding:11px 12px;
+    border:1.5px solid var(--paper-line);
+    border-radius:var(--radius-btn);
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    color:var(--ink);
+    background:var(--paper);
+  }
+  input[type="text"]:focus, input[type="password"]:focus{
+    outline:none;
+    border-color:var(--accent);
+    box-shadow:0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  button{
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    border:none;
+    border-radius:var(--radius-btn);
+    padding:11px 18px;
+    cursor:pointer;
+  }
+  .botao-principal{
+    background:var(--accent);
+    color:#fff;
+  }
+  .botao-principal:hover{ background:var(--accent-dark); }
+  .botao-principal:disabled{ opacity:0.55; cursor:not-allowed; }
+  .botao-secundario{
+    background:transparent;
+    color:var(--muted);
+    border:1.5px solid var(--paper-line);
+  }
+  .botao-secundario:hover{ border-color:var(--danger); color:var(--danger); }
+  .produto-card{
+    display:grid;
+    grid-template-columns:1fr 1fr auto;
+    gap:10px;
+    align-items:end;
+    margin-bottom:14px;
+  }
+  @media (max-width:560px){
+    .produto-card{ grid-template-columns:1fr; }
+  }
+  .botao-remover{
+    background:transparent;
+    color:var(--danger);
+    border:1.5px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    padding:11px 14px;
+  }
+  .botao-remover:hover{ background:var(--danger-soft); }
+  .rodape-acoes{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:20px;
+  }
+  .carregando{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--muted);
+    padding:30px 0;
+    text-align:center;
+  }
+  .campo-token-info{
+    font-size:13px;
+    color:var(--muted);
+    margin-top:8px;
+    line-height:1.5;
+  }
+  .trocar-token{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--muted);
+    background:none;
+    border:none;
+    text-decoration:underline;
+    cursor:pointer;
+    padding:0;
+    margin-top:18px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="conteudo">
+    <div>
+      <h1>Produtos Acompanhados</h1>
+      <div class="subtitulo">edite a lista sem mexer em código</div>
+    </div>
+    <a class="link-precos" href="precos.html">← ver preços</a>
+  </div>
+</header>
+
+<main>
+  <div id="area-token" style="display:none;">
+    <div class="aviso">
+      <strong>Configuração única.</strong> Pra essa página conseguir salvar a
+      lista direto no repositório, você precisa criar um token de acesso do
+      GitHub, restrito só a este repositório. Leva 1 minuto:
+      <ol style="margin:8px 0 0; padding-left:20px;">
+        <li>Abra <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">github.com/settings/personal-access-tokens/new</a> (logado como Richardpessuti).</li>
+        <li>Em <strong>Repository access</strong>, marque "Only select repositories" e escolha <strong>Simplifica-projetos</strong>.</li>
+        <li>Em <strong>Permissions → Repository permissions</strong>, ache <strong>Contents</strong> e mude pra <strong>Read and write</strong>.</li>
+        <li>Clique em <strong>Generate token</strong> lá embaixo, e copie o token gerado (começa com <code>github_pat_</code>).</li>
+      </ol>
+    </div>
+    <div class="card">
+      <label for="campo-token">Cole o token aqui</label>
+      <input type="password" id="campo-token" placeholder="github_pat_...">
+      <div class="campo-token-info">
+        Fica salvo só neste navegador (não sai daqui, não é enviado pra
+        nenhum outro lugar além do GitHub). Se trocar de celular/navegador,
+        precisa colar de novo.
+      </div>
+      <div class="rodape-acoes">
+        <button class="botao-principal" id="botao-salvar-token">Salvar e continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="area-principal" style="display:none;">
+    <div id="mensagens"></div>
+    <div id="lista-produtos"></div>
+    <div class="rodape-acoes">
+      <button class="botao-secundario" id="botao-adicionar">+ Adicionar produto</button>
+      <button class="botao-principal" id="botao-salvar">Salvar alterações</button>
+    </div>
+    <button class="trocar-token" id="botao-trocar-token">usar outro token</button>
+  </div>
+
+  <div id="area-carregando" class="carregando">Carregando…</div>
+</main>
+
+<script>
+const DONO = 'Richardpessuti';
+const REPO = 'Simplifica-projetos';
+const BRANCH = 'claude/leitura-perguntas-917odr';
+const CAMINHO_ARQUIVO = 'precos-eletrodomesticos/config/produtos.json';
+const CHAVE_TOKEN = 'gh_token_precos_eletrodomesticos';
+
+let shaAtual = null;
+let produtos = [];
+
+function getToken() {
+  return localStorage.getItem(CHAVE_TOKEN);
+}
+
+function mostrarMensagem(texto, tipo) {
+  const area = document.getElementById('mensagens');
+  area.innerHTML = `<div class="${tipo}">${texto}</div>`;
+  if (tipo === 'sucesso') {
+    setTimeout(() => { area.innerHTML = ''; }, 4000);
+  }
+}
+
+function renderizarLista() {
+  const container = document.getElementById('lista-produtos');
+  container.innerHTML = produtos.map((p, i) => `
+    <div class="produto-card" data-indice="${i}">
+      <div>
+        <label>Nome (aparece na planilha)</label>
+        <input type="text" class="campo-nome" value="${(p.nome || '').replace(/"/g, '&quot;')}" placeholder="Ex: Geladeira Brastemp 375L">
+      </div>
+      <div>
+        <label>Termo de busca (o que digitar no site)</label>
+        <input type="text" class="campo-termo" value="${(p.termo_busca || '').replace(/"/g, '&quot;')}" placeholder="Ex: geladeira brastemp 375l">
+      </div>
+      <button class="botao-remover" data-remover="${i}" title="Remover produto">Remover</button>
+    </div>
+  `).join('') || '<p style="color:var(--muted); font-size:14px;">Nenhum produto ainda — clique em "Adicionar produto".</p>';
+
+  container.querySelectorAll('[data-remover]').forEach(botao => {
+    botao.addEventListener('click', () => {
+      produtos.splice(Number(botao.dataset.remover), 1);
+      renderizarLista();
+    });
+  });
+}
+
+function coletarProdutosDaTela() {
+  const cards = document.querySelectorAll('.produto-card');
+  return Array.from(cards).map(card => ({
+    nome: card.querySelector('.campo-nome').value.trim(),
+    termo_busca: card.querySelector('.campo-termo').value.trim(),
+  })).filter(p => p.nome && p.termo_busca);
+}
+
+async function carregarProdutos() {
+  const token = getToken();
+  if (!token) {
+    document.getElementById('area-carregando').style.display = 'none';
+    document.getElementById('area-token').style.display = 'block';
+    return;
+  }
+  try {
+    const resposta = await fetch(
+      `https://api.github.com/repos/${DONO}/${REPO}/contents/${CAMINHO_ARQUIVO}?ref=${BRANCH}`,
+      { headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json' } }
+    );
+    if (resposta.status === 401 || resposta.status === 403) {
+      throw new Error('token inválido ou sem permissão — gere um novo token e tente de novo');
+    }
+    if (!resposta.ok) throw new Error(`HTTP ${resposta.status}`);
+    const dados = await resposta.json();
+    shaAtual = dados.sha;
+    const conteudoDecodificado = decodeURIComponent(escape(atob(dados.content)));
+    produtos = JSON.parse(conteudoDecodificado);
+
+    document.getElementById('area-carregando').style.display = 'none';
+    document.getElementById('area-principal').style.display = 'block';
+    renderizarLista();
+  } catch (erro) {
+    document.getElementById('area-carregando').style.display = 'none';
+    document.getElementById('area-token').style.display = 'block';
+    mostrarMensagem(`Não consegui carregar a lista atual (${erro.message}).`, 'erro');
+  }
+}
+
+async function salvarProdutos() {
+  const token = getToken();
+  const botaoSalvar = document.getElementById('botao-salvar');
+  const novaLista = coletarProdutosDaTela();
+
+  if (novaLista.length === 0) {
+    mostrarMensagem('Adicione pelo menos um produto antes de salvar.', 'erro');
+    return;
+  }
+
+  botaoSalvar.disabled = true;
+  botaoSalvar.textContent = 'Salvando…';
+
+  try {
+    const conteudoJson = JSON.stringify(novaLista, null, 2) + '\n';
+    const conteudoBase64 = btoa(unescape(encodeURIComponent(conteudoJson)));
+
+    const resposta = await fetch(
+      `https://api.github.com/repos/${DONO}/${REPO}/contents/${CAMINHO_ARQUIVO}`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'Atualiza lista de produtos via painel',
+          content: conteudoBase64,
+          sha: shaAtual,
+          branch: BRANCH,
+        }),
+      }
+    );
+
+    if (!resposta.ok) {
+      const detalhe = await resposta.json().catch(() => ({}));
+      if (resposta.status === 409) {
+        throw new Error('a lista mudou em outro lugar enquanto você editava — recarregando a versão mais recente');
+      }
+      throw new Error(detalhe.message || `HTTP ${resposta.status}`);
+    }
+
+    const dados = await resposta.json();
+    shaAtual = dados.content.sha;
+    produtos = novaLista;
+    mostrarMensagem('Salvo! A próxima coleta (ou uma manual, na aba Actions) já vai usar essa lista.', 'sucesso');
+  } catch (erro) {
+    mostrarMensagem(`Não consegui salvar (${erro.message}).`, 'erro');
+    if (String(erro.message).includes('mudou em outro lugar')) {
+      await carregarProdutos();
+    }
+  } finally {
+    botaoSalvar.disabled = false;
+    botaoSalvar.textContent = 'Salvar alterações';
+  }
+}
+
+document.getElementById('botao-salvar-token').addEventListener('click', () => {
+  const valor = document.getElementById('campo-token').value.trim();
+  if (!valor) return;
+  localStorage.setItem(CHAVE_TOKEN, valor);
+  document.getElementById('area-token').style.display = 'none';
+  document.getElementById('area-carregando').style.display = 'block';
+  carregarProdutos();
+});
+
+document.getElementById('botao-adicionar').addEventListener('click', () => {
+  produtos = coletarProdutosDaTela();
+  produtos.push({ nome: '', termo_busca: '' });
+  renderizarLista();
+});
+
+document.getElementById('botao-salvar').addEventListener('click', salvarProdutos);
+
+document.getElementById('botao-trocar-token').addEventListener('click', () => {
+  localStorage.removeItem(CHAVE_TOKEN);
+  document.getElementById('area-principal').style.display = 'none';
+  document.getElementById('area-token').style.display = 'block';
+});
+
+carregarProdutos();
+</script>
+
+</body>
+</html>

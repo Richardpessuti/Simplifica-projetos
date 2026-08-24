@@ -48,7 +48,21 @@
   header .conteudo{
     max-width:960px;
     margin:0 auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    flex-wrap:wrap;
   }
+  .link-produtos{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--accent-dark);
+    text-decoration:none;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .link-produtos:hover{ text-decoration:underline; }
   h1{
     font-family:'Space Grotesk', sans-serif;
     font-size:26px;
@@ -178,8 +192,11 @@
 
 <header>
   <div class="conteudo">
-    <h1>Preços de Eletrodomésticos</h1>
-    <div class="subtitulo" id="atualizado-em">carregando...</div>
+    <div>
+      <h1>Preços de Eletrodomésticos</h1>
+      <div class="subtitulo" id="atualizado-em">carregando...</div>
+    </div>
+    <a class="link-produtos" href="produtos.html">editar produtos →</a>
   </div>
 </header>
 
