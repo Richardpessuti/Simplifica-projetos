@@ -98,7 +98,9 @@ exports.lerItensCotacao = onCall({ secrets: [ANTHROPIC_API_KEY], region: 'southa
     type: 'text',
     text: 'Este é um orçamento/cotação de reforma (pode ser nota fiscal, proposta ou foto de orçamento). ' +
       'Extraia cada item/produto/serviço cotado, com quantidade e valores, usando a ferramenta "extrair_itens". ' +
-      'Se um valor não aparecer claramente no documento, deixe o campo em branco em vez de inventar ou estimar.'
+      'Se um valor não aparecer claramente no documento, deixe o campo em branco em vez de inventar ou estimar. ' +
+      'Sempre escreva valores em reais no padrão brasileiro (vírgula decimal, ex: "1442,65", nunca "1442.65"). ' +
+      'No campo "qtd", mantenha a unidade que aparecer no documento (ex: "40 sc", "55,89 m²"), não só o número.'
   });
 
   const resposta = await anthropic.messages.create({
