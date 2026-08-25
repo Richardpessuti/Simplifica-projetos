@@ -35,6 +35,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-functions-compat.js"></script>
 
 <!-- pdf.js carrega sob demanda (só quando o admin importa um PDF) — ver ensurePdfJs() -->
 
@@ -1710,6 +1711,8 @@
     <div class="file-drop" id="c-drop">Toque para escolher um ou vários arquivos (PDF ou imagem, até 10MB cada)</div>
     <input type="file" id="c-file" accept=".pdf,image/*" multiple>
 
+    <button type="button" class="btn muted" id="c-ler-ia-btn" style="display:none;margin-top:10px;">🔎 Ler itens automaticamente</button>
+
     <div id="c-bulk-list" style="display:none;margin-top:12px;"></div>
 
     <button class="btn" id="c-save">Salvar cotação</button>
@@ -1804,6 +1807,7 @@ const firebaseConfig = {
 
 let db = null;
 let auth = null;
+let functionsClient = null;
 const LS_KEY_PROJETO = 'ccProjetoAtual';
 let currentProjetoId = null;
 let isAdmin = false;
@@ -2089,6 +2093,9 @@ try{
   // o SDK detectar de cara o jeito certo de conectar nessas redes.
   db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
   auth = firebase.auth();
+  // mesma região da Cloud Function lerItensCotacao (functions/index.js) — só usada
+  // se/quando a Fase B (leitura automática por IA) for ativada de verdade
+  functionsClient = firebase.app().functions('southamerica-east1');
   firebaseOk = true;
 }catch(e){
   document.getElementById('config-warning').style.display = 'block';
@@ -4029,6 +4036,7 @@ cFile.addEventListener('change', ()=>{
     document.getElementById('c-local').disabled = true;
     document.getElementById('c-preco').disabled = true;
     renderCotBulkPreview();
+    document.getElementById('c-ler-ia-btn').style.display = 'none';
   }else if(cFile.files.length === 1){
     cotBulkFiles = [];
     renderCotBulkPreview();
@@ -4038,7 +4046,37 @@ cFile.addEventListener('change', ()=>{
     document.getElementById('c-preco').disabled = false;
     cDrop.textContent = '✓ ' + cFile.files[0].name;
     cDrop.classList.add('has-file');
+    // Leitura automática (Fase B) só existe se a Cloud Function estiver configurada
+    // nesta instalação — em quem ainda não ativou, o botão simplesmente não aparece.
+    document.getElementById('c-ler-ia-btn').style.display = functionsClient ? 'block' : 'none';
   }
+});
+
+document.getElementById('c-ler-ia-btn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('c-ler-ia-btn');
+  const file = cFile.files[0];
+  if(!file || !functionsClient) return;
+  btn.disabled = true;
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Lendo com IA...';
+  try{
+    const base64 = await fileToBase64(file);
+    const chamar = functionsClient.httpsCallable('lerItensCotacao');
+    const resultado = await chamar({ base64, fileName: file.name });
+    const itens = (resultado.data && resultado.data.itens) || [];
+    if(itens.length === 0){
+      toast('A IA não encontrou itens nesse arquivo — preencha manualmente');
+    }else{
+      popularItensCotacao(itens);
+      document.getElementById('c-itens-details').open = true;
+      toast(itens.length + ' itens lidos por IA — confira antes de salvar');
+    }
+  }catch(err){
+    console.error(err);
+    toast('Não consegui ler automaticamente (' + (err.message||'erro') + ') — preencha manualmente');
+  }
+  btn.disabled = false;
+  btn.textContent = textoOriginal;
 });
 
 // Arquivo da arquiteta: suporta seleção múltipla (upload em lote)
@@ -4547,6 +4585,7 @@ function cancelEditCotacao(){
   document.getElementById('c-file').value='';
   document.getElementById('c-drop').textContent = 'Toque para escolher um ou vários arquivos (PDF ou imagem, até 10MB cada)';
   document.getElementById('c-drop').classList.remove('has-file');
+  document.getElementById('c-ler-ia-btn').style.display = 'none';
   document.getElementById('c-pagamento-wrap').style.display = 'none';
   document.getElementById('c-pag-vista').click();
   document.getElementById('c-pag-n').value = 2;
