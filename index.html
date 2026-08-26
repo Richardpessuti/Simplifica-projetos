@@ -1665,11 +1665,8 @@
     <label>Tipo</label>
     <select id="c-tipo"></select>
 
-    <label>Local da cotação</label>
-    <input type="text" id="c-local" placeholder="Ex: Loja XYZ / Site ABC">
-
-    <label>Empresa (opcional)</label>
-    <input type="text" id="c-empresa" placeholder="Ex: Silva Materiais Ltda">
+    <label>Empresa</label>
+    <input type="text" id="c-empresa" placeholder="Ex: Silva Materiais Ltda / Loja XYZ">
 
     <label>Telefone (opcional)</label>
     <input type="text" id="c-telefone" placeholder="Ex: (11) 99999-9999">
@@ -3853,7 +3850,7 @@ document.getElementById('p-export-btn').addEventListener('click', ()=>{
 });
 
 document.getElementById('c-export-btn').addEventListener('click', ()=>{
-  const cabecalhos = ['Tipo','Cotação','Local','Empresa','Telefone','Status','Preço total da cotação','Descrição do item','Qtd','Valor unit. do item','Valor total do item'];
+  const cabecalhos = ['Tipo','Cotação','Empresa','Telefone','Status','Preço total da cotação','Descrição do item','Qtd','Valor unit. do item','Valor total do item'];
 
   // agrupa por tipo (mesma ordem alfabética da lista) e, dentro do tipo, Aprovado primeiro
   const grupos = {};
@@ -3870,12 +3867,13 @@ document.getElementById('c-export-btn').addEventListener('click', ()=>{
     const cots = grupos[tipo].slice().sort((a,b)=> (ordemStatus[a.status]??1) - (ordemStatus[b.status]??1));
     cots.forEach(q=>{
       const precoTotal = q.preco!=null ? String(q.preco).replace('.',',') : '';
+      const empresaOuLocal = q.empresa || q.local || '';
       if(q.itens && q.itens.length){
         q.itens.forEach(it=>{
-          linhas.push([tipo, q.item||'', q.local||'', q.empresa||'', q.telefone||'', q.status||'', precoTotal, it.descricao||'', it.qtd||'', it.valorUnit||'', it.valorTotal||'']);
+          linhas.push([tipo, q.item||'', empresaOuLocal, q.telefone||'', q.status||'', precoTotal, it.descricao||'', it.qtd||'', it.valorUnit||'', it.valorTotal||'']);
         });
       }else{
-        linhas.push([tipo, q.item||'', q.local||'', q.empresa||'', q.telefone||'', q.status||'', precoTotal, '', '', '', '']);
+        linhas.push([tipo, q.item||'', empresaOuLocal, q.telefone||'', q.status||'', precoTotal, '', '', '', '']);
       }
     });
   });
@@ -4039,7 +4037,7 @@ cFile.addEventListener('change', ()=>{
     cDrop.classList.add('has-file');
     document.getElementById('c-item').disabled = true;
     document.getElementById('c-tipo').disabled = true;
-    document.getElementById('c-local').disabled = true;
+    document.getElementById('c-empresa').disabled = true;
     document.getElementById('c-preco').disabled = true;
     renderCotBulkPreview();
     document.getElementById('c-ler-ia-btn').style.display = 'none';
@@ -4048,7 +4046,7 @@ cFile.addEventListener('change', ()=>{
     renderCotBulkPreview();
     document.getElementById('c-item').disabled = false;
     document.getElementById('c-tipo').disabled = false;
-    document.getElementById('c-local').disabled = false;
+    document.getElementById('c-empresa').disabled = false;
     document.getElementById('c-preco').disabled = false;
     cDrop.textContent = '✓ ' + cFile.files[0].name;
     cDrop.classList.add('has-file');
@@ -4189,7 +4187,7 @@ function renderCotacoesList(docs){
           <div class="row1">
             <div>
               <div class="item-title">${escapeHtml(q.item)}</div>
-              <div class="meta">${[q.local, q.empresa, q.telefone].filter(Boolean).map(escapeHtml).join(' · ')}</div>
+              <div class="meta">${[q.empresa || q.local, q.telefone].filter(Boolean).map(escapeHtml).join(' · ')}</div>
             </div>
             <div class="price">${q.preco ? 'R$ '+Number(q.preco).toLocaleString('pt-BR',{minimumFractionDigits:2}) : ''}</div>
           </div>
@@ -4489,7 +4487,7 @@ document.getElementById('c-save').addEventListener('click', async ()=>{
       renderCotBulkPreview();
       document.getElementById('c-item').disabled = false;
       document.getElementById('c-tipo').disabled = false;
-      document.getElementById('c-local').disabled = false;
+      document.getElementById('c-empresa').disabled = false;
       document.getElementById('c-preco').disabled = false;
       cancelEditCotacao();
     }catch(err){
@@ -4503,13 +4501,15 @@ document.getElementById('c-save').addEventListener('click', async ()=>{
   // ---- Modo normal: um arquivo (novo ou edição) ----
   const item = document.getElementById('c-item').value.trim();
   const tipo = document.getElementById('c-tipo').value;
-  const local = document.getElementById('c-local').value.trim();
   const empresa = document.getElementById('c-empresa').value.trim();
+  // "local" é o mesmo campo de "empresa" hoje — mantido no documento só pra
+  // compatibilidade com cotações antigas e telas (lista/export) que já leem local
+  const local = empresa;
   const telefone = document.getElementById('c-telefone').value.trim();
   const preco = document.getElementById('c-preco').value;
   const fileInput = document.getElementById('c-file');
 
-  if(!item || !local){ toast('Preencha item e local'); return; }
+  if(!item || !empresa){ toast('Preencha item e empresa'); return; }
 
   btn.disabled = true; btn.textContent = 'Salvando...';
   try{
@@ -4569,7 +4569,6 @@ document.getElementById('c-save').addEventListener('click', async ()=>{
     }
 
     document.getElementById('c-item').value='';
-    document.getElementById('c-local').value='';
     document.getElementById('c-empresa').value='';
     document.getElementById('c-telefone').value='';
     document.getElementById('c-preco').value='';
@@ -4600,8 +4599,7 @@ function cancelEditCotacao(){
   document.getElementById('c-item').value='';
   document.getElementById('c-tipo').disabled = false;
   document.getElementById('c-tipo').value='Móveis';
-  document.getElementById('c-local').disabled = false;
-  document.getElementById('c-local').value='';
+  document.getElementById('c-empresa').disabled = false;
   document.getElementById('c-empresa').value='';
   document.getElementById('c-telefone').value='';
   document.getElementById('c-preco').disabled = false;
@@ -5138,9 +5136,9 @@ document.addEventListener('click', async (e)=>{
     document.getElementById('c-item').value = q.item || '';
     document.getElementById('c-tipo').disabled = false;
     document.getElementById('c-tipo').value = q.tipo || 'Móveis';
-    document.getElementById('c-local').disabled = false;
-    document.getElementById('c-local').value = q.local || '';
-    document.getElementById('c-empresa').value = q.empresa || '';
+    document.getElementById('c-empresa').disabled = false;
+    // cotações antigas só tinham "local" — usa ele se "empresa" ainda não existir
+    document.getElementById('c-empresa').value = q.empresa || q.local || '';
     document.getElementById('c-telefone').value = q.telefone || '';
     document.getElementById('c-preco').disabled = false;
     document.getElementById('c-preco').value = q.preco || '';
