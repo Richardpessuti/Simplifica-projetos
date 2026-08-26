@@ -1573,27 +1573,8 @@
   <!-- ARQUITETA -->
   <section id="tab-arquiteta">
     <div class="tab-toolbar">
+      <button class="btn secondary" id="a-add-btn">+ Novo arquivo</button>
       <button class="btn muted" id="a-export-btn">⬇ Exportar lista</button>
-    </div>
-    <div class="card">
-      <h2 id="a-form-title">Arquivo da arquiteta <span class="tag">upload</span></h2>
-      <label>Descrição do arquivo</label>
-      <input type="text" id="a-nome" placeholder="Ex: Projeto elétrico - sala">
-
-      <label>Categoria</label>
-      <select id="a-categoria"></select>
-
-      <label>Número do profissional destinatário (opcional)</label>
-      <input type="text" id="a-prof" placeholder="Ex: 03 (eletricista)">
-
-      <label>Arquivo(s)</label>
-      <div class="file-drop" id="a-drop">Toque para escolher um ou vários arquivos de uma vez (até 10MB cada)</div>
-      <input type="file" id="a-file" accept=".pdf,image/*" multiple>
-
-      <div id="a-bulk-list" style="display:none;margin-top:12px;"></div>
-
-      <button class="btn secondary" id="a-save">Salvar arquivo</button>
-      <button class="btn muted" id="a-cancel" style="display:none;">Cancelar edição</button>
     </div>
 
     <div id="a-list"></div>
@@ -1720,6 +1701,32 @@
 
     <button class="btn" id="c-save">Salvar cotação</button>
     <button class="btn muted" id="c-cancel" style="display:none;">Cancelar edição</button>
+  </div>
+</div>
+
+<div id="a-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-sheet-head">
+      <h2 id="a-form-title">Novo arquivo <span class="tag">upload</span></h2>
+      <button type="button" class="modal-close" id="a-modal-fechar" aria-label="Fechar">✕</button>
+    </div>
+    <label>Descrição do arquivo</label>
+    <input type="text" id="a-nome" placeholder="Ex: Projeto elétrico - sala">
+
+    <label>Categoria</label>
+    <select id="a-categoria"></select>
+
+    <label>Número do profissional destinatário (opcional)</label>
+    <input type="text" id="a-prof" placeholder="Ex: 03 (eletricista)">
+
+    <label>Arquivo(s)</label>
+    <div class="file-drop" id="a-drop">Toque para escolher um ou vários arquivos de uma vez (até 10MB cada)</div>
+    <input type="file" id="a-file" accept=".pdf,image/*" multiple>
+
+    <div id="a-bulk-list" style="display:none;margin-top:12px;"></div>
+
+    <button class="btn secondary" id="a-save">Salvar arquivo</button>
+    <button class="btn muted" id="a-cancel" style="display:none;">Cancelar edição</button>
   </div>
 </div>
 
@@ -4803,7 +4810,7 @@ function cancelEditArquiteta(){
   editingArquitetaId = null;
   bulkFiles = [];
   renderBulkPreview();
-  document.getElementById('a-form-title').innerHTML = 'Arquivo da arquiteta <span class="tag">upload</span>';
+  document.getElementById('a-form-title').innerHTML = 'Novo arquivo <span class="tag">upload</span>';
   document.getElementById('a-save').textContent = 'Salvar arquivo';
   document.getElementById('a-cancel').style.display = 'none';
   document.getElementById('a-nome').disabled = false;
@@ -4815,8 +4822,14 @@ function cancelEditArquiteta(){
   document.getElementById('a-file').value='';
   document.getElementById('a-drop').textContent='Toque para escolher um ou vários arquivos de uma vez (até 10MB cada)';
   document.getElementById('a-drop').classList.remove('has-file');
+  document.getElementById('a-modal').classList.remove('show');
 }
 document.getElementById('a-cancel').addEventListener('click', cancelEditArquiteta);
+document.getElementById('a-add-btn').addEventListener('click', ()=>{
+  cancelEditArquiteta();
+  document.getElementById('a-modal').classList.add('show');
+});
+document.getElementById('a-modal-fechar').addEventListener('click', cancelEditArquiteta);
 
 // ---------- Prestadores ----------
 function statusPrestadorCor(status){
@@ -5183,7 +5196,7 @@ document.addEventListener('click', async (e)=>{
     document.getElementById('a-form-title').innerHTML = 'Editando arquivo <span class="tag">edição</span>';
     document.getElementById('a-save').textContent = 'Salvar edição';
     document.getElementById('a-cancel').style.display = 'block';
-    document.getElementById('tab-arquiteta').scrollIntoView({behavior:'smooth'});
+    document.getElementById('a-modal').classList.add('show');
     return;
   }
 
