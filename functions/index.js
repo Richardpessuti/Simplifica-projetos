@@ -56,6 +56,7 @@ const FERRAMENTA_EXTRACAO = {
     properties: {
       empresa: { type: 'string', description: 'Nome da empresa/fornecedor/prestador que emitiu o documento, se aparecer. Vazio se não houver.' },
       telefone: { type: 'string', description: 'Telefone de contato da empresa, como está no documento (ex: "(19) 3475-7777"). Vazio se não houver.' },
+      precoTotal: { type: 'string', description: 'Valor TOTAL final do orçamento/nota (ex: "Total", "Valor total da nota", "Total Orçado"), em reais no padrão brasileiro (ex: "8400,00"). Se o documento não mostrar um total final claro, deixe vazio — não some os itens você mesmo.' },
       itens: {
         type: 'array',
         description: 'Um item por linha/produto/serviço cotado.',
@@ -99,8 +100,9 @@ exports.lerItensCotacao = onCall({ secrets: [ANTHROPIC_API_KEY], region: 'southa
   content.push({
     type: 'text',
     text: 'Este é um orçamento/cotação de reforma (pode ser nota fiscal, proposta ou foto de orçamento). ' +
-      'Extraia o nome da empresa/fornecedor e o telefone de contato (se aparecerem), e cada item/produto/serviço ' +
-      'cotado, com quantidade e valores, usando a ferramenta "extrair_itens". ' +
+      'Extraia o nome da empresa/fornecedor, o telefone de contato, o valor TOTAL final do documento ' +
+      '(o valor que a pessoa realmente vai pagar, já com desconto/frete se houver — não a soma dos produtos ' +
+      'antes disso), e cada item/produto/serviço cotado, com quantidade e valores, usando a ferramenta "extrair_itens". ' +
       'Se um valor não aparecer claramente no documento, deixe o campo em branco em vez de inventar ou estimar. ' +
       'Sempre escreva valores em reais no padrão brasileiro (vírgula decimal, ex: "1442,65", nunca "1442.65"). ' +
       'No campo "qtd", mantenha a unidade que aparecer no documento (ex: "40 sc", "55,89 m²"), não só o número.'
@@ -122,5 +124,6 @@ exports.lerItensCotacao = onCall({ secrets: [ANTHROPIC_API_KEY], region: 'southa
   const itens = Array.isArray(toolUse.input.itens) ? toolUse.input.itens : [];
   const empresa = typeof toolUse.input.empresa === 'string' ? toolUse.input.empresa : '';
   const telefone = typeof toolUse.input.telefone === 'string' ? toolUse.input.telefone : '';
-  return { itens, empresa, telefone };
+  const precoTotal = typeof toolUse.input.precoTotal === 'string' ? toolUse.input.precoTotal : '';
+  return { itens, empresa, telefone, precoTotal };
 });

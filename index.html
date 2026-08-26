@@ -4072,11 +4072,18 @@ document.getElementById('c-ler-ia-btn').addEventListener('click', async ()=>{
     const itens = (resultado.data && resultado.data.itens) || [];
     const empresaLida = (resultado.data && resultado.data.empresa) || '';
     const telefoneLido = (resultado.data && resultado.data.telefone) || '';
-    // só preenche empresa/telefone se o campo ainda estiver vazio — não sobrescreve o que já foi digitado
+    const precoLido = (resultado.data && resultado.data.precoTotal) || '';
+    // só preenche se o campo ainda estiver vazio — não sobrescreve o que já foi digitado
     const campoEmpresa = document.getElementById('c-empresa');
     const campoTelefone = document.getElementById('c-telefone');
+    const campoPreco = document.getElementById('c-preco');
     if(empresaLida && !campoEmpresa.value.trim()) campoEmpresa.value = empresaLida;
     if(telefoneLido && !campoTelefone.value.trim()) campoTelefone.value = telefoneLido;
+    if(precoLido && !campoPreco.value.trim()){
+      // campo de preço só aceita ponto decimal (padrão do <input type="number">), não vírgula
+      const precoNumerico = precoLido.replace(/\./g,'').replace(',','.');
+      if(!isNaN(parseFloat(precoNumerico))) campoPreco.value = precoNumerico;
+    }
     if(itens.length === 0){
       toast('A IA não encontrou itens nesse arquivo — preencha manualmente');
     }else{
