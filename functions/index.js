@@ -50,10 +50,12 @@ async function paraImagensBase64(base64, fileName) {
 
 const FERRAMENTA_EXTRACAO = {
   name: 'extrair_itens',
-  description: 'Registra os itens (produtos/serviços) encontrados no orçamento/cotação.',
+  description: 'Registra a empresa/contato e os itens (produtos/serviços) encontrados no orçamento/cotação.',
   input_schema: {
     type: 'object',
     properties: {
+      empresa: { type: 'string', description: 'Nome da empresa/fornecedor/prestador que emitiu o documento, se aparecer. Vazio se não houver.' },
+      telefone: { type: 'string', description: 'Telefone de contato da empresa, como está no documento (ex: "(19) 3475-7777"). Vazio se não houver.' },
       itens: {
         type: 'array',
         description: 'Um item por linha/produto/serviço cotado.',
@@ -97,7 +99,8 @@ exports.lerItensCotacao = onCall({ secrets: [ANTHROPIC_API_KEY], region: 'southa
   content.push({
     type: 'text',
     text: 'Este é um orçamento/cotação de reforma (pode ser nota fiscal, proposta ou foto de orçamento). ' +
-      'Extraia cada item/produto/serviço cotado, com quantidade e valores, usando a ferramenta "extrair_itens". ' +
+      'Extraia o nome da empresa/fornecedor e o telefone de contato (se aparecerem), e cada item/produto/serviço ' +
+      'cotado, com quantidade e valores, usando a ferramenta "extrair_itens". ' +
       'Se um valor não aparecer claramente no documento, deixe o campo em branco em vez de inventar ou estimar. ' +
       'Sempre escreva valores em reais no padrão brasileiro (vírgula decimal, ex: "1442,65", nunca "1442.65"). ' +
       'No campo "qtd", mantenha a unidade que aparecer no documento (ex: "40 sc", "55,89 m²"), não só o número.'
@@ -117,5 +120,7 @@ exports.lerItensCotacao = onCall({ secrets: [ANTHROPIC_API_KEY], region: 'southa
   }
 
   const itens = Array.isArray(toolUse.input.itens) ? toolUse.input.itens : [];
-  return { itens };
+  const empresa = typeof toolUse.input.empresa === 'string' ? toolUse.input.empresa : '';
+  const telefone = typeof toolUse.input.telefone === 'string' ? toolUse.input.telefone : '';
+  return { itens, empresa, telefone };
 });
