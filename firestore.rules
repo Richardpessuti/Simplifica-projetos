@@ -64,8 +64,19 @@ service cloud.firestore {
       allow read: if isMaster() ||
         (isSignedIn() && resource.data.email is string && resource.data.email.lower() == userEmail());
       allow create, delete: if isMaster();
+      // um arquiteto pode atualizar o próprio cadastro (ex: trocar a logo), mas
+      // "limiteIAMensal" (plano de leitura por IA) só o master pode mudar —
+      // senão o próprio arquiteto poderia se autoconceder acesso ilimitado
       allow update: if isMaster() ||
-        (isSignedIn() && resource.data.email is string && resource.data.email.lower() == userEmail());
+        (isSignedIn() && resource.data.email is string && resource.data.email.lower() == userEmail() &&
+         request.resource.data.get('limiteIAMensal', null) == resource.data.get('limiteIAMensal', null));
+
+      // contagem de uso da leitura por IA, por mês — só a Cloud Function
+      // (via Admin SDK, que ignora estas regras) escreve aqui; só o master lê
+      match /usoIA/{mes} {
+        allow read: if isMaster();
+        allow write: if false;
+      }
     }
 
     // ---------- dados legados de antes do login (sem dono definido) ----------
