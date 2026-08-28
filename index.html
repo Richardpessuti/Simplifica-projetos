@@ -449,15 +449,15 @@
   }
 
   .list-item{
-    border:none;
-    border-bottom:1px solid var(--paper-line);
-    border-radius:0;
-    padding:18px 2px;
-    margin-bottom:0;
-    background:transparent;
-    transition:background-color .2s var(--ease);
+    border:1px solid var(--paper-line);
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:10px;
+    background:var(--card-bg);
+    box-shadow:0 2px 8px rgba(20,23,28,0.04);
+    transition:background-color .2s var(--ease), box-shadow .2s var(--ease);
   }
-  .list-item:last-child{ border-bottom:none; padding-bottom:4px; }
+  .list-item:last-child{ margin-bottom:0; }
   .list-item:active{ background:var(--neutral-bg); }
 
   .skel-row{
