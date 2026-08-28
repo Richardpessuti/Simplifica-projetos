@@ -50,15 +50,15 @@
     --caution-dark:#A6701F;
     --ink:#14171C;
     --muted:#6B7280;
-    --ok:#2F6F5E;
+    --ok:#1F4A3E;
     --danger:#C1443A;
-    --accent:#2F6F5E;
-    --accent-dark:#24594B;
+    --accent:#1F4A3E;
+    --accent-dark:#163A30;
     --card-bg:#FFFFFF;
     --nav-bg:#FFFFFF;
-    --radius-card:16px;
+    --radius-card:18px;
     --radius-btn:10px;
-    --accent-soft:#E4EFEB;
+    --accent-soft:#E7EFE9;
     --ease:cubic-bezier(.16,1,.3,1);
     --ease-spring:cubic-bezier(.34,1.56,.64,1);
     --shadow-sm:0 1px 2px rgba(20,23,28,0.06), 0 1px 1px rgba(20,23,28,0.05);
@@ -77,9 +77,9 @@
     --paper:#F4F5F3;
     --ink:#14171C;
     --muted:#6B7280;
-    --ok:#2F6F5E;
+    --ok:#1F4A3E;
     --danger:#C1443A;
-    --accent:#2F6F5E;
+    --accent:#1F4A3E;
     --card-bg:#FFFFFF;
     --nav-bg:#FFFFFF;
     --caution:#C7862B;
@@ -218,12 +218,12 @@
     flex-wrap:nowrap;
     gap:2px;
     margin:0;
-    padding:8px 6px calc(8px + env(safe-area-inset-bottom));
-    border-radius:20px 20px 0 0;
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+    border-radius:22px;
     background:var(--nav-bg);
-    box-shadow:0 -12px 28px rgba(20,23,28,0.14), 0 -2px 6px rgba(20,23,28,0.08), inset 0 1px 0 rgba(255,255,255,0.6);
+    box-shadow:0 10px 26px rgba(20,23,28,0.16), 0 2px 6px rgba(20,23,28,0.06);
     position:fixed;
-    left:0; right:0; bottom:0;
+    left:14px; right:14px; bottom:14px;
     z-index:30;
   }
   nav button{
@@ -247,12 +247,13 @@
     gap:3px;
     transition:background-color .2s var(--ease), color .2s var(--ease), transform .1s var(--ease), box-shadow .2s var(--ease);
   }
-  nav button .tab-ic{ font-size:18px; line-height:1; }
+  nav button .tab-ic{ font-size:18px; line-height:1; display:inline-flex; }
+  nav button .tab-ic svg{ width:18px; height:18px; display:block; }
   nav button:active{ transform:scale(.96); }
   nav button.active{
-    background:var(--accent);
-    color:#fff;
-    box-shadow:0 4px 10px color-mix(in srgb, var(--accent) 45%, transparent);
+    background:var(--accent-soft);
+    color:var(--accent-dark);
+    box-shadow:none;
   }
   .nav-more-sheet{
     display:none;
@@ -277,7 +278,7 @@
     padding:10px 12px;
   }
 
-  main{padding:32px 18px 104px;}
+  main{padding:32px 18px 118px;}
   section{display:none;}
   section.active{display:block; animation:tabFade .15s var(--ease) both;}
 
@@ -287,7 +288,7 @@
     border-radius:var(--radius-card);
     padding:24px;
     margin-bottom:32px;
-    box-shadow:0 1px 3px rgba(20,23,28,0.045);
+    box-shadow:0 6px 18px rgba(20,23,28,0.06), 0 1px 2px rgba(20,23,28,0.04);
     transition:box-shadow .3s var(--ease), transform .3s var(--ease);
   }
   .card h2, .card summary, .modal-sheet-head h2{
@@ -1281,18 +1282,18 @@
 </div>
 
 <nav>
-  <button class="tab-btn active" data-tab="cronograma"><span class="tab-ic">🗓️</span>Cronograma</button>
-  <button class="tab-btn" data-tab="cotacoes"><span class="tab-ic">💰</span>Cotações</button>
-  <button class="tab-btn" data-tab="projeto3d"><span class="tab-ic">📐</span>Projeto 3D</button>
-  <button class="tab-btn" data-tab="prestadores"><span class="tab-ic">👷</span>Prestadores</button>
-  <button class="tab-btn nav-more-btn" id="nav-more-btn" type="button"><span class="tab-ic">⋯</span>Mais</button>
+  <button class="tab-btn active" data-tab="cronograma"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>Cronograma</button>
+  <button class="tab-btn" data-tab="cotacoes"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 1 3 2.2c0 2.8-6 1.6-6 4.3 0 1.3 1.3 2.5 3 2.5s3-1.1 3-2.5"/></svg></span>Cotações</button>
+  <button class="tab-btn" data-tab="projeto3d"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4 7.5L12 12l8-4.5M12 12v9"/></svg></span>Projeto 3D</button>
+  <button class="tab-btn" data-tab="prestadores"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-2a4 4 0 014-4h6a4 4 0 014 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Prestadores</button>
+  <button class="tab-btn nav-more-btn" id="nav-more-btn" type="button"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span>Mais</button>
   <div class="nav-more-sheet" id="nav-more-sheet">
-    <button class="tab-btn" data-tab="tipos">Por Tipo</button>
-    <button class="tab-btn" data-tab="aprovados">Aprovados</button>
-    <button class="tab-btn" data-tab="cartoes">Cartões</button>
-    <button class="tab-btn" data-tab="arquiteta">Arq. Arquiteta</button>
-    <button class="tab-btn" data-tab="buscar">Buscar por nº</button>
-    <button class="tab-btn" data-tab="admin" id="nav-admin-btn" style="display:none;background:var(--caution);">⚙ Admin</button>
+    <button class="tab-btn" data-tab="tipos"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></span>Por Tipo</button>
+    <button class="tab-btn" data-tab="aprovados"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>Aprovados</button>
+    <button class="tab-btn" data-tab="cartoes"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Cartões</button>
+    <button class="tab-btn" data-tab="arquiteta"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></span>Arq. Arquiteta</button>
+    <button class="tab-btn" data-tab="buscar"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>Buscar por nº</button>
+    <button class="tab-btn" data-tab="admin" id="nav-admin-btn" style="display:none;background:var(--caution);"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 11-4 0v-.09A1.7 1.7 0 009 19.36a1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.7 1.7 0 004.64 15a1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09A1.7 1.7 0 004.64 9a1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06A1.7 1.7 0 009 4.64a1.7 1.7 0 001-1.55V3a2 2 0 114 0v.09A1.7 1.7 0 0015 4.64a1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06A1.7 1.7 0 0019.36 9c.14.36.5 1 1.55 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.55 1z"/></svg></span>Admin</button>
   </div>
 </nav>
 
