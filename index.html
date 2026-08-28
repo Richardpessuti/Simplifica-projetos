@@ -1264,7 +1264,7 @@
   <div class="header-deco" id="header-deco"></div>
   <p class="eyebrow">Reforma do apartamento</p>
   <h1 id="app-projeto-nome">Central de Cotações</h1>
-  <p class="sub" id="app-subtitulo">Suba cotações e arquivos da arquiteta. Cada item pode levar o número de um profissional — quem tiver esse número encontra só o que é dele na aba Buscar.</p>
+  <p class="sub" id="app-subtitulo">Suba cotações e documentos do projeto. Cada item pode levar o número de um profissional — quem tiver esse número encontra só o que é dele na aba Buscar.</p>
   <span id="conn-status" class="ok">conectado ✓</span>
   <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
     <button id="btn-trocar-projeto" style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4);border-radius:20px;padding:5px 12px;cursor:pointer;">↺ trocar projeto</button>
@@ -1291,7 +1291,7 @@
     <button class="tab-btn" data-tab="tipos"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></span>Por Tipo</button>
     <button class="tab-btn" data-tab="aprovados"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>Aprovados</button>
     <button class="tab-btn" data-tab="cartoes"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Cartões</button>
-    <button class="tab-btn" data-tab="arquiteta"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></span>Arq. Arquiteta</button>
+    <button class="tab-btn" data-tab="arquiteta"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></span>Documentos</button>
     <button class="tab-btn" data-tab="buscar"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>Buscar por nº</button>
     <button class="tab-btn" data-tab="admin" id="nav-admin-btn" style="display:none;background:var(--caution);"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 11-4 0v-.09A1.7 1.7 0 009 19.36a1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.7 1.7 0 004.64 15a1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09A1.7 1.7 0 004.64 9a1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06A1.7 1.7 0 009 4.64a1.7 1.7 0 001-1.55V3a2 2 0 114 0v.09A1.7 1.7 0 0015 4.64a1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06A1.7 1.7 0 0019.36 9c.14.36.5 1 1.55 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.55 1z"/></svg></span>Admin</button>
   </div>
@@ -1407,7 +1407,7 @@
       <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Edite os textos principais deste projeto. Deixe em branco pra usar o texto padrão.</div>
 
       <label>Subtítulo do cabeçalho</label>
-      <input type="text" id="admin-txt-subtitulo" placeholder="Suba cotações e arquivos da arquiteta...">
+      <input type="text" id="admin-txt-subtitulo" placeholder="Suba cotações e documentos do projeto...">
 
       <label>Título "Próxima etapa"</label>
       <input type="text" id="admin-txt-tituloProximaEtapa" placeholder="Próxima etapa">
@@ -1416,7 +1416,7 @@
       <input type="text" id="admin-txt-tituloLinhaDoTempo" placeholder="Linha do tempo completa">
 
       <label>Mensagem de cronograma vazio</label>
-      <input type="text" id="admin-txt-cronogramaVazioMembro" placeholder="A arquiteta ainda não subiu o cronograma da obra.">
+      <input type="text" id="admin-txt-cronogramaVazioMembro" placeholder="O cronograma da obra ainda não foi importado.">
 
       <label>Título "Buscar por especialidade"</label>
       <input type="text" id="admin-txt-tituloBuscarEspecialidade" placeholder="Buscar por especialidade">
@@ -1963,10 +1963,10 @@ document.addEventListener('input', (e)=>{
 });
 
 const TEXTOS_PADRAO = {
-  subtitulo: 'Suba cotações e arquivos da arquiteta. Cada item pode levar o número de um profissional — quem tiver esse número encontra só o que é dele na aba Buscar.',
+  subtitulo: 'Suba cotações e documentos do projeto. Cada item pode levar o número de um profissional — quem tiver esse número encontra só o que é dele na aba Buscar.',
   tituloProximaEtapa: 'Próxima etapa',
   tituloLinhaDoTempo: 'Linha do tempo completa',
-  cronogramaVazioMembro: 'A arquiteta ainda não subiu o cronograma da obra.',
+  cronogramaVazioMembro: 'O cronograma da obra ainda não foi importado.',
   tituloBuscarEspecialidade: 'Buscar por especialidade',
   tituloBuscarNumero: 'Buscar por número do profissional'
 };
@@ -3313,7 +3313,7 @@ function renderGaleriaMembro(containerId, items, textoVazio){
 
 function renderProjeto3DGaleria(){
   const items = projeto3dCache.map(f=>({...f, _col:'projeto3d'}));
-  renderGaleriaMembro('projeto3d-galeria', items, 'A arquiteta ainda não subiu o projeto 3D.');
+  renderGaleriaMembro('projeto3d-galeria', items, 'O projeto 3D ainda não foi importado.');
 }
 
 function renderFotosGaleria(){
@@ -5551,7 +5551,7 @@ async function buscar(){
       `).join('') + `</div>`;
   }
   if(arq.length){
-    html += `<div class="card"><h2>Arquivos da arquiteta <span class="tag">${arq.length}</span></h2>` +
+    html += `<div class="card"><h2>Documentos <span class="tag">${arq.length}</span></h2>` +
       arq.map(f=>`
         <div class="list-item">
           <div class="item-title">${escapeHtml(f.nome)}</div>
@@ -6379,7 +6379,7 @@ if(firebaseOk){
       const resumo = await contarConteudoProjeto(delProjId);
       const msg = `Excluir "${nomeProj}"? Isso vai apagar:\n` +
         `- ${resumo.cotacoes} cotação(ões)\n` +
-        `- ${resumo.arquiteta} arquivo(s) da arquiteta\n` +
+        `- ${resumo.arquiteta} documento(s) do projeto\n` +
         `- ${resumo.prestadores} prestador(es)\n` +
         `- ${resumo.etapas} etapa(s) do cronograma\n\n` +
         `Essa ação não pode ser desfeita.`;
