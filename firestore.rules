@@ -46,9 +46,18 @@ service cloud.firestore {
         (projetoData.criadoPor is string && projetoData.criadoPor.lower() == userEmail() || isMaster());
     }
 
+    // "ativo" (default true quando o campo não existe, pra não quebrar
+    // projetos antigos criados antes disso existir) fica false quando uma
+    // assinatura do Mercado Pago é cancelada/pausada — a Cloud Function seta
+    // isso via Admin SDK. Master sempre passa direto, mesmo com o projeto
+    // inativo (precisa continuar enxergando pra dar suporte).
     function isProjectMember(projetoData) {
-      return isProjectAdmin(projetoData) ||
-        (isSignedIn() && projetoData.membrosEmails is list && userEmail() in projetoData.membrosEmails);
+      return isMaster() ||
+        (
+          projetoData.get('ativo', true) == true &&
+          (isProjectAdmin(projetoData) ||
+            (isSignedIn() && projetoData.membrosEmails is list && userEmail() in projetoData.membrosEmails))
+        );
     }
 
     // ---------- config/master ----------
@@ -91,12 +100,13 @@ service cloud.firestore {
       // criadoPor precisa ser exatamente o e-mail de quem está criando (já em minúsculo,
       // por definição de userEmail()), e membrosEmails só pode conter esse mesmo e-mail
       // no momento da criação — evita depender só do app já mandar tudo em minúsculo.
-      // "limiteIAMensal" (franquia de leitura por IA deste acesso) não pode ser
-      // definido na criação — fica de fora, e a Cloud Function usa um padrão.
+      // "limiteIAMensal" e "ativo" não podem ser definidos na criação — ficam
+      // de fora, e a Cloud Function/regra usa o padrão (franquia normal, ativo).
       allow create: if isSignedIn() &&
         request.resource.data.criadoPor == userEmail() &&
         request.resource.data.membrosEmails == [userEmail()] &&
-        !('limiteIAMensal' in request.resource.data);
+        !('limiteIAMensal' in request.resource.data) &&
+        !('ativo' in request.resource.data);
 
       allow update: if isMaster() ||
         (isProjectMember(resource.data) &&
@@ -105,9 +115,11 @@ service cloud.firestore {
           (isProjectAdmin(resource.data) ||
             (request.resource.data.criadoPor == resource.data.criadoPor &&
              request.resource.data.membrosEmails == resource.data.membrosEmails)) &&
-          // "limiteIAMensal" só o master muda — nem o dono do projeto pode
-          // se autoconceder mais leituras por IA
-          request.resource.data.get('limiteIAMensal', null) == resource.data.get('limiteIAMensal', null));
+          // "limiteIAMensal" e "ativo" só o master (ou a Cloud Function via
+          // Admin SDK) mudam — ninguém se autoconcede mais leituras por IA
+          // nem se reativa sozinho depois de uma assinatura cancelada
+          request.resource.data.get('limiteIAMensal', null) == resource.data.get('limiteIAMensal', null) &&
+          request.resource.data.get('ativo', true) == resource.data.get('ativo', true));
 
       allow delete: if isProjectAdmin(resource.data);
 

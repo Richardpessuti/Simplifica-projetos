@@ -234,10 +234,25 @@ async function handleMercadoPagoWebhook(req, res) {
 
     const preapproval = await buscarPreapproval(preapprovalId);
 
+    // usa o próprio ID da assinatura como ID do projeto — assim, se o
+    // Mercado Pago reenviar o mesmo aviso (acontece, é esperado), a
+    // segunda vez só sobrescreve o mesmo documento em vez de duplicar
+    const projetoId = `mp_${preapprovalId}`;
+    const projetoRef = db.doc(`projetos/${projetoId}`);
+
     if (preapproval.status !== 'authorized') {
-      // ainda não aprovada (pendente, cancelada, pausada) — não libera nada;
-      // revogar acesso de assinatura cancelada fica pra uma próxima fase
-      res.status(200).send('status ainda não autorizado: ' + preapproval.status);
+      // cancelada ou pausada: revoga o acesso daquele projeto específico —
+      // mas só se ele já existia (uma assinatura cancelada antes de nunca
+      // ter sido aprovada não deve criar um projeto vazio do nada). Dados
+      // ficam guardados, só o acesso é bloqueado — se a pessoa reativar a
+      // assinatura depois, o mesmo projeto volta a funcionar.
+      if (preapproval.status === 'cancelled' || preapproval.status === 'paused') {
+        const snap = await projetoRef.get();
+        if (snap.exists) {
+          await projetoRef.set({ ativo: false }, { merge: true });
+        }
+      }
+      res.status(200).send('status: ' + preapproval.status);
       return;
     }
 
@@ -247,17 +262,17 @@ async function handleMercadoPagoWebhook(req, res) {
       return;
     }
 
-    // usa o próprio ID da assinatura como ID do projeto — assim, se o
-    // Mercado Pago reenviar o mesmo aviso (acontece, é esperado), a
-    // segunda vez só sobrescreve o mesmo documento em vez de duplicar
-    const projetoId = `mp_${preapprovalId}`;
-    await db.doc(`projetos/${projetoId}`).set({
-      nome: 'Novo projeto',
+    // se o projeto já existe (reativação de uma assinatura antes cancelada,
+    // ou reenvio do mesmo aviso), preserva nome e data de criação originais;
+    // só na primeira vez é que esses campos são definidos
+    const jaExistia = (await projetoRef.get()).exists;
+    await projetoRef.set({
+      ...(jaExistia ? {} : { nome: 'Novo projeto', criadoEm: admin.firestore.FieldValue.serverTimestamp() }),
       criadoPor: email,
       membrosEmails: [email],
-      criadoEm: admin.firestore.FieldValue.serverTimestamp(),
       mpPreapprovalId: preapprovalId,
-      mpPlanId: preapproval.preapproval_plan_id || null
+      mpPlanId: preapproval.preapproval_plan_id || null,
+      ativo: true
     }, { merge: true });
 
     res.status(200).send('acesso liberado');
