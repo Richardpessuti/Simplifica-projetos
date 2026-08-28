@@ -1182,6 +1182,9 @@
   <section class="hero-block hero-block-login" id="hero-login">
     <div class="auth-content">
       <div class="card auth-card">
+        <div id="assinatura-confirmada-aviso" style="display:none;background:var(--accent-soft);color:var(--accent-dark);border-radius:var(--radius-btn);padding:14px;font-size:13px;line-height:1.5;margin-bottom:16px;">
+          ✅ Pagamento confirmado! Agora é só criar sua conta usando <strong>o mesmo e-mail</strong> que você usou no pagamento — toca em "Criar conta nova" logo abaixo.
+        </div>
         <h2 id="auth-title">Entrar</h2>
         <label>E-mail</label>
         <input type="text" id="auth-email" placeholder="seu@email.com">
@@ -1484,6 +1487,12 @@
       <input type="text" id="novo-membro-email" placeholder="email@exemplo.com">
       <button class="btn secondary" id="add-membro-btn">Adicionar acesso</button>
       <div style="font-size:11px;color:var(--muted);margin-top:8px;">A pessoa precisa criar uma conta (com esse mesmo e-mail) na tela de login para acessar.</div>
+    </div>
+
+    <div class="card" data-admin-cat="acesso" style="display:none;">
+      <h2>Quer mais um projeto?</h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Cada projeto novo é um acesso extra, com assinatura própria (menor que a do primeiro acesso) e franquia de IA independente.</div>
+      <a class="btn secondary" href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=262ad3c0913346c99f169dafe0ea89f" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;">Assinar mais um acesso</a>
     </div>
 
     <div class="card" data-admin-cat="prestadores" style="display:none;">
@@ -1880,6 +1889,21 @@
 </div>
 
 <script>
+// Volta de uma assinatura recém-paga no Mercado Pago (o back_url do checkout
+// de assinatura sempre inclui "preapproval_id" na volta) — mostra o aviso
+// pra pessoa já ir direto criar a conta com o mesmo e-mail. Roda logo aqui,
+// no topo do script, pra não depender de Firebase configurado nem de nenhuma
+// lib externa carregar — é a primeira coisa que alguém vindo de um
+// pagamento de verdade precisa ver, então não pode falhar.
+if(new URLSearchParams(location.search).has('preapproval_id')){
+  const avisoAssinatura = document.getElementById('assinatura-confirmada-aviso');
+  if(avisoAssinatura){
+    avisoAssinatura.style.display = 'block';
+    const semAnimacao = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById('hero-login').scrollIntoView({behavior: semAnimacao ? 'auto' : 'smooth'});
+  }
+}
+
 /* ======================================================================
    1) COLE AQUI AS CHAVES DO SEU PROJETO FIREBASE
       (Firebase Console > Configurações do projeto > Seus apps > Config)

@@ -1,4 +1,4 @@
-const { onCall, HttpsError } = require('firebase-functions/v2/https');
+const { onCall, onRequest, HttpsError } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const Anthropic = require('@anthropic-ai/sdk');
 const admin = require('firebase-admin');
@@ -9,6 +9,14 @@ admin.initializeApp();
 const db = admin.firestore();
 
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
+const MERCADOPAGO_ACCESS_TOKEN = defineSecret('MERCADOPAGO_ACCESS_TOKEN');
+
+// IDs dos planos de assinatura no Mercado Pago (criados via API de
+// Assinaturas/Preapproval) — hoje são planos de TESTE. Quando trocar pra
+// produção, cria os planos de novo com o Access Token de produção e troca
+// esses dois valores aqui (precisa de um novo deploy da função).
+const MP_PLANO_BASE_ID = '0f695c7dc58f4780a99e7a26bf1897de';
+const MP_PLANO_EXTRA_ID = '262ad3c0913346c99f169dafe0ea89f';
 
 const MAX_PAGINAS = 3; // orçamentos costumam ter poucas páginas — evita custo/tempo alto num PDF gigante
 const MODEL = 'claude-haiku-4-5-20251001'; // modelo mais barato — suficiente pra ler tabela de itens
@@ -192,3 +200,71 @@ exports.lerItensCotacao = onCall({ secrets: [ANTHROPIC_API_KEY], region: 'southa
   const precoTotal = typeof toolUse.input.precoTotal === 'string' ? toolUse.input.precoTotal : '';
   return { itens, empresa, telefone, precoTotal };
 });
+
+// Busca os detalhes completos de uma assinatura (preapproval) direto na API
+// do Mercado Pago — nunca confia só no aviso do webhook em si (poderia ser
+// forjado por qualquer um que descubra a URL), sempre confirma com a fonte.
+async function buscarPreapproval(preapprovalId) {
+  const resposta = await fetch(`https://api.mercadopago.com/preapproval/${preapprovalId}`, {
+    headers: { Authorization: `Bearer ${MERCADOPAGO_ACCESS_TOKEN.value()}` }
+  });
+  if (!resposta.ok) {
+    throw new Error(`Mercado Pago respondeu ${resposta.status} ao consultar a assinatura ${preapprovalId}`);
+  }
+  return resposta.json();
+}
+
+// Webhook do Mercado Pago — avisado automaticamente a cada evento de uma
+// assinatura (criada, paga, cancelada...). Sempre responde 200 rápido (senão
+// o Mercado Pago fica reenviando o mesmo aviso em loop), e só libera acesso
+// depois de confirmar com a própria API deles que a assinatura está mesmo
+// "authorized" (ou seja, o pagamento foi aprovado de verdade).
+async function handleMercadoPagoWebhook(req, res) {
+  try {
+    const preapprovalId = (req.body && req.body.data && req.body.data.id) || req.query['data.id'] || req.query.id;
+    const tipo = (req.body && req.body.type) || req.query.type;
+
+    // só nos importa notificação de assinatura — qualquer outra coisa (ex:
+    // "payment" avulso) a gente ignora, mas ainda responde 200 pro Mercado
+    // Pago não ficar retentando à toa.
+    if (!preapprovalId || tipo !== 'subscription_preapproval') {
+      res.status(200).send('ignorado');
+      return;
+    }
+
+    const preapproval = await buscarPreapproval(preapprovalId);
+
+    if (preapproval.status !== 'authorized') {
+      // ainda não aprovada (pendente, cancelada, pausada) — não libera nada;
+      // revogar acesso de assinatura cancelada fica pra uma próxima fase
+      res.status(200).send('status ainda não autorizado: ' + preapproval.status);
+      return;
+    }
+
+    const email = (preapproval.payer_email || '').toLowerCase();
+    if (!email) {
+      res.status(200).send('sem e-mail do pagador');
+      return;
+    }
+
+    // usa o próprio ID da assinatura como ID do projeto — assim, se o
+    // Mercado Pago reenviar o mesmo aviso (acontece, é esperado), a
+    // segunda vez só sobrescreve o mesmo documento em vez de duplicar
+    const projetoId = `mp_${preapprovalId}`;
+    await db.doc(`projetos/${projetoId}`).set({
+      nome: 'Novo projeto',
+      criadoPor: email,
+      membrosEmails: [email],
+      criadoEm: admin.firestore.FieldValue.serverTimestamp(),
+      mpPreapprovalId: preapprovalId,
+      mpPlanId: preapproval.preapproval_plan_id || null
+    }, { merge: true });
+
+    res.status(200).send('acesso liberado');
+  } catch (e) {
+    console.error('Erro no webhook do Mercado Pago:', e);
+    res.status(500).send('erro interno');
+  }
+}
+
+exports.mercadoPagoWebhook = onRequest({ secrets: [MERCADOPAGO_ACCESS_TOKEN], region: 'southamerica-east1' }, handleMercadoPagoWebhook);
