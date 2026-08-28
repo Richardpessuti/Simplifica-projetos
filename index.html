@@ -3050,9 +3050,21 @@ function renderProximaEtapa(){
   }
 
   const tipos = proxima.tipos || [];
+  const totalEtapas = ordenadas.length;
+  const etapasConcluidas = ordenadas.filter(e=>e.status==='Concluída'||e.status==='Pulada').length;
+  const pctObra = totalEtapas>0 ? Math.round((etapasConcluidas/totalEtapas)*100) : 0;
+  const raioAnel = 20, circAnel = 2*Math.PI*raioAnel;
+  const dashAnel = (circAnel - (circAnel*pctObra/100)).toFixed(1);
   el.innerHTML = `
     <div class="card">
-      <h2>${escapeHtml(txt('tituloProximaEtapa'))} <span class="tag">${escapeHtml(proxima.nome)}</span></h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;">
+        <h2 style="margin:0;">${escapeHtml(txt('tituloProximaEtapa'))} <span class="tag">${escapeHtml(proxima.nome)}</span></h2>
+        <svg width="48" height="48" viewBox="0 0 48 48" style="flex-shrink:0;">
+          <circle cx="24" cy="24" r="${raioAnel}" stroke="var(--accent-soft)" stroke-width="6" fill="none"/>
+          <circle cx="24" cy="24" r="${raioAnel}" stroke="var(--accent)" stroke-width="6" fill="none" stroke-dasharray="${circAnel.toFixed(1)}" stroke-dashoffset="${dashAnel}" stroke-linecap="round" transform="rotate(-90 24 24)"/>
+          <text x="24" y="28" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="600" font-size="12" fill="var(--ink)">${pctObra}%</text>
+        </svg>
+      </div>
       ${tipos.map(t=>{
         const c = checarTipo(proxima, t);
         const completo = proxima.tiposCompletos && proxima.tiposCompletos[t];
