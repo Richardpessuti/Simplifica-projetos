@@ -13,14 +13,22 @@ const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 const MAX_PAGINAS = 3; // orçamentos costumam ter poucas páginas — evita custo/tempo alto num PDF gigante
 const MODEL = 'claude-haiku-4-5-20251001'; // modelo mais barato — suficiente pra ler tabela de itens
 
-// mesmo e-mail fixo do isMaster() em firestore.rules — master sempre tem acesso
-// ilimitado à leitura por IA, independente do plano de qualquer arquiteto
+// mesmo e-mail fixo do isMaster() em firestore.rules — master sempre tem
+// acesso ilimitado à leitura por IA, em qualquer projeto
 const MASTER_EMAIL = 'richardpessuti@hotmail.com';
 
-// Confere se quem está chamando tem acesso ao projeto informado e, se o
-// projeto pertencer a um arquiteto com plano limitado, conta e controla o
-// uso mensal de forma atômica (transação) antes de deixar a IA rodar —
-// assim nunca gasta chamada da Anthropic com quem não tem permissão.
+// Franquia padrão de leituras por IA de cada acesso (projeto) por mês —
+// cada projeto tem a própria franquia, independente dos outros projetos da
+// mesma pessoa (não soma nem compartilha). Fica fixo aqui por padrão; um
+// projeto pode ter um valor diferente salvo em `limiteIAMensal` (0 = sem
+// acesso, negativo = ilimitado) pra planos especiais, mas isso não tem UI
+// hoje — só é setado manualmente ou futuramente pela automação de pagamento.
+const DEFAULT_LIMITE_IA = 15;
+
+// Confere se quem está chamando tem acesso ao projeto informado e conta o
+// uso mensal de leitura por IA daquele projeto, de forma atômica (transação),
+// antes de deixar a IA rodar — assim nunca gasta chamada da Anthropic com
+// quem não tem permissão ou já estourou a franquia daquele acesso.
 async function verificarAcessoEContarUso(request) {
   const { projetoId } = request.data || {};
   if (!projetoId || typeof projetoId !== 'string') {
@@ -28,7 +36,8 @@ async function verificarAcessoEContarUso(request) {
   }
   const callerEmail = (request.auth.token.email || '').toLowerCase();
 
-  const projetoSnap = await db.doc(`projetos/${projetoId}`).get();
+  const projetoRef = db.doc(`projetos/${projetoId}`);
+  const projetoSnap = await projetoRef.get();
   if (!projetoSnap.exists) {
     throw new HttpsError('not-found', 'Projeto não encontrado.');
   }
@@ -41,29 +50,22 @@ async function verificarAcessoEContarUso(request) {
     throw new HttpsError('permission-denied', 'Você não tem acesso a este projeto.');
   }
 
-  // master sempre passa direto; projetos sem arquiteto vinculado (raro —
-  // criados direto pelo master) também não têm limite
-  if (isMaster || !projeto.arquitetoId) return;
+  if (isMaster) return;
 
-  const arqRef = db.doc(`arquitetos/${projeto.arquitetoId}`);
-  const arqSnap = await arqRef.get();
-  // sem plano definido pelo master = sem acesso, por padrão (nega por segurança)
-  const limite = arqSnap.exists && typeof arqSnap.data().limiteIAMensal === 'number'
-    ? arqSnap.data().limiteIAMensal
-    : 0;
+  const limite = typeof projeto.limiteIAMensal === 'number' ? projeto.limiteIAMensal : DEFAULT_LIMITE_IA;
 
   if (limite === 0) {
-    throw new HttpsError('permission-denied', 'A leitura automática por IA não está disponível no seu plano. Fale com quem administra o sistema.');
+    throw new HttpsError('permission-denied', 'A leitura automática por IA não está disponível neste projeto.');
   }
-  if (limite < 0) return; // limite negativo = plano ilimitado
+  if (limite < 0) return; // limite negativo = ilimitado
 
   const mesAtual = new Date().toISOString().slice(0, 7); // "2026-08"
-  const usoRef = arqRef.collection('usoIA').doc(mesAtual);
+  const usoRef = projetoRef.collection('usoIA').doc(mesAtual);
   await db.runTransaction(async (tx) => {
     const usoSnap = await tx.get(usoRef);
     const atual = usoSnap.exists && typeof usoSnap.data().contagem === 'number' ? usoSnap.data().contagem : 0;
     if (atual >= limite) {
-      throw new HttpsError('resource-exhausted', `Limite mensal de leituras por IA atingido (${limite}/mês). Fale com quem administra o sistema pra aumentar.`);
+      throw new HttpsError('resource-exhausted', `Limite mensal de leituras por IA atingido (${limite}/mês) neste acesso.`);
     }
     tx.set(usoRef, { contagem: atual + 1, atualizadoEm: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
   });

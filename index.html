@@ -6231,22 +6231,7 @@ if(firebaseOk){
       const arqs = [];
       snap.forEach(d=>arqs.push({id:d.id, ...d.data()}));
 
-      // busca o uso do mês atual de cada arquiteto em paralelo (só informativo,
-      // não trava a tela se algum falhar)
-      const mesAtual = new Date().toISOString().slice(0,7);
-      const usos = await Promise.all(arqs.map(a=>
-        db.collection('arquitetos').doc(a.id).collection('usoIA').doc(mesAtual).get()
-          .then(d=> d.exists ? (d.data().contagem||0) : 0)
-          .catch(()=>null)
-      ));
-
-      el.innerHTML = arqs.map((a,i)=>{
-        const limite = typeof a.limiteIAMensal === 'number' ? a.limiteIAMensal : 0;
-        const uso = usos[i];
-        let usoTexto = '';
-        if(limite > 0) usoTexto = `Uso este mês: ${uso==null?'—':uso}/${limite} leituras por IA`;
-        else if(limite < 0) usoTexto = uso==null ? '' : `Uso este mês: ${uso} leituras por IA (ilimitado)`;
-        return `
+      el.innerHTML = arqs.map(a=> `
         <div class="list-item">
           <div class="row1">
             <div>
@@ -6255,21 +6240,13 @@ if(firebaseOk){
             </div>
             <span class="badge-prof" style="background:${a.ativo!==false?'var(--ok)':'var(--danger)'};">${a.ativo!==false?'Ativo':'Bloqueado'}</span>
           </div>
-          <label style="margin-top:10px;">Plano de leitura por IA</label>
-          <select data-plano-ia="${a.id}">
-            <option value="0" ${limite===0?'selected':''}>Sem acesso</option>
-            <option value="20" ${limite===20?'selected':''}>Básico — 20 leituras/mês</option>
-            <option value="100" ${limite===100?'selected':''}>Avançado — 100 leituras/mês</option>
-            <option value="-1" ${limite<0?'selected':''}>Ilimitado</option>
-          </select>
-          ${usoTexto ? `<div class="meta" style="margin-top:4px;">${escapeHtml(usoTexto)}</div>` : ''}
           <div class="actions">
             <button data-ver-arquiteto="${a.id}">Ver projetos</button>
             <button data-toggle-arquiteto="${a.id}" data-ativo="${a.ativo!==false}">${a.ativo!==false?'Bloquear':'Ativar'}</button>
             <button class="del" data-del-arquiteto="${a.id}" data-nome-arquiteto="${escapeHtml(a.nome)}">Excluir</button>
           </div>
         </div>
-      `;}).join('');
+      `).join('');
     }catch(e){
       console.error(e);
       el.innerHTML = `<div class="empty">Erro ao carregar arquitetos.<br><span style="font-size:10px;color:var(--muted);">${escapeHtml(e.code || e.message || String(e))}</span></div>`;
@@ -6315,23 +6292,6 @@ if(firebaseOk){
   document.getElementById('master-sair').addEventListener('click', ()=>{
     unsubscribeAll();
     auth.signOut();
-  });
-
-  document.addEventListener('change', async (e)=>{
-    const planoArqId = e.target.getAttribute('data-plano-ia');
-    if(planoArqId){
-      const limite = parseInt(e.target.value, 10);
-      e.target.disabled = true;
-      try{
-        await db.collection('arquitetos').doc(planoArqId).update({limiteIAMensal: limite});
-        toast('Plano de IA atualizado');
-      }catch(err){
-        console.error(err);
-        toast('Erro ao atualizar plano: ' + err.message);
-        renderMasterScreen();
-      }
-      e.target.disabled = false;
-    }
   });
 
   document.addEventListener('click', async (e)=>{
