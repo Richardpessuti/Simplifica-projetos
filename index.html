@@ -29,6 +29,16 @@
 <meta name="theme-color" content="#14171C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Registra o Service Worker (deixa o app instalável de verdade e funcional
+  // offline pra tela inicial). Só tenta em http(s) — em file:// (testes locais)
+  // o navegador nem suporta Service Worker, então nem chama.
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch((err) => console.error('Falha ao registrar Service Worker:', err));
+    });
+  }
+</script>
 
 <!-- Firebase (Auth + Firestore — gratuito, sem cartão de crédito) -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
