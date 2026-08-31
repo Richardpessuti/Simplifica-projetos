@@ -6,10 +6,11 @@
 // rede falhar. Tudo que não é essa casca (Firebase, Cloud Functions, CDNs
 // de libs) passa direto pela rede, sem cache — dados de verdade nunca podem
 // vir de uma cópia velha guardada aqui.
-const CACHE_NAME = 'simplifica-shell-v1';
+const CACHE_NAME = 'simplifica-shell-v2';
 const SHELL_FILES = [
   './',
   './index.html',
+  './app.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
