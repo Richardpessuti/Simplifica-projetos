@@ -12,11 +12,9 @@ const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 const MERCADOPAGO_ACCESS_TOKEN = defineSecret('MERCADOPAGO_ACCESS_TOKEN');
 
 // IDs dos planos de assinatura no Mercado Pago (criados via API de
-// Assinaturas/Preapproval) — hoje são planos de TESTE. Quando trocar pra
-// produção, cria os planos de novo com o Access Token de produção e troca
-// esses dois valores aqui (precisa de um novo deploy da função).
-const MP_PLANO_BASE_ID = '0f695c7dc58f4780a99e7a26bf1897de';
-const MP_PLANO_EXTRA_ID = '262ad3c0913346c99f169dafe0ea89f';
+// Assinaturas/Preapproval), planos de PRODUÇÃO.
+const MP_PLANO_BASE_ID = '9a61496329f34bf7bdcf0918ebc5fb81';
+const MP_PLANO_EXTRA_ID = 'a75dda952dea4678aa9815a990648bbe';
 
 const MAX_PAGINAS = 3; // orçamentos costumam ter poucas páginas — evita custo/tempo alto num PDF gigante
 const MODEL = 'claude-haiku-4-5-20251001'; // modelo mais barato — suficiente pra ler tabela de itens
