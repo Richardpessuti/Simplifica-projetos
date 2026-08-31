@@ -17,6 +17,7 @@ const MP_PLANO_BASE_ID = '9a61496329f34bf7bdcf0918ebc5fb81';
 const MP_PLANO_EXTRA_ID = 'a75dda952dea4678aa9815a990648bbe';
 
 const MAX_PAGINAS = 3; // orçamentos costumam ter poucas páginas — evita custo/tempo alto num PDF gigante
+const MAX_BASE64_CHARS = 20 * 1024 * 1024; // ~15MB de arquivo real — orçamento não precisa de mais que isso, evita abuso de custo/memória
 const MODEL = 'claude-haiku-4-5-20251001'; // modelo mais barato — suficiente pra ler tabela de itens
 
 // mesmo e-mail fixo do isMaster() em firestore.rules — master sempre tem
@@ -144,7 +145,7 @@ const FERRAMENTA_EXTRACAO = {
   }
 };
 
-exports.lerItensCotacao = onCall({ secrets: [ANTHROPIC_API_KEY], region: 'southamerica-east1' }, async (request) => {
+exports.lerItensCotacao = onCall({ secrets: [ANTHROPIC_API_KEY], region: 'southamerica-east1', maxInstances: 10 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Faça login pra usar a leitura automática.');
   }
@@ -152,6 +153,9 @@ exports.lerItensCotacao = onCall({ secrets: [ANTHROPIC_API_KEY], region: 'southa
   const { base64, fileName } = request.data || {};
   if (!base64 || typeof base64 !== 'string') {
     throw new HttpsError('invalid-argument', 'Nenhum arquivo enviado.');
+  }
+  if (base64.length > MAX_BASE64_CHARS) {
+    throw new HttpsError('invalid-argument', 'Arquivo muito grande pra leitura automática (máximo ~15MB).');
   }
 
   // checa permissão/plano e conta o uso ANTES de gastar qualquer chamada da IA
@@ -230,6 +234,14 @@ async function handleMercadoPagoWebhook(req, res) {
       return;
     }
 
+    // IDs de preapproval do Mercado Pago são sempre hex de 32 caracteres —
+    // rejeita rápido qualquer coisa fora desse formato (ex: alguém mandando
+    // lixo direto pro endpoint público) sem gastar uma chamada na API deles.
+    if (!/^[a-f0-9]{32}$/i.test(preapprovalId)) {
+      res.status(200).send('id em formato inválido');
+      return;
+    }
+
     const preapproval = await buscarPreapproval(preapprovalId);
 
     // usa o próprio ID da assinatura como ID do projeto — assim, se o
@@ -280,4 +292,4 @@ async function handleMercadoPagoWebhook(req, res) {
   }
 }
 
-exports.mercadoPagoWebhook = onRequest({ secrets: [MERCADOPAGO_ACCESS_TOKEN], region: 'southamerica-east1' }, handleMercadoPagoWebhook);
+exports.mercadoPagoWebhook = onRequest({ secrets: [MERCADOPAGO_ACCESS_TOKEN], region: 'southamerica-east1', maxInstances: 10 }, handleMercadoPagoWebhook);
