@@ -73,9 +73,15 @@ service cloud.firestore {
       allow read: if isMaster() ||
         (isSignedIn() && resource.data.email is string && resource.data.email.lower() == userEmail());
       allow create, delete: if isMaster();
-      // um arquiteto pode atualizar o próprio cadastro (ex: trocar a logo)
+      // um arquiteto pode atualizar o próprio cadastro (ex: trocar a logo),
+      // mas não pode mexer em "ativo" (só o master desativa/reativa — senão
+      // uma arquiteta desativada conseguiria se reativar sozinha) nem trocar
+      // o próprio "email" (identidade usada nas checagens de permissão em
+      // outros lugares — só o master reatribui isso, se precisar)
       allow update: if isMaster() ||
-        (isSignedIn() && resource.data.email is string && resource.data.email.lower() == userEmail());
+        (isSignedIn() && resource.data.email is string && resource.data.email.lower() == userEmail() &&
+          request.resource.data.get('ativo', true) == resource.data.get('ativo', true) &&
+          request.resource.data.email == resource.data.email);
     }
 
     // ---------- dados legados de antes do login (sem dono definido) ----------
@@ -102,11 +108,28 @@ service cloud.firestore {
       // no momento da criação — evita depender só do app já mandar tudo em minúsculo.
       // "limiteIAMensal" e "ativo" não podem ser definidos na criação — ficam
       // de fora, e a Cloud Function/regra usa o padrão (franquia normal, ativo).
+      //
+      // IMPORTANTE: criar projeto pelo cliente só é permitido pro master ou pra
+      // quem é uma arquiteta de verdade cadastrada (referência real na coleção
+      // "arquitetos", cujo e-mail bate com quem está criando) — sem essa trava,
+      // qualquer conta nova (cadastro é aberto, sem convite) conseguiria criar
+      // um projeto de graça pra si mesma, chamando o Firestore direto sem passar
+      // pela tela. Os projetos dos clientes que pagam são criados pelo webhook
+      // do Mercado Pago via Admin SDK, que ignora estas regras — essa trava aqui
+      // não afeta esse fluxo, só fecha a brecha do lado do cliente.
       allow create: if isSignedIn() &&
         request.resource.data.criadoPor == userEmail() &&
         request.resource.data.membrosEmails == [userEmail()] &&
         !('limiteIAMensal' in request.resource.data) &&
-        !('ativo' in request.resource.data);
+        !('ativo' in request.resource.data) &&
+        (
+          isMaster() ||
+          (
+            'arquitetoId' in request.resource.data &&
+            get(/databases/$(database)/documents/arquitetos/$(request.resource.data.arquitetoId)).data.email is string &&
+            get(/databases/$(database)/documents/arquitetos/$(request.resource.data.arquitetoId)).data.email.lower() == userEmail()
+          )
+        );
 
       allow update: if isMaster() ||
         (isProjectMember(resource.data) &&
