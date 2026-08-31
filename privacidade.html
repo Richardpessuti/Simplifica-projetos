@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simplifica Projetos — Política de Privacidade</title>
+<meta name="description" content="Como o Simplifica Projetos coleta, usa e protege os dados de quem usa o app.">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --accent:#1F4A3E;
+    --accent-dark:#163A30;
+    --accent-soft:#E7EFE9;
+    --paper:#F6F4EE;
+    --ink:#1B2420;
+    --muted:#5C6058;
+    --card-bg:#FFFFFF;
+    --paper-line:#E1DFD3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 20px;}
+
+  header{
+    background:var(--accent);
+    color:#FBF9F2;
+    padding:52px 20px 60px;
+    position:relative;
+    overflow:hidden;
+  }
+  header .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:#B7CFC4;
+    margin:0 0 10px;
+  }
+  header h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:clamp(26px,6.5vw,34px);
+    line-height:1.2;
+    margin:0 0 12px;
+    text-wrap:balance;
+  }
+  header p{
+    font-size:14px;
+    line-height:1.6;
+    color:#DCE7E1;
+    margin:0;
+    max-width:46ch;
+  }
+
+  main{margin-top:-30px;position:relative;}
+
+  .card{
+    background:var(--card-bg);
+    border-radius:18px;
+    padding:24px;
+    margin-bottom:20px;
+    box-shadow:0 6px 20px rgba(20,23,28,0.07);
+  }
+  .card h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:17px;
+    margin:0 0 12px;
+  }
+  .card p{
+    font-size:14px;
+    line-height:1.65;
+    color:var(--ink);
+    margin:0 0 12px;
+  }
+  .card p:last-child{margin-bottom:0;}
+  .card ul{
+    margin:0 0 12px;
+    padding-left:20px;
+    font-size:14px;
+    line-height:1.65;
+    color:var(--ink);
+  }
+  .card ul:last-child{margin-bottom:0;}
+  .card li{margin-bottom:6px;}
+  .card li:last-child{margin-bottom:0;}
+  .card strong{font-weight:600;}
+  .card a{color:var(--accent-dark);}
+
+  .atualizado{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--muted);
+    margin:0 0 20px;
+  }
+
+  footer{
+    text-align:center;
+    padding:32px 20px 44px;
+    font-size:11.5px;
+    color:var(--muted);
+    font-family:'IBM Plex Mono',monospace;
+  }
+  footer a{color:var(--muted);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="eyebrow">Simplifica Projetos</p>
+    <h1>Política de Privacidade</h1>
+    <p>Como coletamos, usamos e protegemos os dados de quem usa o app — em linguagem simples.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="atualizado">Última atualização: agosto de 2026</p>
+
+  <div class="card">
+    <h2>Quais dados coletamos</h2>
+    <p>Pra você usar o app, guardamos:</p>
+    <ul>
+      <li><strong>E-mail de login</strong>, usado pra autenticação (Firebase Authentication).</li>
+      <li><strong>Dados do(s) projeto(s) de reforma</strong> que você cadastra: cotações, contatos de prestadores, cronograma da obra, fotos e arquivos que você sobe (PDFs, imagens), e o financeiro (valores aprovados, pagos e pendentes).</li>
+      <li><strong>Dados de pagamento da assinatura</strong>: apenas o seu e-mail e o status da assinatura (ativa, cancelada, pausada). Nunca recebemos ou guardamos número de cartão — isso fica só com o Mercado Pago.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Onde os dados ficam guardados</h2>
+    <p>Tudo fica no Firebase (Google), num banco de dados (Firestore) e armazenamento de arquivos, com regras de acesso que garantem que só você e as pessoas que você convidar pro seu projeto conseguem ver os dados dele — nem outros clientes do app, nem o dono de outro projeto.</p>
+  </div>
+
+  <div class="card">
+    <h2>Leitura automática de cotações por IA</h2>
+    <p>Quando você usa a função de leitura automática de orçamento, a foto ou o PDF que você sobe é enviado pra API da Anthropic (empresa que faz o modelo de IA Claude) só na hora de extrair os itens, valores e dados da empresa — e não é usado pra treinar modelo nenhum, nem guardado por lá além do tempo necessário pra responder o pedido.</p>
+  </div>
+
+  <div class="card">
+    <h2>Pagamento e assinatura</h2>
+    <p>O pagamento da assinatura é processado inteiramente pelo <strong>Mercado Pago</strong>. O Simplifica Projetos nunca vê nem guarda dados do seu cartão ou conta bancária — apenas recebe um aviso do Mercado Pago confirmando que o pagamento foi aprovado (ou cancelado), com seu e-mail e o status da assinatura, pra liberar ou revogar o acesso automaticamente.</p>
+  </div>
+
+  <div class="card">
+    <h2>Por quanto tempo guardamos os dados</h2>
+    <p>Enquanto sua assinatura estiver ativa, ou enquanto você quiser manter o histórico do projeto mesmo com o acesso pausado. Se você cancelar a assinatura, o acesso ao projeto é bloqueado, mas os dados continuam guardados (caso você reative depois). Se quiser que os dados de um projeto sejam apagados definitivamente, é só pedir por e-mail (veja o contato abaixo).</p>
+  </div>
+
+  <div class="card">
+    <h2>Seus direitos</h2>
+    <p>De acordo com a LGPD (Lei Geral de Proteção de Dados), você pode a qualquer momento pedir pra:</p>
+    <ul>
+      <li>Saber quais dados temos sobre você;</li>
+      <li>Corrigir dados incorretos;</li>
+      <li>Excluir seus dados e encerrar sua conta.</li>
+    </ul>
+    <p>Pra qualquer um desses pedidos, é só mandar um e-mail pra <a href="mailto:richardpessuti@hotmail.com">richardpessuti@hotmail.com</a>.</p>
+  </div>
+
+  <div class="card">
+    <h2>Dúvidas</h2>
+    <p>Qualquer dúvida sobre esta política ou sobre como seus dados são usados, escreva pra <a href="mailto:richardpessuti@hotmail.com">richardpessuti@hotmail.com</a>.</p>
+  </div>
+</main>
+
+<footer>Simplifica Projetos — <a href="vendas.html">voltar</a></footer>
+
+</body>
+</html>
