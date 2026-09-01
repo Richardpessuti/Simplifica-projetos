@@ -1478,7 +1478,13 @@
       <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Só muda pra este projeto — a logo continua a mesma. Se você subir uma foto de logo, ela cobre o banner inteiro e essas cores de banner ficam em segundo plano.</div>
 
       <label>Estilo de cor</label>
-      <div id="admin-presets-estilo" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;"></div>
+      <div id="admin-presets-estilo" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;"></div>
+
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:var(--paper);border:1px solid var(--paper-line);margin-bottom:18px;">
+        <span style="font-size:11.5px;color:var(--muted);">Assim vai aparecer pro seu cliente:</span>
+        <button type="button" id="admin-preview-botao" style="pointer-events:none;padding:8px 16px;border:none;border-radius:8px;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;">Botão</button>
+        <span id="admin-preview-badge" style="pointer-events:none;padding:5px 12px;border-radius:20px;color:#fff;font-size:11px;font-weight:600;">Aprovado</span>
+      </div>
 
       <label>Estilo dos cantos</label>
       <select id="admin-cantos">
@@ -2229,6 +2235,23 @@ function aplicarTema(tema){
 
   // cor por tipo (usada nas listas de cotações e etapas)
   window._tipoCores = (tema && tema.tipoCores) || {};
+
+  atualizarPreviewCor(tema);
+}
+
+// A aba Admin trava --accent/--ok num valor fixo (ver comentário em
+// #tab-admin, no CSS) pra continuar legível mesmo com cores ruins escolhidas
+// pro cliente. Só que isso deixa a própria seção "Aparência" sem feedback
+// visual de que a cor mudou de verdade — por isso essa prévia aplica a cor
+// direto via style inline, escapando da trava, só pra esses dois elementos.
+function atualizarPreviewCor(tema){
+  const botao = document.getElementById('admin-preview-botao');
+  const badge = document.getElementById('admin-preview-badge');
+  if(!botao || !badge) return;
+  const corBotao = (tema && tema.corBotao) ? valorComOpacidade(tema.corBotao, tema.corBotaoOpacidade) : '#2F6F5E';
+  const corSucesso = (tema && tema.corSucesso) ? valorComOpacidade(tema.corSucesso, tema.corSucessoOpacidade) : '#2F6F5E';
+  botao.style.background = corBotao;
+  badge.style.background = corSucesso;
 }
 
 let logoBase64Atual = null;
