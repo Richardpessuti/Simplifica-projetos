@@ -26,6 +26,7 @@
     --muted:#5C6058;
     --card-bg:#FFFFFF;
     --paper-line:#E1DFD3;
+    --danger:#C1443A;
   }
   *{box-sizing:border-box;}
   body{
@@ -55,17 +56,34 @@
   header h1{
     font-family:'Space Grotesk',sans-serif;
     font-weight:700;
-    font-size:clamp(28px,7vw,40px);
-    line-height:1.15;
+    font-size:clamp(32px,8.5vw,46px);
+    line-height:1.1;
     margin:0 0 16px;
     text-wrap:balance;
+    letter-spacing:-0.01em;
   }
   header p{
-    font-size:15px;
+    font-size:15.5px;
     line-height:1.6;
     color:#DCE7E1;
     margin:0;
     max-width:46ch;
+  }
+  .trust-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px 18px;
+    margin-top:24px;
+    padding-top:20px;
+    border-top:1px solid rgba(255,255,255,0.18);
+  }
+  .trust-item{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:#DCE7E1;
   }
 
   main{margin-top:-30px;position:relative;}
@@ -139,6 +157,14 @@
   .passo-titulo{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;color:var(--ink);}
   .passo-desc{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5;}
 
+  .comparativo{display:flex;flex-direction:column;gap:10px;}
+  .comp-linha{display:flex;gap:12px;align-items:flex-start;font-size:13.5px;line-height:1.5;padding:10px 12px;border-radius:10px;}
+  .comp-ruim{background:rgba(193,68,58,0.06);color:var(--muted);}
+  .comp-bom{background:var(--accent-soft);color:var(--ink);font-weight:500;}
+  .comp-ic{flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px;}
+  .comp-ruim .comp-ic{background:rgba(193,68,58,0.14);color:var(--danger);}
+  .comp-bom .comp-ic{background:var(--accent);color:#fff;}
+
   .destaques{display:flex;flex-direction:column;gap:16px;}
   .destaque-card{background:var(--accent-soft);border-radius:16px;padding:18px;}
   .destaque-titulo{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;color:var(--accent-dark);margin-bottom:4px;}
@@ -160,13 +186,32 @@
 <header>
   <div class="wrap">
     <p class="eyebrow">Simplifica Projetos</p>
-    <h1>Chega de procurar orçamento perdido no WhatsApp.</h1>
-    <p>Cronograma, cotações lidas por inteligência artificial, prestadores e o financeiro da obra — tudo num só lugar, direto no navegador do celular. Sem baixar app de loja.</p>
+    <h1>Sua reforma inteira, organizada num só lugar. Chega de PDF perdido no WhatsApp.</h1>
+    <p>Cronograma sempre atualizado, cotações lidas sozinhas por inteligência artificial, prestadores organizados e o financeiro sem susto — tudo no navegador do celular, sem baixar app de loja.</p>
     <a class="hero-cta" href="#plano">Ver planos ↓</a>
+    <div class="trust-row">
+      <span class="trust-item">✓ Cancele quando quiser</span>
+      <span class="trust-item">✓ Sem fidelidade</span>
+      <span class="trust-item">✓ Pagamento seguro (Mercado Pago)</span>
+    </div>
   </div>
 </header>
 
 <main class="wrap">
+  <div class="card">
+    <h2>O que muda no dia a dia da sua obra</h2>
+    <div class="comparativo">
+      <div class="comp-linha comp-ruim"><span class="comp-ic">✕</span><span>Orçamento perdido em 30 conversas de WhatsApp</span></div>
+      <div class="comp-linha comp-bom"><span class="comp-ic">✓</span><span>Todas as cotações organizadas num só lugar</span></div>
+      <div class="comp-linha comp-ruim"><span class="comp-ic">✕</span><span>Ninguém sabe em que pé está a obra</span></div>
+      <div class="comp-linha comp-bom"><span class="comp-ic">✓</span><span>Próxima etapa sempre em destaque, com data prevista</span></div>
+      <div class="comp-linha comp-ruim"><span class="comp-ic">✕</span><span>Digitar item por item de cada orçamento na mão</span></div>
+      <div class="comp-linha comp-bom"><span class="comp-ic">✓</span><span>A IA lê o orçamento sozinha, em segundos</span></div>
+      <div class="comp-linha comp-ruim"><span class="comp-ic">✕</span><span>Não saber quanto já foi pago e quanto falta</span></div>
+      <div class="comp-linha comp-bom"><span class="comp-ic">✓</span><span>Financeiro sempre atualizado, parcela por parcela</span></div>
+    </div>
+  </div>
+
   <div class="card">
     <h2>Como funciona</h2>
     <div class="passos">
@@ -202,6 +247,7 @@
   </div>
 
   <div class="card">
+    <h2>Por dentro do app</h2>
     <div class="destaques">
       <div class="destaque-card">
         <div class="destaque-titulo">Sempre sabe em que pé está a obra</div>
@@ -249,7 +295,7 @@
   </div>
 
   <div class="card" id="plano">
-    <h2>Plano</h2>
+    <h2>Comece agora</h2>
     <div class="preco-linha">
       <div>
         <div class="nome">Acesso</div>
