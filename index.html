@@ -15,7 +15,7 @@
 <meta name="description" content="Cronograma, cotações lidas por IA, prestadores e financeiro da sua reforma, tudo num só lugar. Assine e use no navegador, sem app de loja.">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
 <style>
   :root{
     --accent:#1F4A3E;
@@ -54,8 +54,8 @@
     margin:0 0 10px;
   }
   header h1{
-    font-family:'Space Grotesk',sans-serif;
-    font-weight:700;
+    font-family:'Fraunces','Space Grotesk',serif;
+    font-weight:600;
     font-size:clamp(32px,8.5vw,46px);
     line-height:1.1;
     margin:0 0 16px;
@@ -270,7 +270,10 @@
         <div class="mock">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
             <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;">Vidraçaria Sul</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--accent-soft);color:var(--accent-dark);padding:3px 8px;border-radius:20px;white-space:nowrap;">✨ lido por IA</div>
+            <div style="display:flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--accent-soft);color:var(--accent-dark);padding:3px 8px;border-radius:20px;white-space:nowrap;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--accent-dark)"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z"/></svg>
+              lido por IA
+            </div>
           </div>
           <div style="font-size:11.5px;color:var(--muted);">3 itens · Total <strong style="color:var(--ink);">R$ 4.230,00</strong></div>
         </div>
