@@ -507,7 +507,7 @@
   .list-item{
     border:1px solid var(--paper-line);
     border-radius:14px;
-    padding:16px;
+    padding:18px;
     margin-bottom:10px;
     background:var(--card-bg);
     box-shadow:0 2px 8px rgba(20,23,28,0.04);
@@ -545,7 +545,7 @@
     display:flex;
     justify-content:space-between;
     align-items:flex-start;
-    gap:8px;
+    gap:12px;
   }
   .list-item .item-title, .step-body .item-title{
     font-weight:600;
@@ -561,7 +561,7 @@
   .price{
     font-family:'IBM Plex Mono', monospace;
     font-weight:700;
-    color:var(--blueprint);
+    color:var(--ink);
     white-space:nowrap;
   }
   .actions{
@@ -5160,14 +5160,14 @@ function renderPrestadorItem(p){
     <div class="list-item">
       <div class="row1">
         <div>
-          <div class="item-title">${p.favorito?'⭐ ':''}${p.destaque?'📌 ':''}${escapeHtml(p.nome)}</div>
+          <div class="item-title" style="display:flex;align-items:center;gap:5px;">${p.favorito?'<svg width="13" height="13" viewBox="0 0 24 24" fill="var(--caution)" style="flex-shrink:0;"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7-6.2-3.8-6.2 3.8 1.6-7L2 9.2l7.1-.6L12 2z"/></svg>':''}${p.destaque?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 21s-7-7.5-7-12a7 7 0 0114 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.3"/></svg>':''}<span>${escapeHtml(p.nome)}</span></div>
           <div class="meta">${escapeHtml(p.empresa||'')}</div>
           ${p.status ? `<span class="badge-prof" style="background:${statusPrestadorCor(p.status)};">${escapeHtml(p.status)}</span>` : ''}
           ${p.acessoRecebido ? `<span class="badge-prof" style="background:var(--ok);">✓ Acesso recebido</span>` : ''}
         </div>
         <span class="badge-prof">Nº ${escapeHtml(p.num)}</span>
       </div>
-      <div class="meta" style="margin-top:8px;font-size:14px;color:var(--ink);font-weight:600;">${escapeHtml(p.tel||'sem telefone')}</div>
+      <div style="margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);font-weight:600;letter-spacing:0.2px;">${escapeHtml(p.tel||'sem telefone')}</div>
       <div class="actions">
         ${p.tel ? `<a class="view" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:var(--ok);border-color:var(--ok);" href="${waLink(p.tel)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
         ${p.tel ? `<button class="view" style="color:var(--blueprint);border-color:var(--blueprint);" data-whats-arquivo-tel="${escapeHtml(p.tel)}" data-whats-arquivo-nome="${escapeHtml(p.nome)}">📎 Enviar arquivo</button>` : ''}
@@ -5210,7 +5210,7 @@ function renderPrestadoresList(docs){
 
   const destacadosHtml = destacados.length ? `
     <div class="card" style="border:2px solid var(--accent);">
-      <h2>📌 Contatos fixos</h2>
+      <h2><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M12 21s-7-7.5-7-12a7 7 0 0114 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.3"/></svg> Contatos fixos</h2>
       ${destacados.map(p=>renderPrestadorItem(p)).join('')}
     </div>
   ` : '';
