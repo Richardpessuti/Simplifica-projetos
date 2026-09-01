@@ -2121,10 +2121,10 @@ function sincronizarFormularioCores(){
 // bonito, sem configurar campo por campo — quem quiser esse nível de
 // controle ainda tem o editor completo em "Editar estilos avançado".
 const PRESETS_ESTILO = [
-  {id:'verde', nome:'Verde Clássico', cor:'#2F6F5E', paleta:{corFundo:'#F3F5F1', corCabecalho:'#12211C', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#16211C'}},
-  {id:'terracota', nome:'Terracota', cor:'#B5533A', paleta:{corFundo:'#FAF4EF', corCabecalho:'#241712', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#241712'}},
-  {id:'petroleo', nome:'Azul Petróleo', cor:'#2A4D5E', paleta:{corFundo:'#F2F5F5', corCabecalho:'#10222A', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#12232B'}},
-  {id:'cobre', nome:'Cobre Queimado', cor:'#A15C34', paleta:{corFundo:'#F8F2EA', corCabecalho:'#241609', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#241609'}}
+  {id:'verde', nome:'Verde Clássico', cor:'#2F6F5E', paleta:{corFundo:'#F3F5F1', corCabecalho:'#12211C', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#16211C', corTextura:'#2F6F5E'}},
+  {id:'terracota', nome:'Terracota', cor:'#B5533A', paleta:{corFundo:'#FAF4EF', corCabecalho:'#241712', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#241712', corTextura:'#B5533A'}},
+  {id:'petroleo', nome:'Azul Petróleo', cor:'#2A4D5E', paleta:{corFundo:'#F2F5F5', corCabecalho:'#10222A', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#12232B', corTextura:'#2A4D5E'}},
+  {id:'cobre', nome:'Cobre Queimado', cor:'#A15C34', paleta:{corFundo:'#F8F2EA', corCabecalho:'#241609', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#241609', corTextura:'#A15C34'}}
 ];
 function renderPresetsEstilo(){
   const el = document.getElementById('admin-presets-estilo');
@@ -2145,7 +2145,7 @@ document.getElementById('admin-presets-estilo').addEventListener('click', async 
   temaAtual.corBotao = preset.cor;
   temaAtual.corSucesso = preset.cor;
   Object.assign(temaAtual, preset.paleta);
-  ['corBotao','corSucesso','corFundo','corCabecalho','corCard','corMenu','corTexto'].forEach(campo=>{
+  ['corBotao','corSucesso','corFundo','corCabecalho','corCard','corMenu','corTexto','corTextura'].forEach(campo=>{
     delete temaAtual[campo+'Opacidade'];
   });
   aplicarTema(temaAtual);
