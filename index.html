@@ -84,9 +84,6 @@
     margin:0 0 14px;
   }
 
-  .beneficios{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;}
-  .beneficios li{display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.5;color:var(--ink);}
-  .beneficios svg{flex-shrink:0;margin-top:2px;}
 
   .preco-linha{
     display:flex;
@@ -120,6 +117,34 @@
 
   .nota{font-size:11.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5;}
 
+  .hero-cta{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:22px;
+    background:rgba(255,255,255,0.14);
+    border:1px solid rgba(255,255,255,0.35);
+    color:#fff;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:600;
+    text-decoration:none;
+    padding:11px 18px;
+    border-radius:30px;
+  }
+
+  .passos{display:flex;flex-direction:column;gap:18px;}
+  .passo{display:flex;gap:14px;align-items:flex-start;}
+  .passo-ic{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .passo-titulo{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;color:var(--ink);}
+  .passo-desc{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5;}
+
+  .destaques{display:flex;flex-direction:column;gap:16px;}
+  .destaque-card{background:var(--accent-soft);border-radius:16px;padding:18px;}
+  .destaque-titulo{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;color:var(--accent-dark);margin-bottom:4px;}
+  .destaque-desc{font-size:12px;color:var(--ink);margin-bottom:14px;line-height:1.5;}
+  .mock{background:#fff;border-radius:12px;padding:14px;box-shadow:0 4px 14px rgba(20,23,28,0.08);}
+
   footer{
     text-align:center;
     padding:32px 20px 44px;
@@ -135,35 +160,95 @@
 <header>
   <div class="wrap">
     <p class="eyebrow">Simplifica Projetos</p>
-    <h1>Reforma organizada, sem virar bagunça de PDF no WhatsApp.</h1>
-    <p>Cronograma, cotações lidas por inteligência artificial, prestadores e o financeiro da obra — tudo num só lugar, acessível pelo celular.</p>
+    <h1>Chega de procurar orçamento perdido no WhatsApp.</h1>
+    <p>Cronograma, cotações lidas por inteligência artificial, prestadores e o financeiro da obra — tudo num só lugar, direto no navegador do celular. Sem baixar app de loja.</p>
+    <a class="hero-cta" href="#plano">Ver planos ↓</a>
   </div>
 </header>
 
 <main class="wrap">
   <div class="card">
-    <h2>O que você tem no app</h2>
-    <ul class="beneficios">
-      <li>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F4A3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        <span>Cronograma com a próxima etapa sempre em destaque — sem precisar ligar pra saber como está a obra.</span>
-      </li>
-      <li>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F4A3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        <span>Sobe a foto ou o PDF do orçamento e a IA lê sozinha: empresa, telefone, valor total e os itens, um por um.</span>
-      </li>
-      <li>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F4A3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        <span>Contatos de prestadores organizados, com um toque pra abrir o WhatsApp de cada um.</span>
-      </li>
-      <li>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1F4A3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        <span>Total aprovado, já pago e o que falta — inclusive parcelas no cartão, organizadas por fatura.</span>
-      </li>
-    </ul>
+    <h2>Como funciona</h2>
+    <div class="passos">
+      <div class="passo">
+        <div class="passo-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div>
+          <div class="passo-titulo">Assine em 1 minuto</div>
+          <div class="passo-desc">Sem baixar nada de loja de app — funciona direto no navegador do celular.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-2a4 4 0 014-4h6a4 4 0 014 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div>
+          <div class="passo-titulo">Convide quem quiser</div>
+          <div class="passo-desc">Cônjuge, arquiteto, prestador — cada um entra só no seu projeto, com o próprio acesso.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 1 3 2.2c0 2.8-6 1.6-6 4.3 0 1.3 1.3 2.5 3 2.5s3-1.1 3-2.5"/></svg></div>
+        <div>
+          <div class="passo-titulo">Suba a cotação — a IA lê sozinha</div>
+          <div class="passo-desc">Foto ou PDF do orçamento: a inteligência artificial extrai empresa, telefone, itens e valor total.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
+        <div>
+          <div class="passo-titulo">Acompanhe tudo pelo celular</div>
+          <div class="passo-desc">Cronograma, financeiro e prestadores sempre à mão, sem precisar ligar pra ninguém.</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="card">
+    <div class="destaques">
+      <div class="destaque-card">
+        <div class="destaque-titulo">Sempre sabe em que pé está a obra</div>
+        <div class="destaque-desc">A próxima etapa e o percentual concluído aparecem assim que você abre o app.</div>
+        <div class="mock" style="display:flex;align-items:center;gap:12px;">
+          <svg width="52" height="52" viewBox="0 0 48 48" style="flex-shrink:0;">
+            <circle cx="24" cy="24" r="20" stroke="var(--accent-soft)" stroke-width="6" fill="none"/>
+            <circle cx="24" cy="24" r="20" stroke="var(--accent)" stroke-width="6" fill="none" stroke-dasharray="125.7" stroke-dashoffset="40.2" stroke-linecap="round" transform="rotate(-90 24 24)"/>
+            <text x="24" y="28" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="600" font-size="12" fill="var(--ink)">68%</text>
+          </svg>
+          <div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;">Próxima etapa: Pintura</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">Previsão: 12/09</div>
+          </div>
+        </div>
+      </div>
+      <div class="destaque-card">
+        <div class="destaque-titulo">Cotação lida sozinha pela IA</div>
+        <div class="destaque-desc">Sem digitar nada — só subir a foto ou o PDF do orçamento.</div>
+        <div class="mock">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;">Vidraçaria Sul</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--accent-soft);color:var(--accent-dark);padding:3px 8px;border-radius:20px;white-space:nowrap;">✨ lido por IA</div>
+          </div>
+          <div style="font-size:11.5px;color:var(--muted);">3 itens · Total <strong style="color:var(--ink);">R$ 4.230,00</strong></div>
+        </div>
+      </div>
+      <div class="destaque-card">
+        <div class="destaque-titulo">Financeiro sem susto</div>
+        <div class="destaque-desc">Quanto já foi pago, quanto falta — inclusive parcelas no cartão, por fatura.</div>
+        <div class="mock">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;">
+            <span>Já pago</span><span>Falta pagar</span>
+          </div>
+          <div style="display:flex;height:10px;border-radius:6px;overflow:hidden;margin-bottom:8px;">
+            <div style="flex:58;background:var(--accent);"></div>
+            <div style="flex:42;background:var(--paper-line);"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;">
+            <span style="color:var(--accent-dark);">R$ 12.400</span><span style="color:var(--muted);">R$ 8.900</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="plano">
     <h2>Plano</h2>
     <div class="preco-linha">
       <div>
