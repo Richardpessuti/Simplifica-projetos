@@ -80,22 +80,6 @@
     --textura-cor:#E4483A;
     --folhagem-opacidade:1;
   }
-  /* A aba Admin nunca deve mudar de cor — é o painel de controle de quem
-     administra o projeto, e precisa continuar legível mesmo que a
-     personalização escolhida pro cliente fique com pouco contraste. */
-  #tab-admin{
-    --blueprint:#14171C;
-    --paper:#F4F5F3;
-    --ink:#14171C;
-    --muted:#6B7280;
-    --ok:#1F4A3E;
-    --danger:#C1443A;
-    --accent:#1F4A3E;
-    --card-bg:#FFFFFF;
-    --nav-bg:#FFFFFF;
-    --caution:#C7862B;
-    --textura-cor:#E4483A;
-  }
   *{box-sizing:border-box;}
   @keyframes fadeInUp{
     from{opacity:0; transform:translateY(10px);}
@@ -1481,7 +1465,7 @@
       <div id="admin-presets-estilo" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;"></div>
 
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:var(--paper);border:1px solid var(--paper-line);margin-bottom:18px;">
-        <span style="font-size:11.5px;color:var(--muted);">Assim vai aparecer pro seu cliente:</span>
+        <span style="font-size:11.5px;color:var(--muted);">Cor de botão e "aprovado":</span>
         <button type="button" id="admin-preview-botao" style="pointer-events:none;padding:8px 16px;border:none;border-radius:8px;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;">Botão</button>
         <span id="admin-preview-badge" style="pointer-events:none;padding:5px 12px;border-radius:20px;color:#fff;font-size:11px;font-weight:600;">Aprovado</span>
       </div>
@@ -2105,19 +2089,42 @@ function renderCamposCor(){
   });
 }
 
-// Presets de estilo curados — cada um é só a cor de destaque (botões,
-// estado "aprovado" e, por tabela, os tons derivados --accent-dark/
-// --accent-soft usados em ícones). Não mexe em fundo/card/texto/status de
-// pendente-recusado — aqueles continuam neutros e semânticos em qualquer
-// preset, só a identidade visual muda. Pensado pra resolver o excesso dos
-// 9 campos de cor manuais: a maioria das pessoas só quer trocar "a cor do
-// app", não configurar campo por campo — quem quiser esse nível de
+// Preenche os campos do editor avançado (cor, hex e opacidade) a partir do
+// temaAtual — usada tanto no carregamento do projeto quanto depois de
+// aplicar um preset, senão o editor avançado fica com valores desatualizados
+// e um "Aplicar todas as cores" sem querer reverteria o preset recém-escolhido.
+function sincronizarFormularioCores(){
+  Object.keys(TEMA_CAMPOS).forEach(campo=>{
+    const sufixo = campo.replace('cor','').toLowerCase(); // corFundo -> fundo
+    const valor = temaAtual[campo] || '';
+    const hexInput = document.getElementById('admin-cor-'+sufixo+'-hex');
+    const colorInput = document.getElementById('admin-cor-'+sufixo);
+    if(hexInput) hexInput.value = valor;
+    if(colorInput && /^#[0-9A-Fa-f]{6}$/.test(valor)) colorInput.value = valor;
+    const opacidadeInput = document.getElementById('admin-cor-'+sufixo+'-opacidade');
+    if(opacidadeInput){
+      const opacidade = (temaAtual[campo+'Opacidade'] != null) ? temaAtual[campo+'Opacidade'] : 100;
+      opacidadeInput.value = opacidade;
+      const valEl = document.getElementById('admin-cor-'+sufixo+'-opacidade-val');
+      if(valEl) valEl.textContent = opacidade + '%';
+    }
+  });
+}
+
+// Presets de estilo curados — cada um é uma paleta completa (fundo,
+// cabeçalho, cards, menu, texto, botão/aprovado) pensada pra combinar,
+// não só 1 cor de destaque com tons derivados. "Pendente" e "recusado"
+// ficam de fora de propósito: são status semânticos (âmbar/vermelho)
+// universais em qualquer preset, trocar eles pioraria a leitura do app.
+// Pensado pra resolver o excesso dos 9 campos de cor manuais: a maioria
+// das pessoas só quer trocar "a cor do app" de um jeito que já fica
+// bonito, sem configurar campo por campo — quem quiser esse nível de
 // controle ainda tem o editor completo em "Editar estilos avançado".
 const PRESETS_ESTILO = [
-  {id:'verde', nome:'Verde Clássico', cor:'#2F6F5E'},
-  {id:'terracota', nome:'Terracota', cor:'#B5533A'},
-  {id:'petroleo', nome:'Azul Petróleo', cor:'#2A4D5E'},
-  {id:'cobre', nome:'Cobre Queimado', cor:'#A15C34'}
+  {id:'verde', nome:'Verde Clássico', cor:'#2F6F5E', paleta:{corFundo:'#F3F5F1', corCabecalho:'#12211C', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#16211C'}},
+  {id:'terracota', nome:'Terracota', cor:'#B5533A', paleta:{corFundo:'#FAF4EF', corCabecalho:'#241712', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#241712'}},
+  {id:'petroleo', nome:'Azul Petróleo', cor:'#2A4D5E', paleta:{corFundo:'#F2F5F5', corCabecalho:'#10222A', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#12232B'}},
+  {id:'cobre', nome:'Cobre Queimado', cor:'#A15C34', paleta:{corFundo:'#F8F2EA', corCabecalho:'#241609', corCard:'#FFFFFF', corMenu:'#FFFFFF', corTexto:'#241609'}}
 ];
 function renderPresetsEstilo(){
   const el = document.getElementById('admin-presets-estilo');
@@ -2137,10 +2144,13 @@ document.getElementById('admin-presets-estilo').addEventListener('click', async 
   if(!preset) return;
   temaAtual.corBotao = preset.cor;
   temaAtual.corSucesso = preset.cor;
-  delete temaAtual.corBotaoOpacidade;
-  delete temaAtual.corSucessoOpacidade;
+  Object.assign(temaAtual, preset.paleta);
+  ['corBotao','corSucesso','corFundo','corCabecalho','corCard','corMenu','corTexto'].forEach(campo=>{
+    delete temaAtual[campo+'Opacidade'];
+  });
   aplicarTema(temaAtual);
   renderPresetsEstilo();
+  sincronizarFormularioCores();
   try{
     await db.collection('projetos').doc(currentProjetoId).update({tema: temaAtual});
     toast('Estilo "' + preset.nome + '" aplicado');
@@ -2239,11 +2249,9 @@ function aplicarTema(tema){
   atualizarPreviewCor(tema);
 }
 
-// A aba Admin trava --accent/--ok num valor fixo (ver comentário em
-// #tab-admin, no CSS) pra continuar legível mesmo com cores ruins escolhidas
-// pro cliente. Só que isso deixa a própria seção "Aparência" sem feedback
-// visual de que a cor mudou de verdade — por isso essa prévia aplica a cor
-// direto via style inline, escapando da trava, só pra esses dois elementos.
+// Os botões visíveis no card "Aparência" são todos .btn.secondary/.btn.muted
+// (usam --blueprint, não --accent) — sem essa prévia, não haveria nenhum
+// elemento ali mostrando a cor de botão/aprovado escolhida.
 function atualizarPreviewCor(tema){
   const botao = document.getElementById('admin-preview-botao');
   const badge = document.getElementById('admin-preview-badge');
@@ -6421,21 +6429,7 @@ if(firebaseOk){
       temaAtual = data.tema || {};
       aplicarTema(temaAtual);
       renderPresetsEstilo();
-      Object.keys(TEMA_CAMPOS).forEach(campo=>{
-        const sufixo = campo.replace('cor','').toLowerCase(); // corFundo -> fundo
-        const valor = temaAtual[campo] || '';
-        const hexInput = document.getElementById('admin-cor-'+sufixo+'-hex');
-        const colorInput = document.getElementById('admin-cor-'+sufixo);
-        if(hexInput) hexInput.value = valor;
-        if(colorInput && /^#[0-9A-Fa-f]{6}$/.test(valor)) colorInput.value = valor;
-        const opacidadeInput = document.getElementById('admin-cor-'+sufixo+'-opacidade');
-        if(opacidadeInput){
-          const opacidade = (temaAtual[campo+'Opacidade'] != null) ? temaAtual[campo+'Opacidade'] : 100;
-          opacidadeInput.value = opacidade;
-          const valEl = document.getElementById('admin-cor-'+sufixo+'-opacidade-val');
-          if(valEl) valEl.textContent = opacidade + '%';
-        }
-      });
+      sincronizarFormularioCores();
       const cantosSel = document.getElementById('admin-cantos');
       if(cantosSel) cantosSel.value = temaAtual.cantos || 'arredondado';
       const folhagemChk = document.getElementById('admin-mostrar-folhagem');
