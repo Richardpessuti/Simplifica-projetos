@@ -735,6 +735,44 @@
     cursor:pointer;
     padding:0;
   }
+  .recado-bolha{
+    align-self:flex-start;
+    max-width:78%;
+    background:var(--neutral-bg);
+    border-radius:14px;
+    padding:9px 12px;
+  }
+  .recado-bolha.minha{
+    align-self:flex-end;
+    background:var(--accent-soft);
+  }
+  .recado-autor{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    font-weight:600;
+    color:var(--muted);
+    margin-bottom:3px;
+  }
+  .recado-texto{
+    font-size:13.5px;
+    color:var(--ink);
+    white-space:pre-wrap;
+    word-break:break-word;
+    line-height:1.45;
+  }
+  .recado-foto{
+    max-width:100%;
+    border-radius:8px;
+    margin-bottom:6px;
+    display:block;
+    cursor:pointer;
+  }
+  .recado-hora{
+    font-size:9.5px;
+    color:var(--muted);
+    margin-top:4px;
+    text-align:right;
+  }
   .step-date{
     display:flex;
     flex-direction:column;
@@ -1364,6 +1402,7 @@
     <button class="tab-btn" data-tab="aprovados"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>Aprovados</button>
     <button class="tab-btn" data-tab="cartoes"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></span>Cartões</button>
     <button class="tab-btn" data-tab="arquiteta"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg></span>Documentos</button>
+    <button class="tab-btn" data-tab="recados"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></span>Recados</button>
     <button class="tab-btn" data-tab="buscar"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>Buscar por nº</button>
     <button class="tab-btn" data-tab="admin" id="nav-admin-btn" style="display:none;background:var(--caution);"><span class="tab-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.87-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 11-4 0v-.09A1.7 1.7 0 009 19.36a1.7 1.7 0 00-1.87.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.7 1.7 0 004.64 15a1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09A1.7 1.7 0 004.64 9a1.7 1.7 0 00-.34-1.87l-.06-.06a2 2 0 112.83-2.83l.06.06A1.7 1.7 0 009 4.64a1.7 1.7 0 001-1.55V3a2 2 0 114 0v.09A1.7 1.7 0 0015 4.64a1.7 1.7 0 001.87-.34l.06-.06a2 2 0 112.83 2.83l-.06.06A1.7 1.7 0 0019.36 9c.14.36.5 1 1.55 1H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.55 1z"/></svg></span>Admin</button>
   </div>
@@ -1793,6 +1832,28 @@
       </div>
     </div>
     <div id="s-list"></div>
+  </section>
+
+  <!-- RECADOS -->
+  <section id="tab-recados">
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <h2 style="margin:0;">Recados</h2>
+        <button type="button" class="help-ic" data-ajuda="recados">?</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Converse com todo mundo que tem acesso a este projeto — dá pra mandar foto também.</div>
+      <div id="recados-lista" style="display:flex;flex-direction:column;gap:10px;max-height:60vh;overflow-y:auto;padding:4px 2px;"></div>
+      <div id="recados-preview-foto" style="display:none;margin-top:12px;position:relative;width:fit-content;">
+        <img id="recados-preview-img" style="max-width:120px;max-height:120px;border-radius:10px;display:block;">
+        <button type="button" id="recados-remover-foto" style="position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer;font-size:13px;line-height:1;">✕</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-top:14px;">
+        <button type="button" id="recados-anexar-btn" style="flex-shrink:0;width:42px;height:42px;border-radius:50%;border:1.5px solid var(--paper-line);background:none;font-size:18px;cursor:pointer;" title="Anexar foto">📎</button>
+        <input type="file" id="recados-foto-input" accept="image/*" style="display:none;">
+        <textarea id="recados-texto" rows="1" placeholder="Escreva um recado..." style="flex:1;resize:none;"></textarea>
+        <button type="button" id="recados-enviar-btn" class="btn" style="width:auto;flex-shrink:0;margin-top:0;padding:12px 18px;">Enviar</button>
+      </div>
+    </div>
   </section>
 
 </main>
@@ -2330,6 +2391,7 @@ const AJUDA_TEXTOS = {
   cartoes: 'Organiza os pagamentos parcelados no cartão por fatura/mês, pra saber quanto vai cair em cada cartão em cada mês.',
   arquiteta: 'Guarda os documentos e arquivos do projeto (plantas, contratos, memoriais) num só lugar, organizados em pastas.',
   buscar: 'Um prestador pode buscar só os itens com o número de telefone dele, sem precisar ver o resto do orçamento — útil pra compartilhar sem expor tudo.',
+  recados: 'Um mural de conversa entre todo mundo que tem acesso a este projeto — dá pra escrever e mandar foto, útil pra combinar coisas do dia a dia da obra sem precisar de outro grupo de WhatsApp.',
   'admin-aparencia': 'Muda a cara do app pra esse projeto: logo, cores, formato dos cantos e os textos que aparecem pro cliente.',
   'admin-cronograma': 'Importa o PDF do cronograma da obra (ou ajusta as datas manualmente) — é o que alimenta a aba Cronograma que o cliente vê.',
   'admin-projeto3d': 'Sobe as fotos, renders e imagens do projeto que vão aparecer na aba Projeto 3D.',
@@ -2474,7 +2536,7 @@ function skeletonCards(n){
 }
 
 // ---------- Tabs ----------
-const NAV_OVERFLOW_TABS = ['tipos','aprovados','cartoes','arquiteta','buscar','admin'];
+const NAV_OVERFLOW_TABS = ['tipos','aprovados','cartoes','arquiteta','recados','buscar','admin'];
 const LS_KEY_TAB = 'ccAbaAtual';
 function fecharNavMais(){
   document.getElementById('nav-more-sheet').classList.remove('show');
@@ -3646,6 +3708,104 @@ function listenCronograma(){
     renderLinhaDoTempo();
   }, err=>{ console.error(err); toast('Erro ao carregar cronograma'); }));
 }
+
+// ---------- Recados (mural/chat entre os membros do projeto) ----------
+
+let mensagensCache = [];
+let recadoFotoPendente = null;
+
+// não usa serverTimestamp() pra ordenar (mesmo motivo do campo "ordem" em
+// fotos: um write pendente mostra o timestamp como null no cliente até o
+// servidor confirmar, o que bagunçaria a ordem da conversa por um instante)
+function listenChat(){
+  if(!db) return;
+  document.getElementById('recados-lista').innerHTML = skeletonCards(3);
+  trackUnsub(col('mensagens').orderBy('criadoEm','asc').onSnapshot(snap=>{
+    const docs = [];
+    snap.forEach(d=> docs.push({id:d.id, ...d.data()}));
+    mensagensCache = docs;
+    renderMensagens();
+  }, err=>{ console.error(err); toast('Erro ao carregar recados'); }));
+}
+
+function formatarHoraMensagem(ms){
+  return new Date(ms).toLocaleString('pt-BR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+}
+
+function renderMensagens(){
+  const el = document.getElementById('recados-lista');
+  if(mensagensCache.length===0){
+    el.innerHTML = '<div class="empty"><div class="big">— · —</div>Nenhum recado ainda. Escreva o primeiro.</div>';
+    return;
+  }
+  el.innerHTML = mensagensCache.map(m=>{
+    const minha = m.autor === currentUserEmail;
+    return `
+    <div class="recado-bolha${minha?' minha':''}">
+      <div class="recado-autor">${minha?'Você':escapeHtml(m.autor)}</div>
+      ${m.foto ? `<img src="${m.foto}" class="recado-foto" data-recado-foto="${m.id}">` : ''}
+      ${m.texto ? `<div class="recado-texto">${escapeHtml(m.texto)}</div>` : ''}
+      <div class="recado-hora">${formatarHoraMensagem(m.criadoEm)}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+document.getElementById('recados-anexar-btn').addEventListener('click', ()=>{
+  document.getElementById('recados-foto-input').click();
+});
+document.getElementById('recados-foto-input').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  const base64 = await fileToBase64(file);
+  recadoFotoPendente = await resizeImageBase64(base64, 1000);
+  document.getElementById('recados-preview-img').src = recadoFotoPendente;
+  document.getElementById('recados-preview-foto').style.display = 'block';
+});
+document.getElementById('recados-remover-foto').addEventListener('click', ()=>{
+  recadoFotoPendente = null;
+  document.getElementById('recados-preview-foto').style.display = 'none';
+});
+document.getElementById('recados-enviar-btn').addEventListener('click', async ()=>{
+  const textoEl = document.getElementById('recados-texto');
+  const texto = textoEl.value.trim();
+  const foto = recadoFotoPendente;
+  if(!texto && !foto) return;
+  const btn = document.getElementById('recados-enviar-btn');
+  btn.disabled = true;
+  try{
+    await col('mensagens').doc(uid()).set({
+      autor: currentUserEmail,
+      texto: texto,
+      foto: foto || null,
+      criadoEm: Date.now()
+    });
+    textoEl.value = '';
+    recadoFotoPendente = null;
+    document.getElementById('recados-preview-foto').style.display = 'none';
+  }catch(err){
+    console.error(err);
+    toast('Erro ao enviar recado: ' + err.message);
+  }
+  btn.disabled = false;
+});
+// abre a foto do recado no lightbox já existente (Projeto 3D/Imagens) — como
+// a imagem já está inteira em memória (mensagensCache), não precisa buscar
+// nada, só mostrar
+document.addEventListener('click', (e)=>{
+  const recadoFotoId = e.target.getAttribute('data-recado-foto');
+  if(recadoFotoId){
+    const msg = mensagensCache.find(x=>x.id===recadoFotoId);
+    if(!msg || !msg.foto) return;
+    document.getElementById('p3d-lightbox-titulo').textContent = 'Foto do recado';
+    document.getElementById('p3d-lightbox-carregando').style.display = 'none';
+    const img = document.getElementById('p3d-lightbox-img');
+    img.src = msg.foto;
+    img.style.display = 'block';
+    document.getElementById('p3d-lightbox').classList.add('show');
+  }
+});
 
 // ---------- Projeto 3D (renders/plantas) + Imagens (fotos gerais, antes/depois) ----------
 
@@ -6569,6 +6729,7 @@ if(firebaseOk){
     listenCronograma();
     listenProjeto3D();
     listenFotos();
+    listenChat();
   }
 
   // ---------- Painel Master ----------
