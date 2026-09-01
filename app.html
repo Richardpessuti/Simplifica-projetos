@@ -3325,9 +3325,15 @@ document.addEventListener('click', async (e)=>{
     return;
   }
 
+  const iniciarId = e.target.getAttribute('data-iniciar-etapa');
+  if(iniciarId){
+    await col('etapas').doc(iniciarId).update({status:'Em andamento', dataInicioReal: hojeISO()});
+    toast('Etapa iniciada');
+    return;
+  }
   const concluirId = e.target.getAttribute('data-concluir-etapa');
   if(concluirId){
-    await col('etapas').doc(concluirId).update({status:'Concluída'});
+    await col('etapas').doc(concluirId).update({status:'Concluída', dataConclusaoReal: hojeISO()});
     toast('Etapa concluída');
     return;
   }
@@ -3365,6 +3371,10 @@ async function reordenarEtapa(id, direcao){
     col('etapas').doc(a.id).update({ordem: b.ordem}),
     col('etapas').doc(b.id).update({ordem: a.ordem})
   ]);
+}
+
+function hojeISO(){
+  return new Date().toISOString().slice(0,10);
 }
 
 function statusEtapaCor(status){
@@ -3413,12 +3423,14 @@ function renderProximaEtapa(){
   const pctObra = totalEtapas>0 ? Math.round((etapasConcluidas/totalEtapas)*100) : 0;
   const raioAnel = 20, circAnel = 2*Math.PI*raioAnel;
   const dashAnel = (circAnel - (circAnel*pctObra/100)).toFixed(1);
+  const atrasada = proxima.status==='Em andamento' && proxima.dataFim && proxima.dataFim < hojeISO();
   el.innerHTML = `
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px;">
         <div style="min-width:0;">
           <p class="eyebrow" style="margin-bottom:6px;">${escapeHtml(txt('tituloProximaEtapa'))}</p>
           <h2 style="margin:0;font-size:clamp(20px,5.5vw,24px);line-height:1.2;overflow-wrap:break-word;">${escapeHtml(proxima.nome)}</h2>
+          ${atrasada ? `<span class="status-pill danger" style="margin-top:8px;">Atrasada</span>` : ''}
         </div>
         <svg width="64" height="64" viewBox="0 0 48 48" style="flex-shrink:0;">
           <circle cx="24" cy="24" r="${raioAnel}" stroke="var(--accent-soft)" stroke-width="5" fill="none"/>
@@ -3440,6 +3452,7 @@ function renderProximaEtapa(){
         </div>`;
       }).join('')}
       <div class="actions" style="margin-top:16px;">
+        ${proxima.status==='Não iniciada' ? `<button data-iniciar-etapa="${proxima.id}" style="color:var(--accent);">Iniciar etapa</button>` : ''}
         <button data-concluir-etapa="${proxima.id}" style="color:var(--ok);">Marcar etapa como concluída</button>
         <button data-pular-etapa="${proxima.id}" style="color:var(--muted);">Pular etapa</button>
       </div>
@@ -3470,6 +3483,13 @@ function renderLinhaDoTempo(){
       }else{
         dataHtml = isAdmin ? `<button type="button" class="date-pill date-pill-empty" data-toggle-data-etapa="${et.id}">+ data</button>` : '';
       }
+      const atrasada = et.status==='Em andamento' && et.dataFim && et.dataFim < hojeISO();
+      let duracaoTxt = '';
+      if(et.status==='Concluída' && et.dataInicioReal && et.dataConclusaoReal){
+        const dias = Math.round((new Date(et.dataConclusaoReal) - new Date(et.dataInicioReal)) / 86400000);
+        duracaoTxt = ` · Levou ${dias} dia${dias===1?'':'s'}`;
+      }
+      const prestadorVinculado = et.prestadorNum ? prestadoresCache.find(p=>p.num===et.prestadorNum) : null;
       return `
       <div class="step-row">
         <div class="step-num" style="background:${statusEtapaCor(et.status)};">${i+1}</div>
@@ -3477,10 +3497,11 @@ function renderLinhaDoTempo(){
           <div class="row1">
             <div>
               <div class="item-title">${escapeHtml(et.nome)}</div>
-              <div class="meta">${escapeHtml((et.tipos||[]).join(', '))}</div>
+              <div class="meta">${escapeHtml((et.tipos||[]).join(', '))}${duracaoTxt}</div>
             </div>
             <div class="step-status-col">
               <span class="status-pill ${statusEtapaClasse(et.status)}">${escapeHtml(et.status)}</span>
+              ${atrasada ? `<span class="status-pill danger">Atrasada</span>` : ''}
               ${dataHtml}
             </div>
           </div>
@@ -3489,9 +3510,27 @@ function renderLinhaDoTempo(){
               <button data-subir-etapa="${et.id}" title="Subir">↑</button>
               <button data-descer-etapa="${et.id}" title="Descer">↓</button>
             </span>
+            ${et.status==='Não iniciada' ? `<button class="step-link" data-iniciar-etapa="${et.id}" style="color:var(--accent);">Iniciar</button>` : ''}
             ${et.status!=='Não iniciada' ? `<button class="step-link" data-reabrir-etapa="${et.id}" style="color:var(--muted);">Reabrir</button>` : ''}
             <button class="step-link" data-del-etapa="${et.id}" style="color:var(--danger);">Excluir</button>
           </div>` : ''}
+          ${isAdmin ? `<details style="margin-top:8px;">
+            <summary style="font-size:12px;color:var(--muted);cursor:pointer;list-style:none;">⋯ mais detalhes</summary>
+            <div style="margin-top:10px;">
+              <label>Prestador vinculado</label>
+              <select data-prestador-etapa="${et.id}">
+                <option value="">— nenhum prestador vinculado —</option>
+                ${prestadoresCache.map(p=>`<option value="${escapeHtml(p.num)}" ${et.prestadorNum===p.num?'selected':''}>${escapeHtml(p.nome)}${p.esp?' · '+escapeHtml(p.esp):''}</option>`).join('')}
+              </select>
+              ${prestadorVinculado && prestadorVinculado.tel ? `<div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);margin-top:4px;">${escapeHtml(prestadorVinculado.tel)}</div>` : ''}
+              <label style="margin-top:10px;">Observação (só você vê)</label>
+              <textarea data-obs-etapa="${et.id}" rows="3" placeholder="Ex: aguardando material chegar">${escapeHtml(et.observacao||'')}</textarea>
+              <button type="button" class="btn muted" data-salvar-obs-etapa="${et.id}" style="margin-top:8px;">Salvar observação</button>
+              ${(et.historicoPrazo||[]).length ? `<div style="margin-top:12px;font-size:11.5px;color:var(--muted);">
+                ${[...et.historicoPrazo].reverse().map(h=>`<div>Prazo era ${formatarDataCompacta(h.prazoAnterior)}, remarcado em ${formatarDataCompacta(h.trocadoEm)}</div>`).join('')}
+              </div>` : ''}
+            </div>
+          </details>` : ''}
         </div>
       </div>
     `;
@@ -3503,6 +3542,15 @@ document.addEventListener('click', (e)=>{
   if(toggleId){
     etapaEditandoData = (etapaEditandoData === toggleId) ? null : toggleId;
     renderLinhaDoTempo();
+    return;
+  }
+  const obsEtapaId = e.target.getAttribute('data-salvar-obs-etapa');
+  if(obsEtapaId){
+    const textarea = document.querySelector(`[data-obs-etapa="${obsEtapaId}"]`);
+    if(!textarea) return;
+    col('etapas').doc(obsEtapaId).update({observacao: textarea.value})
+      .then(()=> toast('Observação salva'))
+      .catch(err=>{ console.error(err); toast('Erro ao salvar observação'); });
   }
 });
 
@@ -3513,11 +3561,29 @@ document.addEventListener('change', async (e)=>{
     const valor = e.target.value || null;
     const payload = {};
     payload[campo === 'inicio' ? 'dataInicio' : 'dataFim'] = valor;
+    // reestipulação de prazo: se a etapa já tinha um prazo (dataFim) diferente
+    // do novo valor, guarda o antigo no histórico antes de sobrescrever
+    if(campo === 'fim'){
+      const etapaAntiga = etapasCache.find(x=>x.id===etapaId);
+      if(etapaAntiga && etapaAntiga.dataFim && etapaAntiga.dataFim !== valor){
+        payload.historicoPrazo = [...(etapaAntiga.historicoPrazo||[]), {prazoAnterior: etapaAntiga.dataFim, trocadoEm: hojeISO()}];
+      }
+    }
     try{
       await col('etapas').doc(etapaId).update(payload);
     }catch(err){
       console.error(err);
       toast('Erro ao salvar data');
+    }
+    return;
+  }
+  const prestadorEtapaId = e.target.getAttribute('data-prestador-etapa');
+  if(prestadorEtapaId){
+    try{
+      await col('etapas').doc(prestadorEtapaId).update({prestadorNum: e.target.value || null});
+    }catch(err){
+      console.error(err);
+      toast('Erro ao vincular prestador');
     }
   }
 });
