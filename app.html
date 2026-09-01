@@ -369,6 +369,32 @@
     color:var(--accent);
   }
   .color-field-actions button.muted-link{ color:var(--muted); }
+  .galeria-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(136px,1fr));
+    gap:14px;
+  }
+  .galeria-item{text-align:center;}
+  .galeria-item img{
+    width:100%;
+    aspect-ratio:4/5;
+    object-fit:cover;
+    border-radius:16px;
+    cursor:pointer;
+    box-shadow:0 3px 14px rgba(20,23,28,0.10);
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease);
+    display:block;
+  }
+  .galeria-item img:active{transform:scale(.97);}
+  .galeria-item .legenda{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:8px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-family:'Inter',sans-serif;
+  }
   .preset-swatch{
     display:flex;
     flex-direction:column;
@@ -3496,11 +3522,11 @@ function renderGaleriaMembro(containerId, items, textoVazio){
   const pdfs = items.filter(f=>f.tipo==='pdf');
   let html = '';
   if(imagens.length){
-    html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;${pdfs.length?'margin-bottom:14px;':''}">` +
+    html += `<div class="galeria-grid" style="${pdfs.length?'margin-bottom:14px;':''}">` +
       imagens.map(f=>`
-        <div style="text-align:center;">
-          <img src="${f.thumb}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer;" data-galeria-col="${f._col}" data-galeria-id="${f.id}" data-galeria-nome="${escapeHtml(f.label||f.fileName)}">
-          <div style="font-size:10px;color:var(--muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(f.label||f.fileName)}</div>
+        <div class="galeria-item">
+          <img src="${f.thumb}" loading="lazy" data-galeria-col="${f._col}" data-galeria-id="${f.id}" data-galeria-nome="${escapeHtml(f.label||f.fileName)}">
+          <div class="legenda">${escapeHtml(f.label||f.fileName)}</div>
         </div>
       `).join('') + `</div>`;
   }
@@ -3546,14 +3572,14 @@ function renderFotosGaleria(){
     if(antes && depois){
       compHtml += `<div class="card" style="margin-bottom:12px;">
         <h2 style="font-size:14px;">${escapeHtml(chave)} <span class="tag">antes e depois</span></h2>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="text-align:center;">
-            <img src="${antes.thumb}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer;" data-galeria-col="fotos" data-galeria-id="${antes.id}" data-galeria-nome="${escapeHtml(chave)} — antes">
-            <div style="font-size:10px;color:var(--muted);margin-top:4px;">Antes</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="galeria-item">
+            <img src="${antes.thumb}" loading="lazy" data-galeria-col="fotos" data-galeria-id="${antes.id}" data-galeria-nome="${escapeHtml(chave)} — antes">
+            <div class="legenda">Antes</div>
           </div>
-          <div style="text-align:center;">
-            <img src="${depois.thumb}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer;" data-galeria-col="fotos" data-galeria-id="${depois.id}" data-galeria-nome="${escapeHtml(chave)} — depois">
-            <div style="font-size:10px;color:var(--muted);margin-top:4px;">Depois</div>
+          <div class="galeria-item">
+            <img src="${depois.thumb}" loading="lazy" data-galeria-col="fotos" data-galeria-id="${depois.id}" data-galeria-nome="${escapeHtml(chave)} — depois">
+            <div class="legenda">Depois</div>
           </div>
         </div>
       </div>`;
