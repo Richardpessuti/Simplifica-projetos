@@ -368,6 +368,24 @@
     color:var(--accent);
   }
   .color-field-actions button.muted-link{ color:var(--muted); }
+  .help-ic{
+    flex-shrink:0;
+    width:22px;
+    height:22px;
+    border:1.5px solid var(--paper-line);
+    border-radius:50%;
+    background:#fff;
+    color:var(--muted);
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:12px;
+    line-height:1;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+  }
   .color-eyedrop-btn{
     flex-shrink:0;
     width:42px;
@@ -1384,6 +1402,7 @@
     <div class="list-item" id="admin-voltar-row" style="display:none;cursor:pointer;align-items:center;gap:10px;" data-voltar-admin-cat>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
       <div id="admin-voltar-titulo" style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;color:var(--ink);">Aparência</div>
+      <button type="button" class="help-ic" id="admin-cat-ajuda" data-ajuda="admin-aparencia" style="margin-left:auto;">?</button>
     </div>
 
     <div class="card" data-admin-cat="avancado" style="display:none;">
@@ -1565,6 +1584,9 @@
   <!-- CRONOGRAMA -->
   <section id="tab-cronograma" class="active">
 
+    <div style="display:flex;justify-content:flex-end;padding:0 4px 6px;">
+      <button type="button" class="help-ic" data-ajuda="cronograma">?</button>
+    </div>
     <div id="cron-proxima"></div>
 
     <div id="cron-linha-do-tempo"></div>
@@ -1574,7 +1596,7 @@
   <!-- PROJETO 3D -->
   <section id="tab-projeto3d">
     <div class="card">
-      <h2 style="justify-content:center;">Projeto 3D</h2>
+      <h2 style="justify-content:center;">Projeto 3D <button type="button" class="help-ic" data-ajuda="projeto3d">?</button></h2>
       <div style="display:flex;gap:8px;margin-bottom:14px;">
         <button type="button" id="p3d-tab-3d" class="pag-toggle-btn active" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Projeto 3D</button>
         <button type="button" id="p3d-tab-fotos" class="pag-toggle-btn" style="flex:1;padding:9px;border:1.5px solid var(--paper-line);border-radius:var(--radius-btn);background:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;">Imagens</button>
@@ -1609,9 +1631,12 @@
 
   <!-- COTAÇÕES -->
   <section id="tab-cotacoes">
-    <div class="tab-toolbar">
-      <button class="btn" id="c-add-btn">+ Nova cotação</button>
-      <button class="btn muted" id="c-export-btn">⬇ Exportar</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+      <div class="tab-toolbar" style="flex:1;margin-bottom:0;">
+        <button class="btn" id="c-add-btn">+ Nova cotação</button>
+        <button class="btn muted" id="c-export-btn">⬇ Exportar</button>
+      </div>
+      <button type="button" class="help-ic" data-ajuda="cotacoes">?</button>
     </div>
 
     <div id="c-list"></div>
@@ -1620,7 +1645,7 @@
   <!-- POR TIPO -->
   <section id="tab-tipos">
     <div class="card" style="text-align:center;">
-      <h2 style="justify-content:center;">Controle por tipo</h2>
+      <h2 style="justify-content:center;">Controle por tipo <button type="button" class="help-ic" data-ajuda="tipos">?</button></h2>
       <div style="font-size:12px;color:var(--muted);">Veja o que já foi cotado em cada categoria</div>
     </div>
     <div id="tipos-list"></div>
@@ -1629,7 +1654,7 @@
   <!-- APROVADOS -->
   <section id="tab-aprovados">
     <div class="card" style="text-align:center;">
-      <h2 style="justify-content:center;">Total aprovado</h2>
+      <h2 style="justify-content:center;">Total aprovado <button type="button" class="help-ic" data-ajuda="aprovados">?</button></h2>
       <div id="ap-total" style="font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:700;color:var(--accent);">R$ 0,00</div>
       <div style="font-size:12px;color:var(--muted);margin-top:4px;" id="ap-count">0 orçamentos aprovados</div>
     </div>
@@ -1648,6 +1673,9 @@
 
   <!-- CARTÕES -->
   <section id="tab-cartoes">
+    <div style="display:flex;justify-content:flex-end;padding:0 4px 6px;">
+      <button type="button" class="help-ic" data-ajuda="cartoes">?</button>
+    </div>
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <button id="cart-mes-prev" style="border:none;background:none;font-size:18px;cursor:pointer;color:var(--muted);">‹</button>
@@ -1663,9 +1691,12 @@
 
   <!-- ARQUITETA -->
   <section id="tab-arquiteta">
-    <div class="tab-toolbar">
-      <button class="btn secondary" id="a-add-btn">+ Novo arquivo</button>
-      <button class="btn muted" id="a-export-btn">⬇ Exportar lista</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+      <div class="tab-toolbar" style="flex:1;margin-bottom:0;">
+        <button class="btn secondary" id="a-add-btn">+ Novo arquivo</button>
+        <button class="btn muted" id="a-export-btn">⬇ Exportar lista</button>
+      </div>
+      <button type="button" class="help-ic" data-ajuda="arquiteta">?</button>
     </div>
 
     <div id="a-list"></div>
@@ -1673,9 +1704,12 @@
 
   <!-- PRESTADORES -->
   <section id="tab-prestadores">
-    <div class="tab-toolbar">
-      <button class="btn secondary" id="p-add-btn">+ Novo prestador</button>
-      <button class="btn muted" id="p-export-btn">⬇ Exportar</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+      <div class="tab-toolbar" style="flex:1;margin-bottom:0;">
+        <button class="btn secondary" id="p-add-btn">+ Novo prestador</button>
+        <button class="btn muted" id="p-export-btn">⬇ Exportar</button>
+      </div>
+      <button type="button" class="help-ic" data-ajuda="prestadores">?</button>
     </div>
 
     <details class="card">
@@ -1691,7 +1725,10 @@
   <!-- BUSCAR -->
   <section id="tab-buscar">
     <div class="card">
-      <h2 id="titulo-buscar-esp">Buscar por especialidade</h2>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px;">
+        <h2 id="titulo-buscar-esp" style="margin:0;">Buscar por especialidade</h2>
+        <button type="button" class="help-ic" data-ajuda="buscar">?</button>
+      </div>
       <div class="search-box">
         <select id="s-esp"></select>
         <button id="s-esp-btn">Buscar</button>
@@ -1865,6 +1902,16 @@
 
     <button class="btn secondary" id="p-save">Salvar prestador</button>
     <button class="btn muted" id="p-cancel" style="display:none;">Cancelar edição</button>
+  </div>
+</div>
+
+<div id="ajuda-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-sheet-head">
+      <h2 id="ajuda-modal-titulo">Como funciona</h2>
+      <button type="button" class="modal-close" id="ajuda-modal-fechar" aria-label="Fechar">✕</button>
+    </div>
+    <div id="ajuda-modal-texto" style="font-size:13.5px;color:var(--ink);line-height:1.6;"></div>
   </div>
 </div>
 
@@ -2123,6 +2170,41 @@ document.getElementById('eyedrop-modal-fechar').addEventListener('click', ()=>{
   document.getElementById('eyedrop-modal').classList.remove('show');
 });
 
+// Textos de ajuda ("?") de cada aba e categoria da Admin — explicação curta,
+// linguagem simples, pro cliente entender pra que serve aquela tela sem
+// precisar perguntar. "cronograma"/"projeto3d" (aba, o que o cliente vê) têm
+// versões próprias pra dentro da Admin ("admin-cronograma"/"admin-projeto3d",
+// como configurar aquilo).
+const AJUDA_TEXTOS = {
+  cronograma: 'Mostra a próxima etapa da obra em destaque, com data prevista e o andamento geral em porcentagem. É a primeira coisa que você vê ao entrar — pra saber como está a obra sem precisar ligar pra ninguém.',
+  cotacoes: 'Suba a foto ou o PDF de um orçamento e a inteligência artificial lê sozinha: nome da empresa, telefone, valor total e cada item cotado. Depois é só comparar as cotações e aprovar a que quiser.',
+  projeto3d: 'Galeria de fotos e renders do projeto — antes/depois, imagens do 3D, o que for útil pra visualizar como a obra vai ficar (ou já ficou).',
+  prestadores: 'Lista de contatos de quem está trabalhando na obra (pedreiro, eletricista, marceneiro etc.), com um toque pra abrir o WhatsApp de cada um direto.',
+  tipos: 'Agrupa tudo que já foi cotado por categoria (piso, elétrica, hidráulica...), pra ver rapidinho quanto já foi gasto ou orçado em cada tipo de serviço.',
+  aprovados: 'Total de tudo que já foi aprovado pra contratar, separado do que já foi pago e do que ainda falta pagar — a visão financeira geral da obra.',
+  cartoes: 'Organiza os pagamentos parcelados no cartão por fatura/mês, pra saber quanto vai cair em cada cartão em cada mês.',
+  arquiteta: 'Guarda os documentos e arquivos do projeto (plantas, contratos, memoriais) num só lugar, organizados em pastas.',
+  buscar: 'Um prestador pode buscar só os itens com o número de telefone dele, sem precisar ver o resto do orçamento — útil pra compartilhar sem expor tudo.',
+  'admin-aparencia': 'Muda a cara do app pra esse projeto: logo, cores, formato dos cantos e os textos que aparecem pro cliente.',
+  'admin-cronograma': 'Importa o PDF do cronograma da obra (ou ajusta as datas manualmente) — é o que alimenta a aba Cronograma que o cliente vê.',
+  'admin-projeto3d': 'Sobe as fotos, renders e imagens do projeto que vão aparecer na aba Projeto 3D.',
+  'admin-prestadores': 'Importa vários prestadores de uma vez (em lista), em vez de cadastrar um por um na aba Prestadores.',
+  'admin-acesso': 'Controla quem pode entrar neste projeto (convidar por e-mail) e, se quiser, comprar mais um acesso pra outro projeto.',
+  'admin-avancado': 'Configurações menos usadas do dia a dia — ajustes técnicos e opções extras do projeto.'
+};
+function abrirAjuda(chave){
+  const texto = AJUDA_TEXTOS[chave];
+  if(!texto) return;
+  document.getElementById('ajuda-modal-texto').textContent = texto;
+  document.getElementById('ajuda-modal').classList.add('show');
+}
+document.getElementById('ajuda-modal-fechar').addEventListener('click', ()=>{
+  document.getElementById('ajuda-modal').classList.remove('show');
+});
+document.querySelectorAll('.help-ic[data-ajuda]').forEach(btn=>{
+  btn.addEventListener('click', (e)=>{ e.stopPropagation(); abrirAjuda(btn.dataset.ajuda); });
+});
+
 document.addEventListener('click', (e)=>{
   const gatilho = e.target.closest('[data-eyedrop-hex]');
   if(gatilho){
@@ -2282,6 +2364,7 @@ function abrirCategoriaAdmin(cat){
   document.getElementById('admin-categorias').style.display = 'none';
   document.getElementById('admin-voltar-row').style.display = 'flex';
   document.getElementById('admin-voltar-titulo').textContent = ADMIN_CATEGORIA_TITULOS[cat] || '';
+  document.getElementById('admin-cat-ajuda').dataset.ajuda = 'admin-' + cat;
   document.querySelectorAll('[data-admin-cat]').forEach(el=>{
     el.style.display = (el.getAttribute('data-admin-cat')===cat) ? '' : 'none';
   });
