@@ -11,7 +11,7 @@
     if(localStorage.getItem('ccJaAcessou')){ location.replace('app.html'); }
   }catch(e){}
 </script>
-<title>Simplifica Projetos — reforma organizada, sem virar bagunça de PDF</title>
+<title>Simplifica Projetos — reforme sem perder o controle</title>
 <meta name="description" content="Cronograma, cotações lidas por IA, prestadores e financeiro da sua reforma, tudo num só lugar. Assine e use no navegador, sem app de loja.">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,6 +29,7 @@
     --danger:#C1443A;
   }
   *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
   body{
     margin:0;
     font-family:'Inter',sans-serif;
@@ -36,16 +37,85 @@
     color:var(--ink);
     -webkit-font-smoothing:antialiased;
   }
+  a{color:inherit;}
+  :focus-visible{outline:2.5px solid var(--accent); outline-offset:2px;}
   .wrap{max-width:640px;margin:0 auto;padding:0 20px;}
+  .wrap-wide{max-width:1120px;margin:0 auto;padding:0 20px;}
+  section{padding:56px 0;}
+  .section-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:clamp(21px,4vw,26px);
+    margin:0 0 8px;
+    text-align:center;
+  }
+  .section-sub{
+    font-size:14px;
+    color:var(--muted);
+    text-align:center;
+    max-width:52ch;
+    margin:0 auto 32px;
+    line-height:1.6;
+  }
 
-  header{
+  /* ---------- barra superior ---------- */
+  .topbar{
+    position:sticky;
+    top:0;
+    z-index:40;
+    background:rgba(246,244,238,0.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--paper-line);
+  }
+  .topbar-inner{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:14px 20px;
+  }
+  .topbar-logo{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:15px;
+    text-decoration:none;
+    color:var(--ink);
+    letter-spacing:-0.2px;
+  }
+  .topbar-links{display:none; gap:26px; font-size:13.5px;}
+  .topbar-links a{text-decoration:none; color:var(--muted);}
+  .topbar-links a:hover{color:var(--ink);}
+  .topbar-cta{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    font-weight:600;
+    text-decoration:none;
+    color:#fff;
+    background:var(--accent);
+    padding:9px 16px;
+    border-radius:30px;
+    white-space:nowrap;
+  }
+  @media (min-width:860px){
+    .topbar-links{display:flex;}
+  }
+
+  /* ---------- hero ---------- */
+  .hero{
     background:var(--accent);
     color:#FBF9F2;
-    padding:52px 20px 60px;
+    padding:44px 0 0;
     position:relative;
     overflow:hidden;
   }
-  header .eyebrow{
+  .hero-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:40px;
+    align-items:center;
+    padding-bottom:44px;
+  }
+  .hero .eyebrow{
     font-family:'IBM Plex Mono',monospace;
     font-size:11px;
     letter-spacing:0.14em;
@@ -53,27 +123,51 @@
     color:#B7CFC4;
     margin:0 0 10px;
   }
-  header h1{
+  .hero h1{
     font-family:'Fraunces','Space Grotesk',serif;
     font-weight:600;
-    font-size:clamp(32px,8.5vw,46px);
-    line-height:1.1;
+    font-size:clamp(32px,6vw,48px);
+    line-height:1.08;
     margin:0 0 16px;
     text-wrap:balance;
     letter-spacing:-0.01em;
   }
-  header p{
+  .hero p.lead{
     font-size:15.5px;
-    line-height:1.6;
+    line-height:1.65;
     color:#DCE7E1;
     margin:0;
-    max-width:46ch;
+    max-width:48ch;
+  }
+  .hero-cta-row{display:flex; flex-wrap:wrap; gap:12px; margin-top:26px;}
+  .btn-primary, .btn-secondary{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    font-weight:600;
+    text-decoration:none;
+    padding:14px 22px;
+    border-radius:30px;
+    white-space:nowrap;
+  }
+  .btn-primary{
+    background:#fff;
+    color:var(--accent-dark);
+    box-shadow:0 10px 26px rgba(0,0,0,0.22);
+  }
+  .btn-primary:active{opacity:0.88;}
+  .btn-secondary{
+    background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.38);
+    color:#fff;
   }
   .trust-row{
     display:flex;
     flex-wrap:wrap;
     gap:10px 18px;
-    margin-top:24px;
+    margin-top:26px;
     padding-top:20px;
     border-top:1px solid rgba(255,255,255,0.18);
   }
@@ -86,23 +180,246 @@
     color:#DCE7E1;
   }
 
-  main{margin-top:-30px;position:relative;}
+  /* ---------- composição visual do hero (mockups em HTML/CSS) ---------- */
+  .hero-visual{position:relative; display:flex; justify-content:center;}
+  .phone-frame{
+    width:220px;
+    background:#12160F;
+    border-radius:32px;
+    padding:9px;
+    box-shadow:0 30px 60px rgba(0,0,0,0.35);
+    position:relative;
+    z-index:2;
+  }
+  .phone-screen{
+    background:var(--paper);
+    border-radius:23px;
+    overflow:hidden;
+    padding:16px 14px;
+    color:var(--ink);
+  }
+  .phone-screen .eyebrow-mini{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:#B08B4F;
+    margin:0 0 4px;
+  }
+  .phone-screen h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    margin:0 0 14px;
+    line-height:1.25;
+  }
+  .browser-frame{
+    display:none;
+    width:320px;
+    background:#fff;
+    border-radius:14px;
+    border:1px solid var(--paper-line);
+    box-shadow:0 24px 60px rgba(0,0,0,0.22);
+    overflow:hidden;
+    position:absolute;
+    left:0;
+    top:36px;
+    z-index:1;
+  }
+  .browser-topbar{
+    height:26px;
+    background:#EFEDE4;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:0 12px;
+  }
+  .browser-topbar span{width:7px; height:7px; border-radius:50%; background:#D3CFC0; display:block;}
+  .browser-body{padding:18px;}
+  @media (min-width:1024px){
+    .hero-grid{grid-template-columns:1.05fr 0.95fr;}
+    .hero-visual{justify-content:flex-end; min-height:300px; align-items:flex-start; padding-top:10px;}
+    .browser-frame{display:block;}
+    .phone-frame{margin-top:110px; margin-right:-10px;}
+  }
 
+  /* ---------- faixa de confiança ---------- */
+  .faixa-confianca{
+    background:var(--card-bg);
+    border-bottom:1px solid var(--paper-line);
+    padding:26px 0;
+  }
+  .confianca-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:18px 14px;
+  }
+  .confianca-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--ink);
+  }
+  .confianca-item .ic{
+    flex-shrink:0;
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    background:var(--accent-soft);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  @media (min-width:768px){
+    .confianca-grid{grid-template-columns:repeat(4,1fr);}
+  }
+
+  /* ---------- cards genéricos ---------- */
   .card{
     background:var(--card-bg);
     border-radius:18px;
-    padding:24px;
-    margin-bottom:20px;
-    box-shadow:0 6px 20px rgba(20,23,28,0.07);
+    padding:26px;
+    box-shadow:0 6px 20px rgba(20,23,28,0.06);
   }
-  .card h2{
+
+  /* ---------- comparação problema/transformação ---------- */
+  .comparativo-2col{display:flex; flex-direction:column; gap:16px;}
+  .comp-bloco{flex:1; border-radius:18px; padding:24px;}
+  .comp-bloco-ruim{background:rgba(193,68,58,0.05); border:1px solid rgba(193,68,58,0.14);}
+  .comp-bloco-bom{background:var(--accent-soft); border:1px solid rgba(31,74,62,0.14);}
+  .comp-bloco-titulo{
     font-family:'Space Grotesk',sans-serif;
     font-weight:600;
-    font-size:19px;
-    margin:0 0 14px;
+    font-size:15px;
+    margin-bottom:14px;
+  }
+  .comp-bloco-ruim .comp-bloco-titulo{color:var(--danger);}
+  .comp-bloco-bom .comp-bloco-titulo{color:var(--accent-dark);}
+  .comp-lista{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px;}
+  .comp-lista li{display:flex; gap:10px; align-items:flex-start; font-size:13.5px; line-height:1.5;}
+  .comp-bloco-ruim .comp-lista li{color:var(--muted);}
+  .comp-bloco-bom .comp-lista li{color:var(--ink); font-weight:500;}
+  .comp-lista svg{flex-shrink:0; margin-top:2px;}
+  @media (min-width:768px){
+    .comparativo-2col{flex-direction:row; align-items:stretch;}
   }
 
+  /* ---------- como funciona ---------- */
+  .passos{display:flex; flex-direction:column; gap:20px;}
+  .passo{display:flex; gap:14px; align-items:flex-start;}
+  .passo-ic{width:40px; height:40px; border-radius:12px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .passo-titulo{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14.5px; color:var(--ink);}
+  .passo-desc{font-size:12.5px; color:var(--muted); margin-top:2px; line-height:1.55;}
+  @media (min-width:768px){
+    .passos{display:grid; grid-template-columns:repeat(4,1fr); gap:22px;}
+  }
 
+  /* ---------- em ação (mockups) ---------- */
+  .destaques{display:flex; flex-direction:column; gap:16px;}
+  .destaque-card{background:var(--accent-soft); border-radius:16px; padding:20px;}
+  .destaque-titulo{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14.5px; color:var(--accent-dark); margin-bottom:4px;}
+  .destaque-desc{font-size:12px; color:var(--ink); margin-bottom:14px; line-height:1.5;}
+  .mock{background:#fff; border-radius:12px; padding:14px; box-shadow:0 4px 14px rgba(20,23,28,0.08);}
+  @media (min-width:768px){
+    .destaques{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  }
+
+  .video-placeholder{
+    margin-top:16px;
+    border-radius:18px;
+    padding:40px 24px;
+    text-align:center;
+    background:linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color:#fff;
+    position:relative;
+  }
+  .video-play{
+    width:58px; height:58px; border-radius:50%;
+    background:rgba(255,255,255,0.16);
+    border:1.5px solid rgba(255,255,255,0.5);
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 14px;
+  }
+  .video-badge{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    background:rgba(255,255,255,0.14);
+    padding:4px 12px;
+    border-radius:20px;
+    margin-bottom:10px;
+  }
+  .video-placeholder p{font-size:13px; color:#DCE7E1; margin:0; max-width:40ch; margin-left:auto; margin-right:auto; line-height:1.5;}
+
+  /* ---------- para quem é ---------- */
+  .publico-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+  }
+  .publico-card{
+    text-align:center;
+    padding:22px 14px;
+    border-radius:16px;
+    background:var(--card-bg);
+    box-shadow:0 4px 14px rgba(20,23,28,0.05);
+  }
+  .publico-card .ic{
+    width:42px; height:42px; border-radius:12px;
+    background:var(--accent-soft);
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 12px;
+  }
+  .publico-card span{font-size:12.5px; font-weight:600; line-height:1.4; display:block;}
+  @media (min-width:860px){
+    .publico-grid{grid-template-columns:repeat(5,1fr);}
+  }
+
+  /* ---------- benefícios (faixa escura) ---------- */
+  .beneficios-faixa{background:var(--accent-dark); color:#FBF9F2;}
+  .beneficios-faixa .section-title, .beneficios-faixa .section-sub{color:#FBF9F2;}
+  .beneficios-faixa .section-sub{color:#C9D7CF;}
+  .beneficios-lista{
+    list-style:none; margin:0; padding:0;
+    display:grid; grid-template-columns:1fr; gap:14px;
+  }
+  .beneficios-lista li{
+    display:flex; gap:10px; align-items:flex-start;
+    font-size:14px; line-height:1.5; color:#EDF1EC;
+  }
+  .beneficios-lista svg{flex-shrink:0; margin-top:3px;}
+  @media (min-width:768px){
+    .beneficios-lista{grid-template-columns:1fr 1fr;}
+  }
+
+  /* ---------- prova social ---------- */
+  .depoimentos-grid{display:flex; flex-direction:column; gap:16px;}
+  .depoimento-card{
+    background:var(--card-bg);
+    border:1.5px dashed var(--paper-line);
+    border-radius:16px;
+    padding:22px;
+  }
+  .depoimento-topo{display:flex; align-items:center; gap:12px; margin-bottom:12px;}
+  .depoimento-avatar{
+    width:42px; height:42px; border-radius:50%;
+    background:var(--accent-soft);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .depoimento-nome{font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13.5px; color:var(--muted);}
+  .depoimento-cargo{font-size:11.5px; color:var(--muted); margin-top:1px;}
+  .depoimento-texto{font-size:13px; color:var(--muted); font-style:italic; line-height:1.6; margin:0;}
+  @media (min-width:860px){
+    .depoimentos-grid{flex-direction:row;}
+    .depoimento-card{flex:1;}
+  }
+
+  /* ---------- oferta e preço ---------- */
   .preco-linha{
     display:flex;
     align-items:baseline;
@@ -111,11 +428,13 @@
     border-bottom:1px solid var(--paper-line);
   }
   .preco-linha:last-of-type{border-bottom:none;}
-  .preco-linha .nome{font-weight:600;font-size:14.5px;}
-  .preco-linha .desc{font-size:12px;color:var(--muted);margin-top:2px;}
-  .preco-linha .valor{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;white-space:nowrap;}
-  .preco-linha .valor span{font-family:'Inter',sans-serif;font-weight:400;font-size:11px;color:var(--muted);}
-
+  .preco-linha .nome{font-weight:600; font-size:14.5px;}
+  .preco-linha .desc{font-size:12px; color:var(--muted); margin-top:2px;}
+  .preco-linha .valor{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px; white-space:nowrap;}
+  .preco-linha .valor span{font-family:'Inter',sans-serif; font-weight:400; font-size:11px; color:var(--muted);}
+  .inclui-lista{list-style:none; margin:0 0 20px; padding:0; display:flex; flex-direction:column; gap:9px;}
+  .inclui-lista li{display:flex; gap:9px; align-items:flex-start; font-size:13px; line-height:1.5; color:var(--ink);}
+  .inclui-lista svg{flex-shrink:0; margin-top:2px;}
   .btn-assinar{
     display:block;
     width:100%;
@@ -132,44 +451,87 @@
     box-shadow:0 8px 20px rgba(31,74,62,0.28);
   }
   .btn-assinar:active{opacity:0.85;}
-
-  .nota{font-size:11.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5;}
-
-  .hero-cta{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    margin-top:22px;
-    background:rgba(255,255,255,0.14);
-    border:1px solid rgba(255,255,255,0.35);
-    color:#fff;
-    font-family:'IBM Plex Mono',monospace;
+  .nota{font-size:11.5px; color:var(--muted); text-align:center; margin-top:12px; line-height:1.5;}
+  .extra-linha{
+    margin-top:18px;
+    padding-top:18px;
+    border-top:1px dashed var(--paper-line);
     font-size:12px;
-    font-weight:600;
-    text-decoration:none;
-    padding:11px 18px;
-    border-radius:30px;
+    color:var(--muted);
+    text-align:center;
   }
 
-  .passos{display:flex;flex-direction:column;gap:18px;}
-  .passo{display:flex;gap:14px;align-items:flex-start;}
-  .passo-ic{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .passo-titulo{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;color:var(--ink);}
-  .passo-desc{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5;}
+  /* ---------- FAQ ---------- */
+  .faq-item{
+    border-bottom:1px solid var(--paper-line);
+    padding:16px 0;
+  }
+  .faq-item:first-child{padding-top:0;}
+  .faq-item summary{
+    cursor:pointer;
+    list-style:none;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:14.5px;
+  }
+  .faq-item summary::-webkit-details-marker{display:none;}
+  .faq-item summary .chevron{flex-shrink:0; transition:transform .2s ease;}
+  .faq-item[open] summary .chevron{transform:rotate(180deg);}
+  .faq-item p{font-size:13.5px; color:var(--muted); line-height:1.65; margin:12px 0 0;}
 
-  .comparativo{display:flex;flex-direction:column;gap:10px;}
-  .comp-linha{display:flex;gap:12px;align-items:flex-start;font-size:13.5px;line-height:1.5;padding:10px 12px;border-radius:10px;}
-  .comp-ruim{background:rgba(193,68,58,0.06);color:var(--muted);}
-  .comp-bom{background:var(--accent-soft);color:var(--ink);font-weight:500;}
-  .comp-ic{flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:1px;}
-  .comp-ruim .comp-ic{background:rgba(193,68,58,0.14);color:var(--danger);}
-  .comp-bom .comp-ic{background:var(--accent);color:#fff;}
+  /* ---------- CTA final ---------- */
+  .cta-final{background:var(--accent); color:#FBF9F2; text-align:center;}
+  .cta-final h2{
+    font-family:'Fraunces','Space Grotesk',serif;
+    font-weight:600;
+    font-size:clamp(24px,4.5vw,32px);
+    margin:0 0 12px;
+    text-wrap:balance;
+  }
+  .cta-final p{font-size:14.5px; color:#DCE7E1; max-width:44ch; margin:0 auto 26px; line-height:1.6;}
 
-  .destaques{display:flex;flex-direction:column;gap:16px;}
-  .destaque-card{background:var(--accent-soft);border-radius:16px;padding:18px;}
-  .destaque-titulo{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;color:var(--accent-dark);margin-bottom:4px;}
-  .destaque-desc{font-size:12px;color:var(--ink);margin-bottom:14px;line-height:1.5;}
-  .mock{background:#fff;border-radius:12px;padding:14px;box-shadow:0 4px 14px rgba(20,23,28,0.08);}
+  /* ---------- barra fixa mobile ---------- */
+  .cta-fixa-mobile{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:50;
+    background:#fff;
+    border-top:1px solid var(--paper-line);
+    box-shadow:0 -8px 24px rgba(20,23,28,0.10);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .cta-fixa-mobile .preco{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:14px;
+  }
+  .cta-fixa-mobile .preco span{display:block; font-family:'Inter',sans-serif; font-weight:400; font-size:10px; color:var(--muted);}
+  .cta-fixa-mobile a{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    font-weight:600;
+    text-decoration:none;
+    color:#fff;
+    background:var(--accent);
+    padding:11px 18px;
+    border-radius:30px;
+    white-space:nowrap;
+  }
+  @media (min-width:860px){
+    .cta-fixa-mobile{display:none;}
+  }
+  body{padding-bottom:74px;}
+  @media (min-width:860px){
+    body{padding-bottom:0;}
+  }
 
   footer{
     text-align:center;
@@ -183,74 +545,132 @@
 </head>
 <body>
 
-<header>
-  <div class="wrap">
-    <p class="eyebrow">Simplifica Projetos</p>
-    <h1>Sua reforma inteira, organizada num só lugar. Chega de PDF perdido no WhatsApp.</h1>
-    <p>Cronograma sempre atualizado, cotações lidas sozinhas por inteligência artificial, prestadores organizados e o financeiro sem susto — tudo no navegador do celular, sem baixar app de loja.</p>
-    <a class="hero-cta" href="#plano">Ver planos ↓</a>
-    <div class="trust-row">
-      <span class="trust-item">✓ Cancele quando quiser</span>
-      <span class="trust-item">✓ Sem fidelidade</span>
-      <span class="trust-item">✓ Pagamento seguro (Mercado Pago)</span>
+<nav class="topbar">
+  <div class="wrap-wide topbar-inner">
+    <a class="topbar-logo" href="#">Simplifica Projetos</a>
+    <div class="topbar-links">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#em-acao">Em ação</a>
+      <a href="#plano">Preço</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a class="topbar-cta" href="#plano">Começar agora</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap-wide hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">Simplifica Projetos</p>
+      <h1>Reforme sem perder o controle.</h1>
+      <p class="lead">Cronograma, cotações, prestadores e financeiro organizados em um só lugar — com inteligência artificial pra transformar seus orçamentos em informação útil.</p>
+      <div class="hero-cta-row">
+        <a class="btn-primary" href="#plano">Começar por R$ 29,90/mês</a>
+        <a class="btn-secondary" href="#em-acao">Ver como funciona</a>
+      </div>
+      <div class="trust-row">
+        <span class="trust-item">✓ Sem fidelidade</span>
+        <span class="trust-item">✓ Cancele quando quiser</span>
+        <span class="trust-item">✓ Pagamento seguro pelo Mercado Pago</span>
+      </div>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <div class="browser-frame">
+        <div class="browser-topbar"><span></span><span></span><span></span></div>
+        <div class="browser-body">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;">
+            <span>Já pago</span><span>Falta pagar</span>
+          </div>
+          <div style="display:flex;height:10px;border-radius:6px;overflow:hidden;margin-bottom:8px;">
+            <div style="flex:58;background:var(--accent);"></div>
+            <div style="flex:42;background:var(--paper-line);"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;">
+            <span style="color:var(--accent-dark);">R$ 12.400</span><span style="color:var(--muted);">R$ 8.900</span>
+          </div>
+        </div>
+      </div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <p class="eyebrow-mini">Próxima etapa</p>
+          <h3>Pintura das paredes</h3>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <svg width="52" height="52" viewBox="0 0 48 48" style="flex-shrink:0;">
+              <circle cx="24" cy="24" r="20" stroke="var(--accent-soft)" stroke-width="6" fill="none"/>
+              <circle cx="24" cy="24" r="20" stroke="var(--accent)" stroke-width="6" fill="none" stroke-dasharray="125.7" stroke-dashoffset="40.2" stroke-linecap="round" transform="rotate(-90 24 24)"/>
+              <text x="24" y="28" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-weight="600" font-size="12" fill="var(--ink)">68%</text>
+            </svg>
+            <div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;">68% concluído</div>
+              <div style="font-size:10.5px;color:var(--muted);margin-top:2px;">Previsão: 12/09</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </header>
 
-<main class="wrap">
-  <div class="card">
-    <h2>O que muda no dia a dia da sua obra</h2>
-    <div class="comparativo">
-      <div class="comp-linha comp-ruim"><span class="comp-ic">✕</span><span>Orçamento perdido em 30 conversas de WhatsApp</span></div>
-      <div class="comp-linha comp-bom"><span class="comp-ic">✓</span><span>Todas as cotações organizadas num só lugar</span></div>
-      <div class="comp-linha comp-ruim"><span class="comp-ic">✕</span><span>Ninguém sabe em que pé está a obra</span></div>
-      <div class="comp-linha comp-bom"><span class="comp-ic">✓</span><span>Próxima etapa sempre em destaque, com data prevista</span></div>
-      <div class="comp-linha comp-ruim"><span class="comp-ic">✕</span><span>Digitar item por item de cada orçamento na mão</span></div>
-      <div class="comp-linha comp-bom"><span class="comp-ic">✓</span><span>A IA lê o orçamento sozinha, em segundos</span></div>
-      <div class="comp-linha comp-ruim"><span class="comp-ic">✕</span><span>Não saber quanto já foi pago e quanto falta</span></div>
-      <div class="comp-linha comp-bom"><span class="comp-ic">✓</span><span>Financeiro sempre atualizado, parcela por parcela</span></div>
+<section class="faixa-confianca">
+  <div class="wrap-wide confianca-grid">
+    <div class="confianca-item">
+      <span class="ic" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 010 18M12 3a15 15 0 000 18"/></svg></span>
+      Funciona no navegador do celular
+    </div>
+    <div class="confianca-item">
+      <span class="ic" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></span>
+      Não precisa baixar aplicativo
+    </div>
+    <div class="confianca-item">
+      <span class="ic" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-2a4 4 0 014-4h6a4 4 0 014 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+      Compartilhe com quem está na obra
+    </div>
+    <div class="confianca-item">
+      <span class="ic" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 3v6h6"/></svg></span>
+      Cancele quando quiser
     </div>
   </div>
+</section>
 
-  <div class="card">
-    <h2>Como funciona</h2>
-    <div class="passos">
-      <div class="passo">
-        <div class="passo-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
-        <div>
-          <div class="passo-titulo">Assine em 1 minuto</div>
-          <div class="passo-desc">Sem baixar nada de loja de app — funciona direto no navegador do celular.</div>
-        </div>
+<section>
+  <div class="wrap">
+    <h2 class="section-title">Você reconhece esse cenário?</h2>
+    <p class="section-sub">A reforma some no meio de conversas, PDFs e ligações. É pra isso que o Simplifica Projetos existe.</p>
+    <div class="comparativo-2col">
+      <div class="comp-bloco comp-bloco-ruim">
+        <div class="comp-bloco-titulo">Sem o Simplifica Projetos</div>
+        <ul class="comp-lista">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg><span>PDFs de orçamento espalhados em conversas de WhatsApp</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Ninguém sabe ao certo qual é a próxima etapa</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Informação duplicada em várias conversas diferentes</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Orçamento sendo digitado item por item, na mão</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Difícil saber quanto já foi pago e quanto falta</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg><span>Dependência de ligações e mensagens pra saber de tudo</span></li>
+        </ul>
       </div>
-      <div class="passo">
-        <div class="passo-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-2a4 4 0 014-4h6a4 4 0 014 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-        <div>
-          <div class="passo-titulo">Convide quem quiser</div>
-          <div class="passo-desc">Cônjuge, arquiteto, prestador — cada um entra só no seu projeto, com o próprio acesso.</div>
-        </div>
-      </div>
-      <div class="passo">
-        <div class="passo-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 1 3 2.2c0 2.8-6 1.6-6 4.3 0 1.3 1.3 2.5 3 2.5s3-1.1 3-2.5"/></svg></div>
-        <div>
-          <div class="passo-titulo">Suba a cotação — a IA lê sozinha</div>
-          <div class="passo-desc">Foto ou PDF do orçamento: a inteligência artificial extrai empresa, telefone, itens e valor total.</div>
-        </div>
-      </div>
-      <div class="passo">
-        <div class="passo-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
-        <div>
-          <div class="passo-titulo">Acompanhe tudo pelo celular</div>
-          <div class="passo-desc">Cronograma, financeiro e prestadores sempre à mão, sem precisar ligar pra ninguém.</div>
-        </div>
+      <div class="comp-bloco comp-bloco-bom">
+        <div class="comp-bloco-titulo">Com o Simplifica Projetos</div>
+        <ul class="comp-lista">
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Todas as cotações organizadas num só lugar</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Próxima etapa sempre visível, com data prevista</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Leitura automática do orçamento por inteligência artificial</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Financeiro sempre atualizado, parcela por parcela</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Acesso compartilhado com cada pessoa da obra</span></li>
+          <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Visão geral da obra em poucos segundos, pelo celular</span></li>
+        </ul>
       </div>
     </div>
   </div>
+</section>
 
-  <div class="card">
-    <h2>Por dentro do app</h2>
+<section id="em-acao" style="background:var(--card-bg);">
+  <div class="wrap">
+    <h2 class="section-title">Veja o Simplifica Projetos em ação</h2>
+    <p class="section-sub">Recriação fiel das telas reais do app — cores, dados e comportamento exatamente como você vai usar.</p>
     <div class="destaques">
       <div class="destaque-card">
-        <div class="destaque-titulo">Sempre sabe em que pé está a obra</div>
+        <div class="destaque-titulo">Saiba exatamente em que etapa a obra está</div>
         <div class="destaque-desc">A próxima etapa e o percentual concluído aparecem assim que você abre o app.</div>
         <div class="mock" style="display:flex;align-items:center;gap:12px;">
           <svg width="52" height="52" viewBox="0 0 48 48" style="flex-shrink:0;">
@@ -265,13 +685,13 @@
         </div>
       </div>
       <div class="destaque-card">
-        <div class="destaque-titulo">Cotação lida sozinha pela IA</div>
+        <div class="destaque-titulo">Envie uma foto ou PDF e deixe a IA organizar a cotação</div>
         <div class="destaque-desc">Sem digitar nada — só subir a foto ou o PDF do orçamento.</div>
         <div class="mock">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;">
             <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;">Vidraçaria Sul</div>
             <div style="display:flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--accent-soft);color:var(--accent-dark);padding:3px 8px;border-radius:20px;white-space:nowrap;">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--accent-dark)"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z"/></svg>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--accent-dark)" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z"/></svg>
               lido por IA
             </div>
           </div>
@@ -279,8 +699,8 @@
         </div>
       </div>
       <div class="destaque-card">
-        <div class="destaque-titulo">Financeiro sem susto</div>
-        <div class="destaque-desc">Quanto já foi pago, quanto falta — inclusive parcelas no cartão, por fatura.</div>
+        <div class="destaque-titulo">Veja o que já foi pago e o que ainda falta</div>
+        <div class="destaque-desc">Inclusive parcelas no cartão, organizadas por fatura.</div>
         <div class="mock">
           <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;">
             <span>Já pago</span><span>Falta pagar</span>
@@ -294,35 +714,255 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <div class="card" id="plano">
-    <h2>Comece agora</h2>
-    <div class="preco-linha">
-      <div>
-        <div class="nome">Acesso</div>
-        <div class="desc">1 projeto de reforma, com franquia própria de leitura por IA</div>
+      <div class="destaque-card">
+        <div class="destaque-titulo">Compartilhe o projeto com cônjuge, arquiteto ou prestador</div>
+        <div class="destaque-desc">Cada pessoa entra com o próprio e-mail, vendo só o que importa.</div>
+        <div class="mock">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">RF</span>
+              <span style="font-size:12px;color:var(--ink);">richard@email.com <span style="color:var(--muted);">· admin</span></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent-dark);font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">FC</span>
+              <span style="font-size:12px;color:var(--ink);">francielle@email.com</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="valor">R$ 29,90<span>/mês</span></div>
-    </div>
-    <div class="preco-linha">
-      <div>
-        <div class="nome">Acesso extra</div>
-        <div class="desc">Pra cada projeto a mais, quando quiser adicionar</div>
-      </div>
-      <div class="valor">R$ 9,90<span>/mês</span></div>
     </div>
 
-    <a class="btn-assinar" id="btn-assinar" href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=9a61496329f34bf7bdcf0918ebc5fb81">Assinar agora</a>
-    <div class="nota">Pagamento processado pelo Mercado Pago. Cobrança mensal automática, cancele quando quiser.</div>
-    <div style="text-align:center;margin-top:14px;">
-      <a href="app.html" style="color:var(--muted);font-size:12.5px;text-decoration:underline;">Já é assinante? Entrar</a>
+    <div class="video-placeholder">
+      <div class="video-play" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <span class="video-badge">Vídeo em breve</span>
+      <p>Aqui vai entrar um vídeo curto (20–45s, sem áudio) mostrando a navegação pelo app, o envio de uma cotação e a leitura por IA.</p>
     </div>
   </div>
-</main>
+</section>
+
+<section id="como-funciona">
+  <div class="wrap-wide">
+    <h2 class="section-title">Como funciona</h2>
+    <p class="section-sub">Direto no navegador — sem app de loja pra baixar.</p>
+    <div class="passos">
+      <div class="passo">
+        <div class="passo-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <div>
+          <div class="passo-titulo">Assine em menos de um minuto</div>
+          <div class="passo-desc">Sem baixar nada de loja de app — funciona direto no navegador do celular.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
+        <div>
+          <div class="passo-titulo">Crie ou abra seu projeto de reforma</div>
+          <div class="passo-desc">Seu acesso já vem pronto assim que o pagamento é confirmado.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 1 3 2.2c0 2.8-6 1.6-6 4.3 0 1.3 1.3 2.5 3 2.5s3-1.1 3-2.5"/></svg></div>
+        <div>
+          <div class="passo-titulo">Envie fotos ou PDFs das cotações</div>
+          <div class="passo-desc">A inteligência artificial extrai empresa, telefone, itens e valor total.</div>
+        </div>
+      </div>
+      <div class="passo">
+        <div class="passo-ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-2a4 4 0 014-4h6a4 4 0 014 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div>
+          <div class="passo-titulo">Acompanhe pelo celular</div>
+          <div class="passo-desc">Cronograma, prestadores e financeiro sempre à mão, sem precisar ligar pra ninguém.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="background:var(--card-bg);">
+  <div class="wrap-wide">
+    <h2 class="section-title">Para quem é</h2>
+    <p class="section-sub">Cada pessoa tem acesso só ao que é do seu projeto.</p>
+    <div class="publico-grid">
+      <div class="publico-card">
+        <span class="ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg></span>
+        <span>Quem está reformando a própria casa</span>
+      </div>
+      <div class="publico-card">
+        <span class="ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-8-4.5-8-11a4 4 0 018-2 4 4 0 018 2c0 6.5-8 11-8 11z"/></svg></span>
+        <span>Casais que precisam acompanhar juntos</span>
+      </div>
+      <div class="publico-card">
+        <span class="ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></span>
+        <span>Arquitetos e designers de interiores</span>
+      </div>
+      <div class="publico-card">
+        <span class="ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+        <span>Quem gerencia várias obras ao mesmo tempo</span>
+      </div>
+      <div class="publico-card">
+        <span class="ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M6 21V7l6-4 6 4v14M9 21v-6h6v6"/></svg></span>
+        <span>Pequenos escritórios que centralizam tudo num lugar</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="beneficios-faixa">
+  <div class="wrap">
+    <h2 class="section-title">O que muda pra você</h2>
+    <p class="section-sub">Não é só uma lista de recursos — é menos tempo perdido e mais clareza sobre o que precisa acontecer agora.</p>
+    <ul class="beneficios-lista">
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Menos tempo procurando informação espalhada</span></li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Menos mensagens desencontradas com prestadores</span></li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Mais clareza sobre qual é a próxima decisão</span></li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Mais controle sobre os pagamentos da obra</span></li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Mais tranquilidade durante a reforma</span></li>
+      <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Uma visão centralizada de todo o projeto</span></li>
+    </ul>
+  </div>
+</section>
+
+<section style="background:var(--card-bg);">
+  <div class="wrap">
+    <h2 class="section-title">Feito para tornar a reforma mais simples</h2>
+    <p class="section-sub">Estamos começando agora — em breve, depoimentos reais de quem usa o Simplifica Projetos aparecem aqui.</p>
+    <div class="depoimentos-grid">
+      <div class="depoimento-card">
+        <div class="depoimento-topo">
+          <span class="depoimento-avatar" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+          <div>
+            <div class="depoimento-nome">Nome do cliente</div>
+            <div class="depoimento-cargo">Profissão · tipo de projeto</div>
+          </div>
+        </div>
+        <p class="depoimento-texto">"[Espaço reservado para um depoimento real, com autorização da pessoa.]"</p>
+      </div>
+      <div class="depoimento-card">
+        <div class="depoimento-topo">
+          <span class="depoimento-avatar" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+          <div>
+            <div class="depoimento-nome">Nome do cliente</div>
+            <div class="depoimento-cargo">Profissão · tipo de projeto</div>
+          </div>
+        </div>
+        <p class="depoimento-texto">"[Espaço reservado para um depoimento real, com autorização da pessoa.]"</p>
+      </div>
+      <div class="depoimento-card">
+        <div class="depoimento-topo">
+          <span class="depoimento-avatar" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+          <div>
+            <div class="depoimento-nome">Nome do cliente</div>
+            <div class="depoimento-cargo">Profissão · tipo de projeto</div>
+          </div>
+        </div>
+        <p class="depoimento-texto">"[Espaço reservado para um depoimento real, com autorização da pessoa.]"</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="plano">
+  <div class="wrap">
+    <h2 class="section-title">Comece agora</h2>
+    <p class="section-sub">Um projeto de reforma, tudo incluído, por um preço baixo pra começar.</p>
+    <div class="card">
+      <ul class="inclui-lista">
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>1 projeto de reforma completo</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Franquia própria de leitura por IA (15 leituras por mês)</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Cronograma da obra sempre atualizado</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Organização de cotações por tipo</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Acompanhamento financeiro completo</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Acesso compartilhado — convide quem quiser</span></li>
+        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-dark)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Funciona direto no navegador do celular</span></li>
+      </ul>
+
+      <div class="preco-linha">
+        <div>
+          <div class="nome">Acesso</div>
+          <div class="desc">1 projeto de reforma</div>
+        </div>
+        <div class="valor">R$ 29,90<span>/mês</span></div>
+      </div>
+
+      <a class="btn-assinar" id="btn-assinar" href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=9a61496329f34bf7bdcf0918ebc5fb81">Assinar agora por R$ 29,90/mês</a>
+      <div class="nota">Cobrança mensal automática · sem fidelidade · cancelamento quando quiser · pagamento processado pelo Mercado Pago.</div>
+      <div style="text-align:center;margin-top:14px;">
+        <a href="app.html" style="color:var(--muted);font-size:12.5px;text-decoration:underline;">Já é assinante? Entrar</a>
+      </div>
+
+      <div class="extra-linha">Quer organizar mais de uma obra? Cada projeto extra sai por <strong style="color:var(--ink);">R$ 9,90/mês</strong>, com franquia de IA própria — pode ser adicionado depois, de dentro do app.</div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="background:var(--card-bg);">
+  <div class="wrap">
+    <h2 class="section-title">Perguntas frequentes</h2>
+    <div>
+      <details class="faq-item">
+        <summary>Preciso instalar algum aplicativo? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>Não. O Simplifica Projetos funciona direto no navegador do celular ou computador. Se quiser, dá pra adicionar um atalho na tela inicial, mas isso é opcional.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Posso usar pelo celular? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>Sim — foi pensado primeiro pra celular, que é como a maioria acompanha a obra no dia a dia.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Posso compartilhar o projeto com outras pessoas? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>Sim. Você pode convidar cônjuge, arquiteto ou prestador pra acessar o mesmo projeto pelo e-mail deles.</p>
+      </details>
+      <details class="faq-item">
+        <summary>O que a inteligência artificial lê na cotação? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>Ela extrai o nome da empresa, telefone, valor total e os itens do orçamento, direto da foto ou do PDF que você sobe.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Posso enviar foto ou PDF? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>Sim, os dois formatos são aceitos pela leitura automática.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Posso cancelar quando quiser? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>Sim. A assinatura é mensal e automática pelo Mercado Pago — ao cancelar, não há cobrança no mês seguinte, sem multa e sem fidelidade.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Como funciona o pagamento? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>Todo processado pelo Mercado Pago, com cobrança mensal automática no cartão. O Simplifica Projetos nunca vê nem guarda os dados do seu cartão.</p>
+      </details>
+      <details class="faq-item">
+        <summary>O que está incluído no plano? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>1 projeto de reforma completo: cronograma, cotações, leitura por IA (com franquia de 15 leituras por mês), financeiro e acesso compartilhado.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Posso adicionar outro projeto? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>Sim, por um valor menor (R$ 9,90/mês). Cada projeto extra tem a própria franquia de IA, independente dos outros.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Meus dados ficam protegidos? <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></summary>
+        <p>Sim. O acesso a cada projeto é restrito a quem você convidar — nenhuma outra pessoa, nem outros clientes do app, consegue ver seus dados.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="cta-final">
+  <div class="wrap">
+    <h2>Menos confusão. Mais controle sobre a sua reforma.</h2>
+    <p>Organize seu projeto hoje e tenha uma visão clara do que precisa acontecer agora.</p>
+    <a class="btn-primary" href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=9a61496329f34bf7bdcf0918ebc5fb81">Começar agora</a>
+    <div class="trust-row" style="justify-content:center;border-top:none;padding-top:20px;margin-top:6px;">
+      <span class="trust-item">✓ R$ 29,90/mês</span>
+      <span class="trust-item">✓ Sem fidelidade</span>
+      <span class="trust-item">✓ Pagamento seguro pelo Mercado Pago</span>
+    </div>
+  </div>
+</section>
 
 <footer>Simplifica Projetos — <a href="privacidade.html">Política de privacidade</a></footer>
+
+<div class="cta-fixa-mobile">
+  <div class="preco">R$ 29,90<span>por mês</span></div>
+  <a href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=9a61496329f34bf7bdcf0918ebc5fb81">Assinar agora</a>
+</div>
 
 </body>
 </html>
