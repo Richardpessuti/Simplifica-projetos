@@ -3333,7 +3333,33 @@ document.addEventListener('click', async (e)=>{
   }
   const concluirId = e.target.getAttribute('data-concluir-etapa');
   if(concluirId){
-    await col('etapas').doc(concluirId).update({status:'Concluída', dataConclusaoReal: hojeISO()});
+    const etapa = etapasCache.find(x=>x.id===concluirId);
+    const hoje = hojeISO();
+    await col('etapas').doc(concluirId).update({status:'Concluída', dataConclusaoReal: hoje});
+
+    // se essa etapa tinha prazo (dataFim) e terminou fora dele — atrasada ou
+    // adiantada — desloca automaticamente as datas de todas as etapas
+    // seguintes que ainda não foram concluídas/puladas, pelo mesmo número
+    // de dias. Mantém o histórico de prazo de cada uma que for deslocada.
+    if(etapa && etapa.dataFim){
+      const delta = diaAbsolutoISO(hoje) - diaAbsolutoISO(etapa.dataFim);
+      if(delta !== 0){
+        const afetadas = etapasCache.filter(x=>
+          x.id!==etapa.id && x.ordem>etapa.ordem && x.status!=='Concluída' && x.status!=='Pulada' && (x.dataInicio || x.dataFim)
+        );
+        await Promise.all(afetadas.map(x=>{
+          const payload = {};
+          if(x.dataInicio) payload.dataInicio = somarDiasISO(x.dataInicio, delta);
+          if(x.dataFim){
+            payload.dataFim = somarDiasISO(x.dataFim, delta);
+            payload.historicoPrazo = [...(x.historicoPrazo||[]), {prazoAnterior: x.dataFim, trocadoEm: hoje}];
+          }
+          return col('etapas').doc(x.id).update(payload);
+        }));
+        toast(`Etapa concluída ${delta>0 ? delta+' dia(s) atrasada' : Math.abs(delta)+' dia(s) adiantada'} — datas seguintes recalculadas`);
+        return;
+      }
+    }
     toast('Etapa concluída');
     return;
   }
@@ -3375,6 +3401,20 @@ async function reordenarEtapa(id, direcao){
 
 function hojeISO(){
   return new Date().toISOString().slice(0,10);
+}
+
+// dia absoluto (UTC) a partir de uma data 'YYYY-MM-DD' — usado só pra fazer
+// aritmética de dias sem sofrer com fuso horário local
+function diaAbsolutoISO(iso){
+  const [y,m,d] = iso.split('-').map(Number);
+  return Math.round(Date.UTC(y, m-1, d) / 86400000);
+}
+
+function somarDiasISO(iso, dias){
+  const [y,m,d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d));
+  dt.setUTCDate(dt.getUTCDate() + dias);
+  return dt.toISOString().slice(0,10);
 }
 
 function statusEtapaCor(status){
