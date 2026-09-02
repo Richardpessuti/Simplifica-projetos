@@ -19,7 +19,7 @@ const MP_PLANO_EXTRA_ID = 'a75dda952dea4678aa9815a990648bbe';
 // criado no Mercado Pago; até lá fica com este placeholder, que nunca bate
 // com nenhum preapproval_plan_id de verdade, então o webhook nunca entra
 // nesse fluxo por engano
-const MP_PLANO_VAGA_EXTRA_ID = 'COLE_AQUI_O_ID_DO_PLANO_DE_VAGA_EXTRA';
+const MP_PLANO_VAGA_EXTRA_ID = '5de834075a0842cf88e5286dbbb508a5';
 
 // franquia padrão de pessoas com acesso a um projeto — quem quiser mais
 // gente no mesmo projeto assina o plano de vaga extra (1 vaga por
