@@ -106,8 +106,9 @@ service cloud.firestore {
       // criadoPor precisa ser exatamente o e-mail de quem está criando (já em minúsculo,
       // por definição de userEmail()), e membrosEmails só pode conter esse mesmo e-mail
       // no momento da criação — evita depender só do app já mandar tudo em minúsculo.
-      // "limiteIAMensal" e "ativo" não podem ser definidos na criação — ficam
-      // de fora, e a Cloud Function/regra usa o padrão (franquia normal, ativo).
+      // "limiteIAMensal", "ativo" e "limiteMembros" não podem ser definidos na
+      // criação — ficam de fora, e a Cloud Function/regra usa o padrão (franquia
+      // normal, ativo, 3 pessoas).
       //
       // IMPORTANTE: criar projeto pelo cliente só é permitido pro master ou pra
       // quem é uma arquiteta de verdade cadastrada (referência real na coleção
@@ -122,6 +123,7 @@ service cloud.firestore {
         request.resource.data.membrosEmails == [userEmail()] &&
         !('limiteIAMensal' in request.resource.data) &&
         !('ativo' in request.resource.data) &&
+        !('limiteMembros' in request.resource.data) &&
         (
           isMaster() ||
           (
@@ -138,11 +140,18 @@ service cloud.firestore {
           (isProjectAdmin(resource.data) ||
             (request.resource.data.criadoPor == resource.data.criadoPor &&
              request.resource.data.membrosEmails == resource.data.membrosEmails)) &&
-          // "limiteIAMensal" e "ativo" só o master (ou a Cloud Function via
-          // Admin SDK) mudam — ninguém se autoconcede mais leituras por IA
-          // nem se reativa sozinho depois de uma assinatura cancelada
+          // "limiteIAMensal", "ativo" e "limiteMembros" só o master (ou a Cloud
+          // Function via Admin SDK) mudam — ninguém se autoconcede mais leituras
+          // por IA, se reativa sozinho depois de uma assinatura cancelada, ou se
+          // autoconcede mais vagas de acesso sem pagar por elas
           request.resource.data.get('limiteIAMensal', null) == resource.data.get('limiteIAMensal', null) &&
-          request.resource.data.get('ativo', true) == resource.data.get('ativo', true));
+          request.resource.data.get('ativo', true) == resource.data.get('ativo', true) &&
+          request.resource.data.get('limiteMembros', 3) == resource.data.get('limiteMembros', 3) &&
+          // só bloqueia CRESCER membrosEmails além do limite do projeto — nunca
+          // bloqueia remover gente nem mexer em outros campos, mesmo num projeto
+          // que por algum motivo já tenha mais gente que o limite atual
+          (request.resource.data.membrosEmails.size() <= resource.data.get('limiteMembros', 3) ||
+           request.resource.data.membrosEmails.size() <= resource.data.membrosEmails.size()));
 
       allow delete: if isProjectAdmin(resource.data);
 

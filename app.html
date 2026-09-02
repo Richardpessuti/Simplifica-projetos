@@ -1594,16 +1594,26 @@
 
     <div class="card" data-admin-cat="acesso" style="display:none;">
       <h2>Quem tem acesso a este projeto</h2>
+      <div id="membros-contador" style="font-size:11.5px;color:var(--muted);margin-bottom:10px;"></div>
       <div id="membros-list" style="margin-bottom:12px;"></div>
-      <label>Adicionar por e-mail</label>
-      <input type="text" id="novo-membro-email" placeholder="email@exemplo.com">
-      <button class="btn secondary" id="add-membro-btn">Adicionar acesso</button>
-      <div style="font-size:11px;color:var(--muted);margin-top:8px;">A pessoa precisa criar uma conta (com esse mesmo e-mail) na tela de login para acessar.</div>
+      <div id="add-membro-form">
+        <label>Adicionar por e-mail</label>
+        <input type="text" id="novo-membro-email" placeholder="email@exemplo.com">
+        <button class="btn secondary" id="add-membro-btn">Adicionar acesso</button>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;">A pessoa precisa criar uma conta (com esse mesmo e-mail) na tela de login para acessar.</div>
+      </div>
+      <div id="add-membro-limite" style="display:none;font-size:12px;color:var(--muted);background:var(--neutral-bg);padding:12px;border-radius:var(--radius-btn);">Esse projeto já está com todas as vagas ocupadas. Pra adicionar mais gente, veja as opções abaixo.</div>
+    </div>
+
+    <div class="card" data-admin-cat="acesso" id="card-vaga-extra" style="display:none;">
+      <h2>Quer mais vagas neste projeto?</h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Cada vaga extra dá acesso a mais 1 pessoa <strong style="color:var(--ink);">neste mesmo projeto</strong> — precisa de 2 a mais? Assine 2 vezes.</div>
+      <a class="btn secondary" id="link-vaga-extra" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;">Assinar 1 vaga extra</a>
     </div>
 
     <div class="card" data-admin-cat="acesso" style="display:none;">
       <h2>Quer mais um projeto?</h2>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Cada projeto novo é um acesso extra, com assinatura própria (menor que a do primeiro acesso) e franquia de IA independente.</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">Isso aqui é pra uma obra separada, com o próprio cronograma e franquia de IA — não aumenta as vagas deste projeto (pra isso, veja "Quer mais vagas" acima). Cada projeto novo é um acesso extra, com assinatura própria (menor que a do primeiro acesso).</div>
       <a class="btn secondary" href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=a75dda952dea4678aa9815a990648bbe" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;">Assinar mais um acesso</a>
     </div>
 
@@ -2476,6 +2486,17 @@ let firebaseOk = false;
    ====================================================================== */
 const RECAPTCHA_V3_SITE_KEY = "COLE_SUA_CHAVE_RECAPTCHA_V3_AQUI";
 
+/* ======================================================================
+   Plano de "vaga extra" no Mercado Pago (+1 pessoa num projeto já
+   existente). Ainda não foi criado lá — depois de criar, cole o
+   preapproval_plan_id aqui embaixo. Até lá, o botão "Assinar 1 vaga
+   extra" (Admin → Acesso) fica escondido.
+   ====================================================================== */
+const MP_PLANO_VAGA_EXTRA_ID = "COLE_AQUI_O_ID_DO_PLANO_DE_VAGA_EXTRA";
+if(MP_PLANO_VAGA_EXTRA_ID !== "COLE_AQUI_O_ID_DO_PLANO_DE_VAGA_EXTRA"){
+  document.getElementById('link-vaga-extra').href = 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=' + MP_PLANO_VAGA_EXTRA_ID;
+}
+
 try{
   if(firebaseConfig.apiKey === "COLE_AQUI"){
     throw new Error("config-missing");
@@ -2575,6 +2596,12 @@ function abrirCategoriaAdmin(cat){
   document.querySelectorAll('[data-admin-cat]').forEach(el=>{
     el.style.display = (el.getAttribute('data-admin-cat')===cat) ? '' : 'none';
   });
+  // o card de "vaga extra" só participa da categoria "acesso" normalmente
+  // se o plano já tiver sido configurado — senão fica escondido mesmo
+  // quando essa categoria é aberta
+  if(cat==='acesso' && MP_PLANO_VAGA_EXTRA_ID === "COLE_AQUI_O_ID_DO_PLANO_DE_VAGA_EXTRA"){
+    document.getElementById('card-vaga-extra').style.display = 'none';
+  }
 }
 document.querySelectorAll('[data-abrir-admin-cat]').forEach(el=>{
   el.addEventListener('click', ()=> abrirCategoriaAdmin(el.getAttribute('data-abrir-admin-cat')));
@@ -6555,7 +6582,11 @@ if(firebaseOk){
     }
   });
 
+  let membrosCountAtual = 0;
+  let membrosLimiteAtual = 3;
+
   document.getElementById('add-membro-btn').addEventListener('click', async ()=>{
+    if(membrosCountAtual >= membrosLimiteAtual){ toast('Esse projeto já está com todas as vagas ocupadas'); return; }
     const email = document.getElementById('novo-membro-email').value.trim().toLowerCase();
     if(!email || !email.includes('@')){ toast('Digite um e-mail válido'); return; }
     const btn = document.getElementById('add-membro-btn');
@@ -6587,13 +6618,20 @@ if(firebaseOk){
 
   async function renderMembros(){
     const doc = await db.collection('projetos').doc(currentProjetoId).get();
-    const membros = (doc.data() && doc.data().membrosEmails) || [];
+    const dados = doc.data() || {};
+    const membros = dados.membrosEmails || [];
+    membrosCountAtual = membros.length;
+    membrosLimiteAtual = dados.limiteMembros || 3;
+    document.getElementById('membros-contador').textContent = membrosCountAtual + ' de ' + membrosLimiteAtual + ' vagas usadas';
     document.getElementById('membros-list').innerHTML = membros.map(m=>`
       <div class="list-item" style="padding:8px 10px;display:flex;justify-content:space-between;align-items:center;">
         <span style="font-size:13px;">${escapeHtml(m)}${m===currentUserEmail?' (você)':''}</span>
         ${membros.length>1 ? `<button data-rem-membro="${escapeHtml(m)}" style="border:1px solid var(--danger);color:var(--danger);background:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;">remover</button>` : ''}
       </div>
     `).join('');
+    const cheio = membrosCountAtual >= membrosLimiteAtual;
+    document.getElementById('add-membro-form').style.display = cheio ? 'none' : 'block';
+    document.getElementById('add-membro-limite').style.display = cheio ? 'block' : 'none';
   }
 
   async function carregarProjetosDoUsuario(){

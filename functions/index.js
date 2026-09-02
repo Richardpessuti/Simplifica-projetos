@@ -15,6 +15,16 @@ const MERCADOPAGO_ACCESS_TOKEN = defineSecret('MERCADOPAGO_ACCESS_TOKEN');
 // Assinaturas/Preapproval), planos de PRODUÇÃO.
 const MP_PLANO_BASE_ID = '9a61496329f34bf7bdcf0918ebc5fb81';
 const MP_PLANO_EXTRA_ID = 'a75dda952dea4678aa9815a990648bbe';
+// plano de vaga extra (R$5/mês, +1 pessoa no MESMO projeto) — ainda não
+// criado no Mercado Pago; até lá fica com este placeholder, que nunca bate
+// com nenhum preapproval_plan_id de verdade, então o webhook nunca entra
+// nesse fluxo por engano
+const MP_PLANO_VAGA_EXTRA_ID = 'COLE_AQUI_O_ID_DO_PLANO_DE_VAGA_EXTRA';
+
+// franquia padrão de pessoas com acesso a um projeto — quem quiser mais
+// gente no mesmo projeto assina o plano de vaga extra (1 vaga por
+// assinatura), que incrementa este valor pra aquele projeto específico
+const DEFAULT_LIMITE_MEMBROS = 3;
 
 const MAX_PAGINAS = 3; // orçamentos costumam ter poucas páginas — evita custo/tempo alto num PDF gigante
 const MAX_BASE64_CHARS = 20 * 1024 * 1024; // ~15MB de arquivo real — orçamento não precisa de mais que isso, evita abuso de custo/memória
@@ -243,6 +253,40 @@ async function handleMercadoPagoWebhook(req, res) {
     }
 
     const preapproval = await buscarPreapproval(preapprovalId);
+    const email = (preapproval.payer_email || '').toLowerCase();
+
+    // plano de vaga extra (+1 pessoa num projeto já existente) segue um
+    // caminho totalmente separado: não cria/atualiza um projeto próprio
+    // keyed por este preapprovalId, só ajusta o limiteMembros do projeto
+    // de quem pagou.
+    if (preapproval.preapproval_plan_id === MP_PLANO_VAGA_EXTRA_ID) {
+      if (!email) {
+        res.status(200).send('sem e-mail do pagador');
+        return;
+      }
+      const delta = preapproval.status === 'authorized' ? 1
+        : (preapproval.status === 'cancelled' || preapproval.status === 'paused') ? -1
+        : 0;
+      if (delta === 0) {
+        res.status(200).send('status: ' + preapproval.status);
+        return;
+      }
+      const projetosDoEmail = await db.collection('projetos').where('criadoPor', '==', email).get();
+      // só aplica se der pra saber exatamente em qual projeto — não é o
+      // caso comum (a maioria tem só 1), mas evita aplicar a vaga no
+      // projeto errado se a pessoa tiver mais de um
+      if (projetosDoEmail.size !== 1) {
+        console.error(`Vaga extra de ${email}: ${projetosDoEmail.size} projeto(s) encontrado(s), não deu pra decidir automaticamente.`);
+        res.status(200).send('vaga extra pendente: ' + projetosDoEmail.size + ' projeto(s)');
+        return;
+      }
+      const projetoDoc = projetosDoEmail.docs[0];
+      const limiteAtual = projetoDoc.data().limiteMembros || DEFAULT_LIMITE_MEMBROS;
+      const novoLimite = Math.max(DEFAULT_LIMITE_MEMBROS, limiteAtual + delta);
+      await projetoDoc.ref.set({ limiteMembros: novoLimite }, { merge: true });
+      res.status(200).send('limiteMembros: ' + novoLimite);
+      return;
+    }
 
     // usa o próprio ID da assinatura como ID do projeto — assim, se o
     // Mercado Pago reenviar o mesmo aviso (acontece, é esperado), a
@@ -266,20 +310,25 @@ async function handleMercadoPagoWebhook(req, res) {
       return;
     }
 
-    const email = (preapproval.payer_email || '').toLowerCase();
     if (!email) {
       res.status(200).send('sem e-mail do pagador');
       return;
     }
 
     // se o projeto já existe (reativação de uma assinatura antes cancelada,
-    // ou reenvio do mesmo aviso), preserva nome e data de criação originais;
-    // só na primeira vez é que esses campos são definidos
+    // ou reenvio do mesmo aviso), preserva nome, data de criação e
+    // membrosEmails originais — sem isso, toda renovação mensal (que
+    // também dispara este webhook) apagaria qualquer pessoa extra que o
+    // admin tivesse adicionado, voltando a lista só pro pagador
     const jaExistia = (await projetoRef.get()).exists;
     await projetoRef.set({
-      ...(jaExistia ? {} : { nome: 'Novo projeto', criadoEm: admin.firestore.FieldValue.serverTimestamp() }),
+      ...(jaExistia ? {} : {
+        nome: 'Novo projeto',
+        criadoEm: admin.firestore.FieldValue.serverTimestamp(),
+        membrosEmails: [email],
+        limiteMembros: DEFAULT_LIMITE_MEMBROS
+      }),
       criadoPor: email,
-      membrosEmails: [email],
       mpPreapprovalId: preapprovalId,
       mpPlanId: preapproval.preapproval_plan_id || null,
       ativo: true
