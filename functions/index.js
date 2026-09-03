@@ -10,6 +10,7 @@ const db = admin.firestore();
 
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 const MERCADOPAGO_ACCESS_TOKEN = defineSecret('MERCADOPAGO_ACCESS_TOKEN');
+const RESEND_API_KEY = defineSecret('RESEND_API_KEY');
 
 // IDs dos planos de assinatura no Mercado Pago (criados via API de
 // Assinaturas/Preapproval), planos de PRODUÇÃO.
@@ -342,3 +343,62 @@ async function handleMercadoPagoWebhook(req, res) {
 }
 
 exports.mercadoPagoWebhook = onRequest({ secrets: [MERCADOPAGO_ACCESS_TOKEN], region: 'southamerica-east1', maxInstances: 10 }, handleMercadoPagoWebhook);
+
+// Avisa por e-mail quando alguém é adicionado ao "Quem tem acesso a este
+// projeto" (Admin → Acesso) — chamado pelo app logo depois do arrayUnion
+// em membrosEmails ter sucesso. Só o admin do projeto (ou master) pode
+// disparar, e só pra um e-mail que já esteja mesmo na lista de membros —
+// evita virar um jeito de mandar e-mail arbitrário pra qualquer endereço.
+async function notificarNovoMembroLogica(request) {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Faça login pra adicionar acesso.');
+  }
+  const callerEmail = (request.auth.token.email || '').toLowerCase();
+  const { projetoId, email } = request.data || {};
+  if (!projetoId || typeof projetoId !== 'string' || !email || typeof email !== 'string') {
+    throw new HttpsError('invalid-argument', 'Faltou informar o projeto ou o e-mail.');
+  }
+  const emailNormalizado = email.toLowerCase().trim();
+
+  const projetoSnap = await db.doc(`projetos/${projetoId}`).get();
+  if (!projetoSnap.exists) {
+    throw new HttpsError('not-found', 'Projeto não encontrado.');
+  }
+  const projeto = projetoSnap.data();
+  const isAdmin = callerEmail === MASTER_EMAIL ||
+    (typeof projeto.criadoPor === 'string' && projeto.criadoPor.toLowerCase() === callerEmail);
+  if (!isAdmin) {
+    throw new HttpsError('permission-denied', 'Só o admin do projeto pode notificar novos membros.');
+  }
+  if (!Array.isArray(projeto.membrosEmails) || !projeto.membrosEmails.includes(emailNormalizado)) {
+    throw new HttpsError('failed-precondition', 'Esse e-mail ainda não foi adicionado ao projeto.');
+  }
+
+  const nomeProjeto = projeto.nome || 'seu projeto de reforma';
+  const resposta = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY.value()}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: 'Simplifica Projetos <onboarding@resend.dev>',
+      to: [emailNormalizado],
+      subject: `Você foi adicionado ao projeto "${nomeProjeto}"`,
+      html: `
+        <p>Olá!</p>
+        <p>Você agora tem acesso ao projeto <strong>${nomeProjeto}</strong> no Simplifica Projetos — cronograma, cotações, prestadores e financeiro, tudo num só lugar.</p>
+        <p>Pra acessar: entre em <a href="https://richardpessuti.github.io/Simplifica-projetos/app.html">richardpessuti.github.io/Simplifica-projetos/app.html</a> e crie sua conta usando <strong>exatamente este e-mail</strong> (${emailNormalizado}). Depois de logar, o projeto já aparece pra você automaticamente.</p>
+      `
+    })
+  });
+  if (!resposta.ok) {
+    const detalhe = await resposta.text();
+    console.error('Erro ao enviar e-mail via Resend:', resposta.status, detalhe);
+    throw new HttpsError('internal', 'Não consegui enviar o e-mail de convite.');
+  }
+
+  return { ok: true };
+}
+
+exports.notificarNovoMembro = onCall({ secrets: [RESEND_API_KEY], region: 'southamerica-east1', maxInstances: 10 }, notificarNovoMembroLogica);

@@ -6604,6 +6604,12 @@ if(firebaseOk){
       document.getElementById('novo-membro-email').value = '';
       toast('Acesso adicionado');
       renderMembros();
+      // manda o e-mail de convite depois — se falhar, o acesso já foi
+      // concedido normalmente, só não teve o aviso automático por e-mail
+      if(functionsClient){
+        functionsClient.httpsCallable('notificarNovoMembro')({ projetoId: currentProjetoId, email })
+          .catch(err=>{ console.error('Erro ao enviar e-mail de convite:', err); toast('Acesso adicionado, mas o e-mail de aviso não foi enviado'); });
+      }
     }catch(e){
       console.error(e);
       toast('Erro: ' + e.message);
