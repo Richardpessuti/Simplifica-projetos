@@ -382,7 +382,7 @@ async function notificarNovoMembroLogica(request) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      from: 'Simplifica Projetos <onboarding@resend.dev>',
+      from: 'Simplifica Projetos <avisos@simplificaseuprojeto.com.br>',
       to: [emailNormalizado],
       subject: `Você foi adicionado ao projeto "${nomeProjeto}"`,
       html: `
