@@ -382,13 +382,13 @@ async function notificarNovoMembroLogica(request) {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      from: 'Simplifica Projetos <avisos@simplificaseuprojeto.com.br>',
+      from: 'Simplifica Seu Projeto <avisos@simplificaseuprojeto.com.br>',
       to: [emailNormalizado],
       subject: `Você foi adicionado ao projeto "${nomeProjeto}"`,
       html: `
         <p>Olá!</p>
-        <p>Você agora tem acesso ao projeto <strong>${nomeProjeto}</strong> no Simplifica Projetos — cronograma, cotações, prestadores e financeiro, tudo num só lugar.</p>
-        <p>Pra acessar: entre em <a href="https://richardpessuti.github.io/Simplifica-projetos/app.html">richardpessuti.github.io/Simplifica-projetos/app.html</a> e crie sua conta usando <strong>exatamente este e-mail</strong> (${emailNormalizado}). Depois de logar, o projeto já aparece pra você automaticamente.</p>
+        <p>Você agora tem acesso ao projeto <strong>${nomeProjeto}</strong> no Simplifica Seu Projeto — cronograma, cotações, prestadores e financeiro, tudo num só lugar.</p>
+        <p>Pra acessar: entre em <a href="https://simplificaseuprojeto.com.br/app.html">simplificaseuprojeto.com.br/app.html</a> e crie sua conta usando <strong>exatamente este e-mail</strong> (${emailNormalizado}). Depois de logar, o projeto já aparece pra você automaticamente.</p>
       `
     })
   });

@@ -1,4 +1,4 @@
-// Service Worker do Simplifica Projetos.
+// Service Worker do Simplifica Seu Projeto.
 //
 // Objetivo é só o essencial pra virar um PWA instalável de verdade e não
 // quebrar com uma tela de erro do navegador quando a conexão cai: guarda em

@@ -1,6 +1,6 @@
 {
   "name": "simplifica-projetos-functions",
-  "description": "Cloud Functions do Simplifica Projetos — hoje só a leitura automática de itens de cotação por IA (Fase B).",
+  "description": "Cloud Functions do Simplifica Seu Projeto — hoje só a leitura automática de itens de cotação por IA (Fase B).",
   "engines": {
     "node": "20"
   },
