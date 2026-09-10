@@ -108,7 +108,29 @@
     position:relative;
     overflow:hidden;
   }
+  /* trama de papel milimetrado — a mesma grade que uma prancheta de
+     arquitetura usa, bem discreta, só pra dar textura ao fundo */
+  .hero::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(251,249,242,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(251,249,242,0.06) 1px, transparent 1px);
+    background-size:34px 34px;
+    pointer-events:none;
+  }
+  /* marcas de registro — referência a marca de corte/alinhamento de
+     prancha impressa, um detalhe técnico de projeto arquitetônico */
+  .reg-mark{position:absolute; pointer-events:none; opacity:0.55;}
+  .reg-tl{top:18px; left:18px;}
+  .reg-tr{top:18px; right:18px;}
+  @media (min-width:860px){
+    .reg-bl{position:absolute; bottom:18px; left:18px; pointer-events:none; opacity:0.55;}
+  }
   .hero-grid{
+    position:relative;
+    z-index:1;
     display:grid;
     grid-template-columns:1fr;
     gap:40px;
@@ -603,6 +625,9 @@
 </nav>
 
 <header class="hero">
+  <svg class="reg-mark reg-tl" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 0v18M0 9h18" stroke="#FBF9F2" stroke-width="1"/></svg>
+  <svg class="reg-mark reg-tr" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 0v18M0 9h18" stroke="#FBF9F2" stroke-width="1"/></svg>
+  <svg class="reg-mark reg-bl" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 0v18M0 9h18" stroke="#FBF9F2" stroke-width="1"/></svg>
   <div class="wrap-wide hero-grid">
     <div class="hero-copy">
       <p class="eyebrow">Simplifica Seu Projeto</p>
@@ -954,7 +979,12 @@
           <div class="nome">Acesso</div>
           <div class="desc">1 projeto de reforma</div>
         </div>
-        <div class="valor">R$ 29,90<span>/mês</span></div>
+        <div>
+          <svg width="70" height="12" viewBox="0 0 70 12" aria-hidden="true" style="display:block;margin:0 0 4px auto;">
+            <path d="M1 1v10M69 1v10M1 6h68" stroke="var(--paper-line)" stroke-width="1"/>
+          </svg>
+          <div class="valor">R$ 29,90<span>/mês</span></div>
+        </div>
       </div>
 
       <a class="btn-assinar" id="btn-assinar" href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=9a61496329f34bf7bdcf0918ebc5fb81">Assinar agora por R$ 29,90/mês</a>
