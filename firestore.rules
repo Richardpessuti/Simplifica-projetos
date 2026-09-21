@@ -107,7 +107,17 @@ service cloud.firestore {
 
     // ---------- projetos e tudo dentro deles ----------
     match /projetos/{projetoId} {
-      allow read: if isProjectMember(resource.data);
+      allow read: if isProjectMember(resource.data) ||
+        // mesma checagem do terceiro ramo de isProjectMember, mas escrita
+        // direto (sem passar pelas funções isSignedIn()/userEmail()) —
+        // blindagem redundante caso a indireção por função esteja
+        // atrapalhando o Firestore a provar a segurança desta consulta em
+        // lista (`array-contains` em membrosEmails); não muda quem tem
+        // acesso, só reforça o mesmo resultado escrito de outro jeito.
+        (request.auth != null &&
+         request.auth.token.email != null &&
+         resource.data.membrosEmails is list &&
+         request.auth.token.email.lower() in resource.data.membrosEmails);
 
       // criadoPor precisa ser exatamente o e-mail de quem está criando (já em minúsculo,
       // por definição de userEmail()), e membrosEmails só pode conter esse mesmo e-mail
