@@ -107,24 +107,19 @@ service cloud.firestore {
 
     // ---------- projetos e tudo dentro deles ----------
     match /projetos/{projetoId} {
-      // A causa real (confirmada com diagnóstico ao vivo: um GET direto no
-      // documento funcionava, mas a consulta em lista com `array-contains`
-      // era negada) é uma limitação do Firestore: pra ele conseguir provar
-      // que uma consulta em lista é segura, a regra precisa comparar
-      // exatamente o mesmo valor "puro" que aparece no filtro da consulta —
-      // qualquer transformação (mesmo um inofensivo `.lower()`) no valor do
-      // token de autenticação quebra essa prova e ele nega a consulta
-      // inteira, mesmo com dados certos. Por isso este ramo usa
-      // `request.auth.token.email` cru, sem `.lower()` — o app já salva
-      // `membrosEmails` sempre em minúsculo (`add-membro-btn`), então isso
-      // só funciona de fato se o e-mail do login também já estiver em
-      // minúsculo (é o caso normal; contas com e-mail em maiúscula no
-      // cadastro do Firebase Auth cairiam de volta no isProjectMember acima
-      // pra um GET, mas não pra list — aceitável por ora).
-      allow read: if isProjectMember(resource.data) ||
-        (request.auth != null &&
-         resource.data.membrosEmails is list &&
-         request.auth.token.email in resource.data.membrosEmails);
+      // Um GET direto no documento sempre funcionou (confirmado com
+      // diagnóstico ao vivo); só a consulta em lista (`array-contains` em
+      // membrosEmails) era negada, mesmo com dados e regra corretos —
+      // tentativas de reescrever a MESMA condição combinada num `||` não
+      // resolveram. Por isso agora cada caso de acesso é uma declaração
+      // `allow read` SEPARADA (o Firestore consegue provar a segurança de
+      // uma consulta em lista mais facilmente quando ela não precisa ser
+      // avaliada dentro de uma árvore booleana grande combinada com `||`).
+      allow read: if isMaster();
+      allow read: if isProjectAdmin(resource.data);
+      allow read: if request.auth != null &&
+        resource.data.membrosEmails is list &&
+        request.auth.token.email in resource.data.membrosEmails;
 
       // criadoPor precisa ser exatamente o e-mail de quem está criando (já em minúsculo,
       // por definição de userEmail()), e membrosEmails só pode conter esse mesmo e-mail
