@@ -46,18 +46,24 @@ service cloud.firestore {
         (projetoData.criadoPor is string && projetoData.criadoPor.lower() == userEmail() || isMaster());
     }
 
-    // "ativo" (default true quando o campo não existe, pra não quebrar
-    // projetos antigos criados antes disso existir) fica false quando uma
-    // assinatura do Mercado Pago é cancelada/pausada — a Cloud Function seta
-    // isso via Admin SDK. Master sempre passa direto, mesmo com o projeto
-    // inativo (precisa continuar enxergando pra dar suporte).
+    // IMPORTANTE: esta função não pode depender de nenhum campo que não seja
+    // o próprio "membrosEmails" (o mesmo usado no filtro `array-contains` da
+    // consulta que lista os projetos do usuário). O Firestore só consegue
+    // provar que uma consulta em lista é seletiva quando a regra de leitura
+    // é satisfeita usando exclusivamente os campos filtrados na própria
+    // consulta; qualquer condição extra ANDed aqui (como um campo "ativo"
+    // que a consulta não filtra) faz o Firestore negar a consulta inteira
+    // com permission-denied — mesmo que os dados reais estejam certos —
+    // porque ele não consegue garantir isso sem executar a consulta primeiro.
+    // Isso só não aparecia antes porque só o master (que passa direto pela
+    // primeira condição do OR) tinha testado essa tela; qualquer outro
+    // membro batia nesse bloqueio. A checagem de "ativo" (assinatura paga)
+    // continua existindo, só que isolada dentro de `allow update` do
+    // documento do projeto, onde não afeta consultas em lista.
     function isProjectMember(projetoData) {
       return isMaster() ||
-        (
-          projetoData.get('ativo', true) == true &&
-          (isProjectAdmin(projetoData) ||
-            (isSignedIn() && projetoData.membrosEmails is list && userEmail() in projetoData.membrosEmails))
-        );
+        isProjectAdmin(projetoData) ||
+        (isSignedIn() && projetoData.membrosEmails is list && userEmail() in projetoData.membrosEmails);
     }
 
     // ---------- config/master ----------
@@ -135,6 +141,11 @@ service cloud.firestore {
 
       allow update: if isMaster() ||
         (isProjectMember(resource.data) &&
+          // projeto com assinatura cancelada/pausada (Mercado Pago) não pode
+          // ser editado por membros comuns nem pelo admin — só o master (via
+          // suporte) ou a própria Cloud Function (Admin SDK, ignora regras)
+          // conseguem mexer nele até a assinatura voltar a ficar ativa.
+          resource.data.get('ativo', true) == true &&
           // impede que um membro comum se auto-promova a criador ou mude quem tem acesso;
           // só o admin do projeto pode alterar essas duas coisas
           (isProjectAdmin(resource.data) ||
