@@ -6692,25 +6692,7 @@ if(firebaseOk){
       `).join('');
     }catch(e){
       console.error(e);
-      // DIAGNÓSTICO TEMPORÁRIO — remover depois de achar a causa do
-      // permission-denied que só acontece com membros comuns (não master).
-      // Tenta um GET direto (não é list/query) no único projeto existente,
-      // pra descobrir se o problema é específico de LIST ou geral.
-      let diag = '';
-      try{
-        const doc = await db.collection('projetos').doc('sHbSWOifZ6yBMNYVLmzB').get();
-        diag = 'GET direto: ' + (doc.exists ? 'OK, leu o doc' : 'doc não existe');
-      }catch(e2){
-        diag = 'GET direto também falhou: ' + (e2.code || e2.message);
-      }
-      el.innerHTML = `<div class="empty">Erro ao carregar projetos.<br>
-        <span style="font-size:10px;color:var(--muted);">
-        LIST: ${escapeHtml(e.code || e.message || String(e))}<br>
-        e-mail usado: ${escapeHtml(JSON.stringify(currentUserEmail))}<br>
-        uid: ${escapeHtml((auth.currentUser && auth.currentUser.uid) || 'null')}<br>
-        emailVerified: ${escapeHtml(String(auth.currentUser && auth.currentUser.emailVerified))}<br>
-        ${escapeHtml(diag)}
-        </span></div>`;
+      el.innerHTML = `<div class="empty">Erro ao carregar projetos.<br><span style="font-size:10px;color:var(--muted);">${escapeHtml(e.code || e.message || String(e))}</span></div>`;
     }
   }
 
