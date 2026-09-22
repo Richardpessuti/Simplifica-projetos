@@ -335,6 +335,16 @@ async function handleMercadoPagoWebhook(req, res) {
       ativo: true
     }, { merge: true });
 
+    // índice reverso e-mail -> projetos (ver comentário em firestore.rules,
+    // seção "membros") — o app usa isso pra listar os projetos de cada
+    // pessoa sem depender de consulta em lista por membrosEmails, que o
+    // Firestore recusa de forma consistente pra contas que não são o master.
+    if (!jaExistia) {
+      await db.doc(`membros/${email}`).set({
+        projetoIds: admin.firestore.FieldValue.arrayUnion(projetoId)
+      }, { merge: true });
+    }
+
     res.status(200).send('acesso liberado');
   } catch (e) {
     console.error('Erro no webhook do Mercado Pago:', e);

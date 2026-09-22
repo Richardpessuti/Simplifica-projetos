@@ -105,19 +105,34 @@ service cloud.firestore {
       match /chunks/{chunkId} { allow read: if isSignedIn(); allow write: if false; }
     }
 
+    // ---------- índice reverso e-mail -> projetos ----------
+    // Confirmado ao vivo: uma consulta em lista (array-contains) direto na
+    // coleção "projetos" filtrando por membrosEmails é negada pelo Firestore
+    // com permission-denied pra qualquer conta que não seja o master, mesmo
+    // com regra e dados corretos — é uma limitação de como o Firestore
+    // precisa "provar" a segurança de consultas em lista, e nenhuma reescrita
+    // razoável da condição contornou isso. GET direto por ID sempre funciona.
+    // Por isso o app mantém aqui, por e-mail, a lista de IDs de projeto que
+    // essa pessoa acessa (atualizada em paralelo sempre que um projeto é
+    // criado, ou alguém é adicionado/removido como membro) e busca cada
+    // projeto individualmente por get() — sem depender de list().
+    match /membros/{emailId} {
+      allow get: if isSignedIn() && userEmail() == emailId;
+      allow list: if false;
+      // Só quem já é admin/master do projeto referenciado nessa lista deveria
+      // poder escrever aqui, mas o Firestore não consegue checar isso num
+      // "arrayUnion" sem reintroduzir o mesmo problema de prova de segurança.
+      // Como este documento é só um ÍNDICE de conveniência (nunca a fonte de
+      // verdade do acesso — cada leitura de projeto é sempre reconferida pela
+      // regra de `projetos/{projetoId}` acima), o pior caso de alguém
+      // adulterar essa lista é o app tentar ler um projeto a mais e receber
+      // permission-denied — não vaza dado nenhum.
+      allow write: if isSignedIn();
+    }
+
     // ---------- projetos e tudo dentro deles ----------
     match /projetos/{projetoId} {
-      // Um GET direto no documento sempre funcionou (confirmado com
-      // diagnóstico ao vivo); só a consulta em lista (`array-contains` em
-      // membrosEmails) era negada, mesmo com dados e regra corretos —
-      // tentativas de reescrever a MESMA condição combinada num `||` não
-      // resolveram. Por isso agora cada caso de acesso é uma declaração
-      // `allow read` SEPARADA (o Firestore consegue provar a segurança de
-      // uma consulta em lista mais facilmente quando ela não precisa ser
-      // avaliada dentro de uma árvore booleana grande combinada com `||`).
-      allow read: if isMaster();
-      allow read: if isProjectAdmin(resource.data);
-      allow read: if request.auth.token.email in resource.data.membrosEmails;
+      allow read: if isProjectMember(resource.data);
 
       // criadoPor precisa ser exatamente o e-mail de quem está criando (já em minúsculo,
       // por definição de userEmail()), e membrosEmails só pode conter esse mesmo e-mail

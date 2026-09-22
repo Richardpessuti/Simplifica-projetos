@@ -6234,6 +6234,13 @@ if(firebaseOk){
         if(arqDoc.exists && arqDoc.data().logoBase64) payload.logoBase64 = arqDoc.data().logoBase64;
       }
       const ref = await db.collection('projetos').add(payload);
+      // índice reverso (e-mail -> projetos) — a consulta em lista direta por
+      // membrosEmails não é confiável no Firestore (ver comentário em
+      // carregarProjetosDoUsuario), então cada membro sabe seus projetos por
+      // aqui, e cada projeto é lido individualmente por get() depois.
+      await db.collection('membros').doc(currentUserEmail).set({
+        projetoIds: firebase.firestore.FieldValue.arrayUnion(ref.id)
+      }, {merge:true});
       abrirProjeto(ref.id, nome, payload);
     }catch(e){
       console.error(e);
@@ -6601,6 +6608,10 @@ if(firebaseOk){
       await db.collection('projetos').doc(currentProjetoId).update({
         membrosEmails: firebase.firestore.FieldValue.arrayUnion(email)
       });
+      // mantém o índice reverso (ver comentário em carregarProjetosDoUsuario)
+      await db.collection('membros').doc(email).set({
+        projetoIds: firebase.firestore.FieldValue.arrayUnion(currentProjetoId)
+      }, {merge:true});
       document.getElementById('novo-membro-email').value = '';
       toast('Acesso adicionado');
       renderMembros();
@@ -6624,6 +6635,10 @@ if(firebaseOk){
       await db.collection('projetos').doc(currentProjetoId).update({
         membrosEmails: firebase.firestore.FieldValue.arrayRemove(remMembro)
       });
+      // mantém o índice reverso (ver comentário em carregarProjetosDoUsuario)
+      await db.collection('membros').doc(remMembro).set({
+        projetoIds: firebase.firestore.FieldValue.arrayRemove(currentProjetoId)
+      }, {merge:true});
       renderMembros();
     }
   });
@@ -6664,20 +6679,32 @@ if(firebaseOk){
 
     el.innerHTML = skeletonRows(2);
     try{
-      let snap;
+      let projetos = [];
       if(modoMasterVendoArquitetoId){
-        snap = await db.collection('projetos').where('arquitetoId','==',modoMasterVendoArquitetoId).get();
+        const snap = await db.collection('projetos').where('arquitetoId','==',modoMasterVendoArquitetoId).get();
+        snap.forEach(d=>projetos.push({id:d.id, ...d.data()}));
       }else{
-        snap = await db.collection('projetos').where('membrosEmails','array-contains',currentUserEmail).get();
+        // IMPORTANTE: não dá pra usar db.collection('projetos').where('membrosEmails',
+        // 'array-contains', currentUserEmail).get() aqui — confirmado ao vivo que o
+        // Firestore recusa essa consulta em lista com permission-denied pra qualquer
+        // conta que não seja o master, mesmo com regra e dados corretos (uma
+        // limitação de como o Firestore precisa "provar" a segurança de consultas
+        // em lista, que não conseguimos contornar só na regra). Um GET direto por
+        // ID sempre funciona, então mantemos um índice reverso em
+        // `membros/{email}.projetoIds` (atualizado em paralelo sempre que alguém
+        // cria um projeto ou é adicionado/removido como membro) e buscamos cada
+        // projeto individualmente por esse ID.
+        const membroDoc = await db.collection('membros').doc(currentUserEmail).get();
+        const projetoIds = (membroDoc.exists && membroDoc.data().projetoIds) || [];
+        const docs = await Promise.all(projetoIds.map(id=>db.collection('projetos').doc(id).get()));
+        docs.forEach(d=>{ if(d.exists) projetos.push({id:d.id, ...d.data()}); });
       }
-      if(snap.empty){
+      if(projetos.length === 0){
         el.innerHTML = podecriarProjeto
           ? '<div class="empty" style="padding:16px 0;">Nenhum projeto ainda. Crie um abaixo.</div>'
           : `<div class="empty" style="padding:16px 0;">Sua conta foi criada, mas você ainda não tem acesso a nenhum projeto. Peça pra quem administra o projeto te adicionar pelo e-mail <strong>${escapeHtml(currentUserEmail)}</strong>.</div>`;
         return;
       }
-      const projetos = [];
-      snap.forEach(d=>projetos.push({id:d.id, ...d.data()}));
       el.innerHTML = projetos.map(p=>`
         <div class="list-item">
           <div style="cursor:pointer;" data-abrir-projeto="${p.id}" data-nome-projeto="${escapeHtml(p.nome)}">
