@@ -117,9 +117,7 @@ service cloud.firestore {
       // avaliada dentro de uma árvore booleana grande combinada com `||`).
       allow read: if isMaster();
       allow read: if isProjectAdmin(resource.data);
-      allow read: if request.auth != null &&
-        resource.data.membrosEmails is list &&
-        request.auth.token.email in resource.data.membrosEmails;
+      allow read: if request.auth.token.email in resource.data.membrosEmails;
 
       // criadoPor precisa ser exatamente o e-mail de quem está criando (já em minúsculo,
       // por definição de userEmail()), e membrosEmails só pode conter esse mesmo e-mail
