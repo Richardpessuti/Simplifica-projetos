@@ -2808,19 +2808,86 @@ function initHero(){
   const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 100);
   camera.position.set(0, 0, 7);
 
-  const geometry = new THREE.IcosahedronGeometry(1.7, isMobile ? 0 : 1);
-  const material = new THREE.MeshStandardMaterial({color:0x2F6F5E, roughness:0.35, metalness:0.15, flatShading:true});
-  const solid = new THREE.Mesh(geometry, material);
-  solid.position.set(1.6, 0, 0);
-  scene.add(solid);
+  // ---- Casa em baixo-poli: começa "precisando de reforma" (parede opaca,
+  // telhado desbotado, janela tapada, entulho no chão) e vai virando
+  // "reformada" (cores quentes, porta e janela na cor da marca, jardim)
+  // conforme o mesmo progresso de scroll que já girava a peça antiga ----
+  const house = new THREE.Group();
 
-  const wire = new THREE.LineSegments(
-    new THREE.WireframeGeometry(geometry),
-    new THREE.LineBasicMaterial({color:0xC7862B, transparent:true, opacity:0.5})
+  const wallMat = new THREE.MeshStandardMaterial({roughness:0.85, metalness:0.05, flatShading:true});
+  const walls = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.5, 2.0), wallMat);
+  walls.position.y = 0.75;
+  house.add(walls);
+
+  const roofMat = new THREE.MeshStandardMaterial({roughness:0.7, metalness:0.05, flatShading:true});
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(1.75, 1.05, 4), roofMat);
+  roof.position.y = 1.5 + 0.52;
+  roof.rotation.y = Math.PI / 4;
+  house.add(roof);
+
+  const chimneyMat = new THREE.MeshStandardMaterial({roughness:0.9, flatShading:true});
+  const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.55, 0.22), chimneyMat);
+  chimney.position.set(0.55, 2.05, 0.3);
+  house.add(chimney);
+
+  const doorMat = new THREE.MeshStandardMaterial({roughness:0.6, flatShading:true});
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 0.06), doorMat);
+  door.position.set(0, 0.45, 1.03);
+  house.add(door);
+
+  const winGeo = new THREE.BoxGeometry(0.42, 0.42, 0.05);
+  const winMatL = new THREE.MeshStandardMaterial({roughness:0.35, flatShading:true});
+  const winMatR = winMatL.clone();
+  const winL = new THREE.Mesh(winGeo, winMatL);
+  winL.position.set(-0.72, 0.95, 1.03);
+  house.add(winL);
+  const winR = new THREE.Mesh(winGeo, winMatR);
+  winR.position.set(0.72, 0.95, 1.03);
+  house.add(winR);
+
+  // entulho no chão — vai sumindo conforme a reforma avança
+  const rubbleMat = new THREE.MeshStandardMaterial({color:0x8a8478, roughness:0.9, flatShading:true});
+  const rubble = [[-0.95, -1.05, 0], [-0.55, -1.1, 1], [1.0, -1.0, 2]].map(([x,z,seed])=>{
+    const r = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 0.22), rubbleMat);
+    r.position.set(x, 0.08, z);
+    r.rotation.y = seed;
+    house.add(r);
+    return r;
+  });
+
+  // vasinho de planta — aparece conforme a reforma avança
+  const bush = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 6, 5),
+    new THREE.MeshStandardMaterial({color:0x3f7a4a, roughness:0.8, flatShading:true})
   );
-  wire.position.copy(solid.position);
+  bush.position.set(-1.05, 0.22, 1.05);
+  bush.scale.setScalar(0.001);
+  house.add(bush);
+
+  house.position.set(1.6, -0.65, 0);
+  scene.add(house);
+
+  // contorno estilo "planta baixa" nas paredes — fica sutil o tempo todo,
+  // como se fossem as linhas do projeto do arquiteto por baixo da obra
+  const wire = new THREE.LineSegments(
+    new THREE.WireframeGeometry(new THREE.BoxGeometry(2.2, 1.5, 2.0)),
+    new THREE.LineBasicMaterial({color:0xC7862B, transparent:true, opacity:0.35})
+  );
+  wire.position.copy(walls.position);
   wire.scale.setScalar(1.02);
-  scene.add(wire);
+  house.add(wire);
+
+  const wallColorA = new THREE.Color(0x8f8b81), wallColorB = new THREE.Color(0xF4F0E6);
+  const roofColorA = new THREE.Color(0x6b6b63), roofColorB = new THREE.Color(0xB5502A);
+  const doorColorA = new THREE.Color(0x35332f), doorColorB = new THREE.Color(0x2F6F5E);
+  const winColorA = new THREE.Color(0x24221f), winColorB = new THREE.Color(0xBFE3F0);
+  const chimColorA = roofColorA.clone(), chimColorB = new THREE.Color(0xC7862B);
+  wallMat.color.copy(wallColorA);
+  roofMat.color.copy(roofColorA);
+  doorMat.color.copy(doorColorA);
+  winMatL.color.copy(winColorA);
+  winMatR.color.copy(winColorA);
+  chimneyMat.color.copy(chimColorA);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.55));
   const key = new THREE.DirectionalLight(0xffffff, 0.9);
@@ -2847,12 +2914,24 @@ function initHero(){
       scrub: 0.6,
       onUpdate(self){
         const p = self.progress;
-        solid.rotation.y = p * Math.PI * 2.2;
-        solid.rotation.x = p * Math.PI * 0.6;
-        wire.rotation.copy(solid.rotation);
+        // gira em volta da casa (como se estivesse dando a volta na obra),
+        // com uma leve inclinação em arco — sobe e desce sem nunca virar de
+        // cabeça pra baixo, pra continuar reconhecível como casa
+        house.rotation.y = p * Math.PI * 2.2;
+        house.rotation.x = Math.sin(p * Math.PI) * 0.22;
         camera.position.x = -p * 1.4;
         camera.position.z = 7 - p * 1.5;
-        camera.lookAt(solid.position);
+        camera.lookAt(house.position);
+
+        wallMat.color.copy(wallColorA).lerp(wallColorB, p);
+        roofMat.color.copy(roofColorA).lerp(roofColorB, p);
+        doorMat.color.copy(doorColorA).lerp(doorColorB, p);
+        winMatL.color.copy(winColorA).lerp(winColorB, p);
+        winMatR.color.copy(winColorA).lerp(winColorB, p);
+        chimneyMat.color.copy(chimColorA).lerp(chimColorB, p);
+        rubble.forEach(r=> r.scale.setScalar(Math.max(0.001, 1 - p * 1.3)));
+        bush.scale.setScalar(Math.max(0.001, p * 1.3));
+
         renderer.render(scene, camera);
       }
     });
