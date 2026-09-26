@@ -6946,8 +6946,16 @@ if(firebaseOk){
       });
       document.getElementById('master-arq-nome').value = '';
       document.getElementById('master-arq-email').value = '';
-      toast('Arquiteto cadastrado — avise a pessoa pra criar a conta com esse e-mail');
+      toast('Arquiteto cadastrado');
       renderMasterScreen();
+      // manda o e-mail de convite depois — se falhar, o cadastro já foi
+      // feito normalmente, só não teve o aviso automático por e-mail
+      if(functionsClient){
+        functionsClient.httpsCallable('notificarNovoArquiteto')({ email })
+          .catch(err=>{ console.error('Erro ao enviar e-mail de convite:', err); toast('Arquiteto cadastrado, mas o e-mail de aviso não foi enviado — avise a pessoa manualmente'); });
+      }else{
+        toast('Arquiteto cadastrado — avise a pessoa pra criar a conta com esse e-mail');
+      }
     }catch(e){
       console.error(e);
       toast('Erro: ' + e.message);

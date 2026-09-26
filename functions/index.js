@@ -412,3 +412,54 @@ async function notificarNovoMembroLogica(request) {
 }
 
 exports.notificarNovoMembro = onCall({ secrets: [RESEND_API_KEY], region: 'southamerica-east1', maxInstances: 10 }, notificarNovoMembroLogica);
+
+// Avisa por e-mail quando o master cadastra um novo arquiteto (painel
+// master → "Cadastrar novo arquiteto") — chamado pelo app logo depois do
+// db.collection('arquitetos').add() ter sucesso. Só o master pode disparar,
+// e só pra um e-mail que já esteja mesmo cadastrado como arquiteto.
+async function notificarNovoArquitetoLogica(request) {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Faça login pra cadastrar um arquiteto.');
+  }
+  const callerEmail = (request.auth.token.email || '').toLowerCase();
+  if (callerEmail !== MASTER_EMAIL) {
+    throw new HttpsError('permission-denied', 'Só o master pode notificar novos arquitetos.');
+  }
+  const { email } = request.data || {};
+  if (!email || typeof email !== 'string') {
+    throw new HttpsError('invalid-argument', 'Faltou informar o e-mail.');
+  }
+  const emailNormalizado = email.toLowerCase().trim();
+
+  const arqSnap = await db.collection('arquitetos').where('email', '==', emailNormalizado).limit(1).get();
+  if (arqSnap.empty) {
+    throw new HttpsError('failed-precondition', 'Esse e-mail ainda não foi cadastrado como arquiteto.');
+  }
+
+  const resposta = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY.value()}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: 'Simplifica Seu Projeto <avisos@simplificaseuprojeto.com.br>',
+      to: [emailNormalizado],
+      subject: 'Você foi cadastrado como arquiteto no Simplifica Seu Projeto',
+      html: `
+        <p>Olá!</p>
+        <p>Você foi cadastrado como arquiteto(a) no Simplifica Seu Projeto — a plataforma pra organizar cronograma, cotações, prestadores e financeiro dos seus clientes, tudo num só lugar.</p>
+        <p>Pra acessar: entre em <a href="https://simplificaseuprojeto.com.br/app.html">simplificaseuprojeto.com.br/app.html</a> e crie sua conta usando <strong>exatamente este e-mail</strong> (${emailNormalizado}). Depois de logar, você já pode criar projetos pros seus clientes.</p>
+      `
+    })
+  });
+  if (!resposta.ok) {
+    const detalhe = await resposta.text();
+    console.error('Erro ao enviar e-mail via Resend:', resposta.status, detalhe);
+    throw new HttpsError('internal', 'Não consegui enviar o e-mail de convite.');
+  }
+
+  return { ok: true };
+}
+
+exports.notificarNovoArquiteto = onCall({ secrets: [RESEND_API_KEY], region: 'southamerica-east1', maxInstances: 10 }, notificarNovoArquitetoLogica);
