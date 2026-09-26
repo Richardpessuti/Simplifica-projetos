@@ -1289,12 +1289,24 @@
         <button id="auth-esqueci" style="background:none;border:none;color:var(--muted);font-size:12px;margin-top:12px;cursor:pointer;text-decoration:underline;padding:0;">Esqueci minha senha</button>
         <div id="auth-erro" style="color:var(--danger);font-size:12px;margin-top:10px;"></div>
       </div>
+
+      <!-- Etapa extra de verificação em duas etapas — só aparece pra quem ativou -->
+      <div class="card auth-card" id="mfa-login-card" style="display:none;">
+        <h2>Verificação em duas etapas</h2>
+        <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px;">Enviamos um código por SMS pro celular cadastrado. Digite ele abaixo.</div>
+        <label>Código recebido</label>
+        <input type="text" id="mfa-login-codigo" placeholder="123456" inputmode="numeric" maxlength="6">
+        <button class="btn" id="mfa-login-confirmar" style="margin-top:10px;">Confirmar e entrar</button>
+        <div id="mfa-login-erro" style="color:var(--danger);font-size:12px;margin-top:10px;"></div>
+      </div>
+
       <div style="text-align:center;margin-top:16px;">
         <a href="privacidade.html" style="color:var(--muted);font-size:12px;text-decoration:underline;">Política de privacidade</a>
       </div>
     </div>
   </section>
 </div>
+<div id="recaptcha-container"></div>
 
 <!-- TELA MASTER -->
 <div id="master-screen" class="screen-auth" style="display:none;">
@@ -1322,6 +1334,24 @@
       <label>E-mail</label>
       <input type="text" id="master-arq-email" placeholder="email@arquiteta.com">
       <button class="btn secondary" id="master-arq-criar">Cadastrar arquiteto</button>
+    </div>
+
+    <div class="card auth-card" id="master-2fa-card">
+      <h2>Verificação em duas etapas</h2>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Protege a conta master: mesmo se descobrirem sua senha, também vão precisar de um código do seu celular pra entrar.</div>
+      <div id="master-2fa-status" style="font-size:13px;margin-bottom:10px;"></div>
+      <div id="master-2fa-passo-tel">
+        <label>Celular (com DDD e código do país)</label>
+        <input type="text" id="master-2fa-tel" placeholder="+5511999999999">
+        <button class="btn secondary" id="master-2fa-enviar" style="margin-top:10px;">Ativar verificação em duas etapas</button>
+      </div>
+      <div id="master-2fa-passo-codigo" style="display:none;">
+        <label>Código recebido por SMS</label>
+        <input type="text" id="master-2fa-codigo" placeholder="123456" inputmode="numeric" maxlength="6">
+        <button class="btn" id="master-2fa-confirmar" style="margin-top:10px;">Confirmar código</button>
+      </div>
+      <button class="btn muted" id="master-2fa-desativar" style="margin-top:10px;display:none;">Desativar verificação em duas etapas</button>
+      <div id="master-2fa-erro" style="color:var(--danger);font-size:12px;margin-top:10px;"></div>
     </div>
 
     <div class="card auth-card">
@@ -2099,6 +2129,14 @@ const firebaseConfig = {
 let db = null;
 let auth = null;
 let functionsClient = null;
+// Verificação em duas etapas (2FA) — segundo fator por SMS, hoje usado só
+// pela conta master. `mfaLoginResolver` guarda o desafio devolvido pelo
+// Firebase durante o login quando a conta que está entrando tem 2FA ativo;
+// `mfaEnrollVerificationId` guarda o código de verificação enquanto o
+// master está no meio do fluxo de ATIVAR o 2FA (etapa separada do login).
+let mfaLoginResolver = null;
+let mfaLoginVerificationId = null;
+let mfaEnrollVerificationId = null;
 const LS_KEY_PROJETO = 'ccProjetoAtual';
 let currentProjetoId = null;
 let isAdmin = false;
@@ -6232,6 +6270,8 @@ function friendlyAuthError(code){
     'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
     'auth/missing-password': 'Digite uma senha.',
     'auth/too-many-requests': 'Muitas tentativas seguidas. Espere um pouco antes de tentar de novo.',
+    'auth/requires-recent-login': 'Por segurança, saia e entre de novo antes de ativar a verificação em duas etapas.',
+    'auth/invalid-phone-number': 'Número de celular inválido. Confere o formato (+55 e DDD).',
   };
   return map[code] || 'Erro: ' + code;
 }
@@ -6246,8 +6286,45 @@ if(firebaseOk){
     try{
       await auth.signInWithEmailAndPassword(email, senha);
     }catch(e){
+      if(e.code === 'auth/multi-factor-auth-required'){
+        try{
+          mfaLoginResolver = e.resolver;
+          const verifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {size:'invisible'}, auth);
+          const phoneInfoOptions = { multiFactorHint: mfaLoginResolver.hints[0], session: mfaLoginResolver.session };
+          mfaLoginVerificationId = await new firebase.auth.PhoneAuthProvider(auth)
+            .verifyPhoneNumber(phoneInfoOptions, verifier);
+          document.getElementById('mfa-login-card').style.display = 'block';
+          document.getElementById('mfa-login-erro').textContent = '';
+          document.getElementById('mfa-login-codigo').value = '';
+        }catch(e2){
+          console.error(e2);
+          erroEl.textContent = 'Não consegui enviar o código de verificação. Tenta de novo.';
+        }
+        return;
+      }
       erroEl.textContent = friendlyAuthError(e.code);
     }
+  });
+
+  document.getElementById('mfa-login-confirmar').addEventListener('click', async ()=>{
+    const codigo = document.getElementById('mfa-login-codigo').value.trim();
+    const erroEl = document.getElementById('mfa-login-erro');
+    if(!codigo){ erroEl.textContent = 'Digite o código recebido.'; return; }
+    if(!mfaLoginResolver || !mfaLoginVerificationId){ erroEl.textContent = 'Sessão de verificação expirada — volta e tenta entrar de novo.'; return; }
+    const btn = document.getElementById('mfa-login-confirmar');
+    btn.disabled = true; btn.textContent = 'Confirmando...';
+    try{
+      const cred = firebase.auth.PhoneAuthProvider.credential(mfaLoginVerificationId, codigo);
+      const assertion = firebase.auth.PhoneMultiFactorGenerator.assertion(cred);
+      await mfaLoginResolver.resolveSignIn(assertion);
+      document.getElementById('mfa-login-card').style.display = 'none';
+      mfaLoginResolver = null;
+      mfaLoginVerificationId = null;
+    }catch(e){
+      console.error(e);
+      erroEl.textContent = 'Código errado ou expirado. Tenta de novo.';
+    }
+    btn.disabled = false; btn.textContent = 'Confirmar e entrar';
   });
 
   document.getElementById('auth-cadastrar').addEventListener('click', async ()=>{
@@ -6898,8 +6975,20 @@ if(firebaseOk){
     }
   }
 
+  function renderMfaStatus(){
+    const fatores = (auth.currentUser && auth.currentUser.multiFactor && auth.currentUser.multiFactor.enrolledFactors) || [];
+    const ativo = fatores.length > 0;
+    document.getElementById('master-2fa-status').innerHTML = ativo
+      ? `✅ Ativa — celular ${escapeHtml(fatores[0].phoneNumber || '')}`
+      : '⚠️ Ainda não ativada';
+    document.getElementById('master-2fa-passo-tel').style.display = ativo ? 'none' : 'block';
+    document.getElementById('master-2fa-passo-codigo').style.display = 'none';
+    document.getElementById('master-2fa-desativar').style.display = ativo ? 'block' : 'none';
+  }
+
   async function renderMasterScreen(){
     document.getElementById('master-email-atual').value = masterEmailAtual;
+    renderMfaStatus();
     const el = document.getElementById('master-arquitetos-list');
     el.innerHTML = skeletonRows(3);
     try{
@@ -6961,6 +7050,63 @@ if(firebaseOk){
       toast('Erro: ' + e.message);
     }
     btn.disabled = false; btn.textContent = 'Cadastrar arquiteto';
+  });
+
+  document.getElementById('master-2fa-enviar').addEventListener('click', async ()=>{
+    const tel = document.getElementById('master-2fa-tel').value.trim();
+    const erroEl = document.getElementById('master-2fa-erro');
+    erroEl.textContent = '';
+    if(!/^\+\d{10,15}$/.test(tel)){ erroEl.textContent = 'Digite o celular com código do país, ex: +5511999999999'; return; }
+    const btn = document.getElementById('master-2fa-enviar');
+    btn.disabled = true; btn.textContent = 'Enviando código...';
+    try{
+      const session = await auth.currentUser.multiFactor.getSession();
+      const verifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {size:'invisible'}, auth);
+      mfaEnrollVerificationId = await new firebase.auth.PhoneAuthProvider(auth)
+        .verifyPhoneNumber({phoneNumber: tel, session}, verifier);
+      document.getElementById('master-2fa-passo-codigo').style.display = 'block';
+      document.getElementById('master-2fa-codigo').value = '';
+      toast('Código enviado por SMS');
+    }catch(e){
+      console.error(e);
+      erroEl.textContent = friendlyAuthError(e.code) || 'Não consegui enviar o código. Confere o número e tenta de novo.';
+    }
+    btn.disabled = false; btn.textContent = 'Ativar verificação em duas etapas';
+  });
+
+  document.getElementById('master-2fa-confirmar').addEventListener('click', async ()=>{
+    const codigo = document.getElementById('master-2fa-codigo').value.trim();
+    const erroEl = document.getElementById('master-2fa-erro');
+    erroEl.textContent = '';
+    if(!codigo){ erroEl.textContent = 'Digite o código recebido.'; return; }
+    if(!mfaEnrollVerificationId){ erroEl.textContent = 'Sessão expirada — clica em ativar de novo.'; return; }
+    const btn = document.getElementById('master-2fa-confirmar');
+    btn.disabled = true; btn.textContent = 'Confirmando...';
+    try{
+      const cred = firebase.auth.PhoneAuthProvider.credential(mfaEnrollVerificationId, codigo);
+      const assertion = firebase.auth.PhoneMultiFactorGenerator.assertion(cred);
+      await auth.currentUser.multiFactor.enroll(assertion, 'Celular');
+      mfaEnrollVerificationId = null;
+      toast('Verificação em duas etapas ativada!');
+      renderMfaStatus();
+    }catch(e){
+      console.error(e);
+      erroEl.textContent = 'Código errado ou expirado. Tenta de novo.';
+    }
+    btn.disabled = false; btn.textContent = 'Confirmar código';
+  });
+
+  document.getElementById('master-2fa-desativar').addEventListener('click', async ()=>{
+    if(!confirm('Desativar a verificação em duas etapas? Sua conta fica protegida só pela senha.')) return;
+    try{
+      const fatores = auth.currentUser.multiFactor.enrolledFactors;
+      if(fatores[0]) await auth.currentUser.multiFactor.unenroll(fatores[0]);
+      toast('Verificação em duas etapas desativada');
+      renderMfaStatus();
+    }catch(e){
+      console.error(e);
+      toast('Erro: ' + e.message);
+    }
   });
 
   document.getElementById('master-email-salvar').addEventListener('click', async ()=>{
