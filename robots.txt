@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /app.html
+Disallow: /precos.html
+Disallow: /produtos.html
+Disallow: /precos-eletrodomesticos/
+Disallow: /functions/
+
+Sitemap: https://simplificaseuprojeto.com.br/sitemap.xml
