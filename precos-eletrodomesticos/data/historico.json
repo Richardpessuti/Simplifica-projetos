@@ -1,5 +1,5 @@
 {
-  "atualizado_em": "2026-10-31T16:14:16.207876+00:00",
+  "atualizado_em": "2026-11-01T17:08:37.892211+00:00",
   "linhas": [
     {
       "data": "2026-08-24",
@@ -10782,6 +10782,159 @@
       "preco": 1131.0,
       "url": "https://www.amazon.com.br/Consul-Branco-acendimento-autom%C3%A1tico-BIVOLT/dp/B076CBHKPW/ref=sr_1_3",
       "erro": null
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Mercado Livre",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "500 do proxy: 'Request failed. You will not be charged for this request. Please make sure your url is correct and try again. Protected domains may require adding premium=true OR ultra_premium=true parameter to your request.'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Casas Bahia",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "resposta inválida do proxy (corpo vazio ou não-JSON)"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Fast Shop",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "500 do proxy: 'Request failed. You will not be charged for this request. Please make sure your url is correct and try again. Protected domains may require adding premium=true OR ultra_premium=true parameter to your request.'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Magazine Luiza",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "500 do proxy: 'Request failed. You will not be charged for this request. Please make sure your url is correct and try again. Protected domains may require adding premium=true OR ultra_premium=true parameter to your request.'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Amazon",
+      "nome_encontrado": null,
+      "preco": 2012.61,
+      "url": "https://www.amazon.com.br/Geladeira-Brastemp-Duplex-litros-Branca/dp/B07FXZ8TR6/ref=sr_1_1",
+      "erro": null
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Amazon",
+      "nome_encontrado": null,
+      "preco": 2940.15,
+      "url": "https://www.amazon.com.br/Geladeira-Brastemp-Frost-Duplex-litros/dp/B07GWVJ8LR/ref=sr_1_2",
+      "erro": null
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Geladeira Brastemp Frost Free 375L",
+      "site": "Amazon",
+      "nome_encontrado": null,
+      "preco": 2564.05,
+      "url": "https://www.amazon.com.br/Geladeira-Brastemp-Litros-Duplex-Branca/dp/B0GFB8M9MZ/ref=sr_1_3",
+      "erro": null
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Mercado Livre",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "500 do proxy: 'Request failed. You will not be charged for this request. Please make sure your url is correct and try again. Protected domains may require adding premium=true OR ultra_premium=true parameter to your request.'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Casas Bahia",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "resposta inválida do proxy (corpo vazio ou não-JSON)"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Fast Shop",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 do proxy: 'You have exhausted the API Credits available in this monthly cycle. You can upgrade your subscription or enable overages from your dashboard (https://dashboard.scraperapi.com/billing). For custom plan upgrades, please contact support (https://www.scraperapi.com/support/).'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Magazine Luiza",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 do proxy: 'You have exhausted the API Credits available in this monthly cycle. You can upgrade your subscription or enable overages from your dashboard (https://dashboard.scraperapi.com/billing). For custom plan upgrades, please contact support (https://www.scraperapi.com/support/).'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Micro-ondas Electrolux 20L",
+      "site": "Amazon",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 do proxy: 'You have exhausted the API Credits available in this monthly cycle. You can upgrade your subscription or enable overages from your dashboard (https://dashboard.scraperapi.com/billing). For custom plan upgrades, please contact support (https://www.scraperapi.com/support/).'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Mercado Livre",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 do proxy: 'You have exhausted the API Credits available in this monthly cycle. You can upgrade your subscription or enable overages from your dashboard (https://dashboard.scraperapi.com/billing). For custom plan upgrades, please contact support (https://www.scraperapi.com/support/).'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Casas Bahia",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 do proxy: 'You have exhausted the API Credits available in this monthly cycle. You can upgrade your subscription or enable overages from your dashboard (https://dashboard.scraperapi.com/billing). For custom plan upgrades, please contact support (https://www.scraperapi.com/support/).'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Fast Shop",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 do proxy: 'You have exhausted the API Credits available in this monthly cycle. You can upgrade your subscription or enable overages from your dashboard (https://dashboard.scraperapi.com/billing). For custom plan upgrades, please contact support (https://www.scraperapi.com/support/).'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Magazine Luiza",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 do proxy: 'You have exhausted the API Credits available in this monthly cycle. You can upgrade your subscription or enable overages from your dashboard (https://dashboard.scraperapi.com/billing). For custom plan upgrades, please contact support (https://www.scraperapi.com/support/).'"
+    },
+    {
+      "data": "2026-11-01",
+      "produto": "Fogão 4 bocas Consul",
+      "site": "Amazon",
+      "nome_encontrado": null,
+      "preco": null,
+      "url": null,
+      "erro": "403 do proxy: 'You have exhausted the API Credits available in this monthly cycle. You can upgrade your subscription or enable overages from your dashboard (https://dashboard.scraperapi.com/billing). For custom plan upgrades, please contact support (https://www.scraperapi.com/support/).'"
     }
   ]
 }
